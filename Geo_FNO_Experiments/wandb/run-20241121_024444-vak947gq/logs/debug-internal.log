@@ -1,0 +1,20 @@
+{"time":"2024-11-21T02:44:44.741608947-05:00","level":"INFO","msg":"using version","core version":"0.18.7"}
+{"time":"2024-11-21T02:44:44.741630509-05:00","level":"INFO","msg":"created symlink","path":"/home/namancho/Geo-UPSplus/wandb/run-20241121_024444-vak947gq/logs/debug-core.log"}
+{"time":"2024-11-21T02:44:44.859451928-05:00","level":"INFO","msg":"created new stream","id":"vak947gq"}
+{"time":"2024-11-21T02:44:44.859745098-05:00","level":"INFO","msg":"stream: started","id":"vak947gq"}
+{"time":"2024-11-21T02:44:44.861198312-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"vak947gq"}
+{"time":"2024-11-21T02:44:44.861450401-05:00","level":"INFO","msg":"sender: started","stream_id":"vak947gq"}
+{"time":"2024-11-21T02:44:44.85971927-05:00","level":"INFO","msg":"handler: started","stream_id":"vak947gq"}
+{"time":"2024-11-21T02:44:45.57217108-05:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-21T07:44:29.503202887-05:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-21T07:44:29.50379732-05:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-21T07:44:29.62766294-05:00","level":"WARN","msg":"No job ingredients found, not creating job artifact"}
+{"time":"2024-11-21T07:44:29.627674498-05:00","level":"WARN","msg":"No source type found, not creating job artifact"}
+{"time":"2024-11-21T07:44:29.627678354-05:00","level":"INFO","msg":"sender: sendDefer: no job artifact to save"}
+{"time":"2024-11-21T07:44:29.897321894-05:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-11-21T07:44:30.001635049-05:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2024-11-21T07:44:31.009513824-05:00","level":"INFO","msg":"stream: closing","id":"vak947gq"}
+{"time":"2024-11-21T07:44:31.009536929-05:00","level":"INFO","msg":"handler: closed","stream_id":"vak947gq"}
+{"time":"2024-11-21T07:44:31.009546544-05:00","level":"INFO","msg":"writer: Close: closed","stream_id":"vak947gq"}
+{"time":"2024-11-21T07:44:31.009603369-05:00","level":"INFO","msg":"sender: closed","stream_id":"vak947gq"}
+{"time":"2024-11-21T07:44:31.009791351-05:00","level":"INFO","msg":"stream: closed","id":"vak947gq"}

@@ -1,0 +1,17 @@
+18883490
+OUTPUT 0 29.158365956973284 1.1417064391242133 0.0 1.0390814082286848
+OUTPUT 1 29.20298177935183 1.0164764785766602 0.0 1.0320357587793674
+OUTPUT 2 29.099478672724217 1.0276597913106282 0.0 1.1129010885631134
+OUTPUT 3 29.119281891733408 1.1162449709574382 0.0 1.1476334320509047
+OUTPUT 4 29.10889290412888 1.1516403664482964 0.0 1.0806478369537242
+OUTPUT 5 29.089048265945166 1.0831855244106716 0.0 1.0140199075967395
+OUTPUT 6 29.08590406086296 1.0078172132703993 0.0 1.0396766180596198
+OUTPUT 7 29.107036522123963 1.0158201132880318 0.0 1.112933651204574
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/geofno_openfoam.py", line 347, in <module>
+    test_l2 += myloss(out.view(batch_size, -1), y.view(batch_size, -1)).item()
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/geofno_openfoam.py", line 347, in <module>
+    test_l2 += myloss(out.view(batch_size, -1), y.view(batch_size, -1)).item()
+KeyboardInterrupt

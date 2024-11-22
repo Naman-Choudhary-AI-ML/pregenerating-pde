@@ -1,0 +1,12 @@
+18883490
+OUTPUT 0 29.205615794286132 1.1417064391242133 0.0 1.0390814082286848
+OUTPUT 1 28.920012689661235 1.0164764785766602 0.0 1.0320357587793674
+OUTPUT 2 28.942165580112487 1.0276597913106282 0.0 1.1129010885631134
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/geofno_openfoam.py", line 331, in <module>
+    train_l2 += loss.item()
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/geofno_openfoam.py", line 331, in <module>
+    train_l2 += loss.item()
+KeyboardInterrupt

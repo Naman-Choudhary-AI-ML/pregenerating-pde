@@ -1,0 +1,9 @@
+{"time":"2024-11-22T16:44:54.577807778-05:00","level":"INFO","msg":"using version","core version":"0.18.7"}
+{"time":"2024-11-22T16:44:54.577838883-05:00","level":"INFO","msg":"created symlink","path":"/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/wandb/run-20241122_164454-quchr9s9/logs/debug-core.log"}
+{"time":"2024-11-22T16:44:54.689212407-05:00","level":"INFO","msg":"created new stream","id":"quchr9s9"}
+{"time":"2024-11-22T16:44:54.689242455-05:00","level":"INFO","msg":"stream: started","id":"quchr9s9"}
+{"time":"2024-11-22T16:44:54.68965907-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"quchr9s9"}
+{"time":"2024-11-22T16:44:54.690037605-05:00","level":"INFO","msg":"handler: started","stream_id":"quchr9s9"}
+{"time":"2024-11-22T16:44:54.690061241-05:00","level":"INFO","msg":"sender: started","stream_id":"quchr9s9"}
+{"time":"2024-11-22T16:44:54.868375888-05:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-22T17:14:55.032808149-05:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/graphql\": net/http: request canceled (Client.Timeout exceeded while awaiting headers)"}

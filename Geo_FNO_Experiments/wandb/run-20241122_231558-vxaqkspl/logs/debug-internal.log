@@ -1,0 +1,16 @@
+{"time":"2024-11-22T23:15:58.804776919-05:00","level":"INFO","msg":"using version","core version":"0.18.7"}
+{"time":"2024-11-22T23:15:58.804798048-05:00","level":"INFO","msg":"created symlink","path":"/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/wandb/run-20241122_231558-vxaqkspl/logs/debug-core.log"}
+{"time":"2024-11-22T23:15:58.944659058-05:00","level":"INFO","msg":"created new stream","id":"vxaqkspl"}
+{"time":"2024-11-22T23:15:58.944701703-05:00","level":"INFO","msg":"stream: started","id":"vxaqkspl"}
+{"time":"2024-11-22T23:15:58.944759271-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"vxaqkspl"}
+{"time":"2024-11-22T23:15:58.945015641-05:00","level":"INFO","msg":"handler: started","stream_id":"vxaqkspl"}
+{"time":"2024-11-22T23:15:58.945035208-05:00","level":"INFO","msg":"sender: started","stream_id":"vxaqkspl"}
+{"time":"2024-11-22T23:15:59.111200164-05:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-22T23:25:52.63068694-05:00","level":"INFO","msg":"stream: closing","id":"vxaqkspl"}
+{"time":"2024-11-22T23:25:52.630824111-05:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-22T23:25:52.631808366-05:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-22T23:25:53.742230969-05:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-11-22T23:25:53.853597866-05:00","level":"INFO","msg":"handler: closed","stream_id":"vxaqkspl"}
+{"time":"2024-11-22T23:25:53.853632635-05:00","level":"INFO","msg":"writer: Close: closed","stream_id":"vxaqkspl"}
+{"time":"2024-11-22T23:25:53.853695742-05:00","level":"INFO","msg":"sender: closed","stream_id":"vxaqkspl"}
+{"time":"2024-11-22T23:25:53.854073532-05:00","level":"INFO","msg":"stream: closed","id":"vxaqkspl"}

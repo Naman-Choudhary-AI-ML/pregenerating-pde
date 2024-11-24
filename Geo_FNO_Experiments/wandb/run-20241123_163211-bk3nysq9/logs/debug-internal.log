@@ -1,0 +1,8 @@
+{"time":"2024-11-23T16:32:11.089339284-05:00","level":"INFO","msg":"using version","core version":"0.18.7"}
+{"time":"2024-11-23T16:32:11.089355644-05:00","level":"INFO","msg":"created symlink","path":"/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/wandb/run-20241123_163211-bk3nysq9/logs/debug-core.log"}
+{"time":"2024-11-23T16:32:11.195961413-05:00","level":"INFO","msg":"created new stream","id":"bk3nysq9"}
+{"time":"2024-11-23T16:32:11.195984953-05:00","level":"INFO","msg":"stream: started","id":"bk3nysq9"}
+{"time":"2024-11-23T16:32:11.196003963-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"bk3nysq9"}
+{"time":"2024-11-23T16:32:11.196046954-05:00","level":"INFO","msg":"sender: started","stream_id":"bk3nysq9"}
+{"time":"2024-11-23T16:32:11.196062944-05:00","level":"INFO","msg":"handler: started","stream_id":"bk3nysq9"}
+{"time":"2024-11-23T16:32:11.359326684-05:00","level":"INFO","msg":"Starting system monitor"}

@@ -1,12 +1,17 @@
 import os
 import numpy as np
 import subprocess
+from scipy.fftpack import dst, idst
 
 # Configuration
-num_trajectories = 1197  # Number of trajectories
+num_trajectories = 1177  # Number of trajectories
 timesteps = 21           # Number of timesteps (0 to 1)
-output_dir = "NS_Sines_dataset"  # Directory to store dataset
+output_dir = "NS_Gauss_dataset"  # Directory to store dataset
 base_case_dir = "./"       # Base OpenFOAM case folder
+channels = 2
+final_output_dir = "/home/namancho/datasets/NS-Gauss-Openfoam"  # Combined reshaped dataset output file
+dataset_dir = "./NS_Gauss_dataset"
+os.makedirs(final_output_dir,exist_ok=True)
 
 # Create output directory
 os.makedirs(output_dir, exist_ok=True)
@@ -59,51 +64,61 @@ def compute_cell_centers(points):
 
     return np.array(cell_centers)
 
-def generate_sinusoidal_velocity(nx, ny, num_modes=10, max_velocity=1.0):
+def generate_gaussian_velocity(nx, ny, num_gaussians=100, max_velocity=1.0):
     """
-    Generate sinusoidal velocity fields for a structured 2D grid.
-    The velocities are scaled to ensure stability during simulation.
+    Generate velocity fields from Gaussian-distributed vorticity, as per the paper.
     
     Parameters:
-        nx, ny: int - Grid size (number of points in x and y directions).
-        num_modes: int - Number of sinusoidal modes.
-        max_velocity: float - Maximum allowable velocity magnitude (to control Courant number).
+        nx, ny: int - Grid dimensions (number of points in x and y directions).
+        num_gaussians: int - Number of Gaussian components in vorticity.
+        max_velocity: float - Maximum allowable velocity magnitude (to scale).
     
     Returns:
         U: np.ndarray - Velocity field in OpenFOAM-compatible format.
     """
-    p = num_modes  # Number of modes
-    alpha = np.random.uniform(-1, 1, (p, p))
-    beta = np.random.uniform(0, 2 * np.pi, (p, p))
-    gamma = np.random.uniform(0, 2 * np.pi, (p, p))
-
     # Generate structured grid
     x = np.linspace(0, 1, nx)
     y = np.linspace(0, 1, ny)
     X, Y = np.meshgrid(x, y)
 
-    # Initialize velocity fields
-    u = np.zeros_like(X)
-    v = np.zeros_like(Y)
+    # Initialize vorticity field
+    omega = np.zeros_like(X)
 
-    # Calculate velocity field
-    for i in range(p):
-        for j in range(p):
-            u += alpha[i, j] * np.sin(2 * np.pi * i * X + beta[i, j]) * np.sin(2 * np.pi * j * Y + gamma[i, j])
-            v += alpha[i, j] * np.cos(2 * np.pi * i * X + beta[i, j]) * np.cos(2 * np.pi * j * Y + gamma[i, j])
+    # Generate Gaussian components
+    for _ in range(num_gaussians):
+        alpha = np.random.uniform(-1, 1)  # Amplitude
+        sigma = np.random.uniform(0.01, 0.1)  # Width
+        x_i = np.random.uniform(0, 1)  # Center x
+        y_i = np.random.uniform(0, 1)  # Center y
+        omega += alpha / sigma * np.exp(-((X - x_i)**2 + (Y - y_i)**2) / (2 * sigma**2))
 
-    # Normalize the velocity to ensure stability
-    max_magnitude = np.sqrt(np.max(u**2 + v**2))
+    # Solve for stream function ψ using DST (Poisson equation: ∇²ψ = ω)
+    omega_dst = dst(dst(omega, type=1, axis=0), type=1, axis=1)
+    kx = np.fft.fftfreq(nx, d=1 / nx)**2
+    ky = np.fft.fftfreq(ny, d=1 / ny)**2
+    denominator = kx[:, None] + ky[None, :]
+    denominator[0, 0] = 1  # Prevent division by zero for the DC component
+    psi_dst = omega_dst / denominator
+    psi = idst(idst(psi_dst, type=1, axis=0), type=1, axis=1)
+
+    # Compute velocity from ψ
+    u_x = np.gradient(psi, axis=1)  # ∂ψ/∂y
+    u_y = -np.gradient(psi, axis=0)  # -∂ψ/∂x
+
+    # Normalize velocity to match max_velocity
+    magnitude = np.sqrt(u_x**2 + u_y**2)
+    max_magnitude = np.max(magnitude)
     if max_magnitude > max_velocity:
-        scaling_factor = max_velocity / max_magnitude
-        u *= scaling_factor
-        v *= scaling_factor
+        scale_factor = max_velocity / max_magnitude
+        u_x *= scale_factor
+        u_y *= scale_factor
 
     # Flatten fields into OpenFOAM-compatible format
     U = np.zeros((nx * ny, 3))  # Ux, Uy, Uz
-    U[:, 0] = u.flatten()
-    U[:, 1] = v.flatten()
+    U[:, 0] = u_x.flatten()
+    U[:, 1] = u_y.flatten()
     return U
+
 
 
 
@@ -164,6 +179,24 @@ def extract_velocity_data(case_dir, timesteps, points):
 
     return data
 
+def combine_and_reshape_trajectories(dataset_dir, nx, ny, timesteps, channels):
+    """
+    Combine and reshape all trajectory .npy files into a single 5D dataset.
+    """
+    files = sorted([f for f in os.listdir(dataset_dir) if f.endswith(".npy")])
+    num_trajectories = len(files)
+
+    # Initialize combined dataset
+    combined_data = np.zeros((num_trajectories, timesteps, nx, ny, channels))
+
+    # Load, reshape, and combine all trajectory files
+    for i, file in enumerate(files):
+        print(f"Processing trajectory {i + 1}/{num_trajectories}: {file}")
+        trajectory_data = np.load(os.path.join(dataset_dir, file))  # Load individual .npy file
+        reshaped_data = trajectory_data.reshape((timesteps, nx, ny, channels))  # Reshape to 4D
+        combined_data[i] = reshaped_data
+
+    return combined_data
 
 # Main dataset generation loop
 for traj in range(num_trajectories):
@@ -171,7 +204,8 @@ for traj in range(num_trajectories):
 
     # Step 1: Generate Sinusoidal Velocity (Fixed Grid)
     nx, ny = 128, 128
-    velocity = generate_sinusoidal_velocity(nx, ny)
+    # velocity = generate_sinusoidal_velocity(nx, ny)
+    velocity = generate_gaussian_velocity(nx, ny)
 
     # Step 2: Update U File
     update_U_file(nx, ny, velocity, base_case_dir)
@@ -192,3 +226,21 @@ for traj in range(num_trajectories):
     np.save(os.path.join(output_dir, f"trajectory_{traj:04d}.npy"), trajectory_data)
 
 print(f"Dataset generation complete. Data saved in {output_dir}")
+
+# Combine individual trajectory files into a single dataset
+print("Combining and reshaping trajectory .npy files...")
+combined_data = combine_and_reshape_trajectories(dataset_dir, nx, ny, timesteps, channels)
+print(f"Combined dataset shape: {combined_data.shape}")
+
+# Save the combined dataset
+combined_output_file = os.path.join(final_output_dir, "NS_Gauss_openfoam.npy")
+print(f"Saving combined dataset to {combined_output_file}...")
+np.save(combined_output_file, combined_data)
+print("Combined dataset saved successfully!")
+
+# Remove individual .npy files
+import glob
+for npy_file in glob.glob(os.path.join(dataset_dir, "*.npy")):
+    os.remove(npy_file)
+print("Individual .npy files deleted.")
+

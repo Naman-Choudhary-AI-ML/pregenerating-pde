@@ -1,0 +1,49 @@
+18883490
+OUTPUT 0 68.22741912199854 1.0036371082729763 0.0 1.0104829395721104
+OUTPUT 1 70.83084556599351 0.9996509318881565 0.0 1.0106598891936485
+OUTPUT 2 69.77410148299532 0.9998539839850532 0.0 1.0110122804607296
+OUTPUT 3 68.75553247700009 1.0001818211873372 0.0 1.0095036090065856
+OUTPUT 4 69.57165331300348 0.9986980798509386 0.0 1.007527403022408
+OUTPUT 5 67.94418130699341 0.9967482482062445 0.0 1.0061684618788076
+OUTPUT 6 68.8014631670012 0.9953837055630154 0.0 1.0050973169209725
+OUTPUT 7 68.6939648789994 0.9942954402499729 0.0 1.0034993581393135
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/geofno_poseidon_nopt.py", line 311, in <module>
+    for x, y in train_loader:
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 701, in __next__
+    data = self._next_data()
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 757, in _next_data
+    data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/_utils/fetch.py", line 55, in fetch
+    return self.collate_fn(data)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 398, in default_collate
+    return collate(batch, collate_fn_map=default_collate_fn_map)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 211, in collate
+    return [
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 212, in <listcomp>
+    collate(samples, collate_fn_map=collate_fn_map)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 155, in collate
+    return collate_fn_map[elem_type](batch, collate_fn_map=collate_fn_map)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 272, in collate_tensor_fn
+    return torch.stack(batch, 0, out=out)
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/geofno_poseidon_nopt.py", line 311, in <module>
+    for x, y in train_loader:
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 701, in __next__
+    data = self._next_data()
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 757, in _next_data
+    data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/_utils/fetch.py", line 55, in fetch
+    return self.collate_fn(data)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 398, in default_collate
+    return collate(batch, collate_fn_map=default_collate_fn_map)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 211, in collate
+    return [
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 212, in <listcomp>
+    collate(samples, collate_fn_map=collate_fn_map)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 155, in collate
+    return collate_fn_map[elem_type](batch, collate_fn_map=collate_fn_map)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 272, in collate_tensor_fn
+    return torch.stack(batch, 0, out=out)
+KeyboardInterrupt

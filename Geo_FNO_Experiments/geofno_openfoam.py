@@ -191,10 +191,10 @@ class FNO3d(nn.Module):
 ################################################################
 # configs
 ################################################################
-DATA_PATH = '/home/namancho/datasets/NS-Sines-Openfoam/NS_Sines_openfoam2.npy'
+DATA_PATH = '/home/namancho/datasets/NS-PwC-Openfoam/openfoam.npy'
 dataset_name = os.path.basename(os.path.dirname(DATA_PATH))  # This gives the folder name like 'NS-PwC'
-# output_folder = dataset_name
-output_folder = "NS-Sines-Openfoam-2"
+output_folder = dataset_name
+# output_folder = "NS-G-Openfoam-2"
 
 # Create the directory if it doesn't exist
 os.makedirs(output_folder, exist_ok=True)
@@ -281,7 +281,7 @@ test_loader = DataLoader(TensorDataset(x_test, y_test), batch_size=batch_size, s
 wandb.init(
     project="GeoFNO1",  # Your personal project name
     entity="namancho",  # Replace with your WandB username
-    name=f"{dataset_name}_{2}",  # Optional, gives each run a unique name
+    name=f"{dataset_name}_{1}",  # Optional, gives each run a unique name
     config={  # Optional configuration logging
         "learning_rate": learning_rate,
         "epochs": epochs,
@@ -408,8 +408,5 @@ for ep in range(epochs):
         plt.tight_layout()
         fig.savefig(os.path.join(output_folder, f"output_epoch_{ep}.png"))
         plt.close(fig)  # Close the figure to avoid memory issues
-
-
-
 
 wandb.finish()

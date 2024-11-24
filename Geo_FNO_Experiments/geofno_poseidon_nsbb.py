@@ -105,7 +105,7 @@ class FNO3d(nn.Module):
         self.modes3 = modes3
         self.width = width
         self.padding = 5  # pad the domain if input is non-periodic
-        self.fc0 = nn.Linear(5, self.width) # 3 velocity channels + 2 positional encodings
+        self.fc0 = nn.Linear(4, self.width) # 3 velocity channels + 2 positional encodings
         # input channel is 12: the solution of the first 10 timesteps + 3 locations (u(1, x, y), ..., u(10, x, y),  x, y, t)
 
         self.conv0 = SpectralConv3d(self.width, self.width, self.modes1, self.modes2, self.modes3)
@@ -123,7 +123,7 @@ class FNO3d(nn.Module):
 
         self.fc1 = nn.Linear(self.width, 128)
         # self.fc2 = nn.Linear(128, 3)
-        self.fc2 = nn.Linear(128, 3)  # Output 33 features (3 channels * 11 timesteps)
+        self.fc2 = nn.Linear(128, 2)  # Output 33 features (3 channels * 11 timesteps)
 
     def forward(self, x):
         grid = self.get_grid(x.shape, x.device)
@@ -165,7 +165,7 @@ class FNO3d(nn.Module):
         # print("Shape after gelu activateion on fc1:",x.shape)
         x = self.fc2(x)
         # print("Shape after fc2 (model output):", x.shape)
-        x = x.view(x.size(0), x.size(1), x.size(2), -1, 3)
+        # x = x.view(x.size(0), x.size(1), x.size(2), -1, 3)
         # print("Shape after reshaping after the final fc2 layer", x.shape)
         return x
 
@@ -191,10 +191,11 @@ class FNO3d(nn.Module):
 ################################################################
 # configs
 ################################################################
-DATA_PATH = '/home/namancho/datasets/NS-BB-Poseidon/velocity_0.nc'
+DATA_PATH = '/home/namancho/datasets/NS-Sines-Poseidon/velocity_0.nc'
 # Extract the immediate parent folder of the file in DATA_PATH
 dataset_name = os.path.basename(os.path.dirname(DATA_PATH))  # This gives the folder name like 'NS-PwC'
-output_folder = dataset_name
+# output_folder = dataset_name
+output_folder = "NS-Sines-Poseidon-nopt"
 
 # Create the directory if it doesn't exist
 os.makedirs(output_folder, exist_ok=True)
@@ -212,7 +213,7 @@ gamma = 0.5
 
 modes = 12
 width = 32
-out_dim = 3 #4, changed to 3 as we have 3 channels.
+out_dim = 2 #4, changed to 3 as we have 3 channels.
 
 s1 = 128 #101, x dimension match
 s2 = 128 #31, y dimension match
@@ -231,13 +232,13 @@ r2 = 1
 with Dataset(DATA_PATH, mode='r') as nc:
     velocity = nc.variables['velocity'][:] #Shape: (samples, time, channels, x, y)
 
-x_train = velocity[:ntrain, :10, :, :, :] #Input first 10 time steps for training
+x_train = velocity[:ntrain, :10, :2, :, :] #Input first 10 time steps for training
 print("Shape of xtrain:", x_train.shape)
-y_train = velocity[:ntrain, 10:20, :, :, :] #Output all remaining time steps for training
+y_train = velocity[:ntrain, 10:20, :2, :, :] #Output all remaining time steps for training
 print("Shape of ytrain:", y_train.shape)
 
-x_test = velocity[-ntest:, :10, :, :, :] #input first 10 time steps for testing
-y_test = velocity[-ntest:, 10:20, :, :, :] #output remanining time steps for testing
+x_test = velocity[-ntest:, :10, :2, :, :] #input first 10 time steps for testing
+y_test = velocity[-ntest:, 10:20, :2, :, :] #output remanining time steps for testing
 
 #Permuting axes to match (batch, x, y, time, channels)
 print("x_train shape before transpose:", x_train.shape)
@@ -280,7 +281,7 @@ test_loader = DataLoader(TensorDataset(x_test, y_test), batch_size=batch_size, s
 wandb.init(
     project="GeoFNO1",  # Your personal project name
     entity="namancho",  # Replace with your WandB username
-    name=f"{dataset_name}_{1}",  # Optional, gives each run a unique name
+    name=f"{dataset_name}_{1}_without_pt",  # Optional, gives each run a unique name
     config={  # Optional configuration logging
         "learning_rate": learning_rate,
         "epochs": epochs,
@@ -312,6 +313,7 @@ for ep in range(epochs):
 
         optimizer.zero_grad()
         out = model(x)
+        out = out.view(out.size(0), out.size(1), out.size(2), -1, out_dim)
         # print("Model output shape before reshape:", out.shape)
         # print("Output numel:", out.numel())
         # print("Expected numel:", batch_size * s1 * s2 * 10 * out_dim)
@@ -344,6 +346,7 @@ for ep in range(epochs):
 
             # out = model(x).reshape(batch_size, s1, s2, t, out_dim)
             out = model(x)
+            out = out.view(out.size(0), out.size(1), out.size(2), -1, out_dim)
             test_l2 += myloss(out.view(batch_size, -1), y.view(batch_size, -1)).item()
 
     train_l2 /= ntrain
@@ -361,26 +364,43 @@ for ep in range(epochs):
         "learning_rate": scheduler.get_last_lr()[0]  # Log current learning rate
     })
     
-    # Updated plotting code
     if ep % 50 == 0:
         truth = y[0].squeeze().detach().cpu().numpy()
         pred = out[0].squeeze().detach().cpu().numpy()
 
-        fig, ax = plt.subplots(6, 5, figsize=(20, 18))  # 6 rows: 2 for each channel (truth + prediction)
+        fig, ax = plt.subplots(4, 5, figsize=(20, 18))  # 4 rows: 2 for each channel (truth + prediction)
         time_indices = [0, 2, 4, 6, 8]  # Example timesteps to visualize
+        channels = ['Horizontal Velocity (u)', 'Vertical Velocity (v)']
 
-        channels = ['Horizontal Velocity (u)', 'Vertical Velocity (v)', 'Passive Tracer']
-        for ch in range(3):  # Loop over channels
+        # Compute global vmin and vmax for each variable
+        vmin_u = truth[:, :, :, 0].min()
+        vmax_u = truth[:, :, :, 0].max()
+        pred_u = pred[:, :, :, 0].min()
+        predx_u = pred[:, :, :, 0].max()
+        vmin_v = truth[:, :, :, 1].min()
+        vmax_v = truth[:, :, :, 1].max()
+        pred_v = pred[:, :, :, 1].min()
+        predx_v = pred[:, :, :, 1].max()
+
+        # Loop over channels and plot with consistent scales
+        for ch in range(out_dim):  # Loop over channels (0 for horizontal, 1 for vertical)
+            vmin = vmin_u if ch == 0 else vmin_v
+            vmax = vmax_u if ch == 0 else vmax_v
+            pred_min = pred_u if ch == 0 else pred_v
+            pred_max = predx_u if ch ==0 else predx_v
+
             for i, t in enumerate(time_indices):
                 # Plot truth for current channel
-                ax[2 * ch, i].imshow(truth[:, :, t, ch], cmap='gist_ncar')
+                im1 = ax[2 * ch, i].imshow(truth[:, :, t, ch], cmap='gist_ncar', vmin=vmin, vmax=vmax)
                 ax[2 * ch, i].set_title(f"Truth - {channels[ch]} - Time {t+10}")
                 ax[2 * ch, i].axis('off')
+                fig.colorbar(im1, ax=ax[2 * ch, i], orientation='vertical', fraction=0.046, pad=0.04)
 
                 # Plot prediction for current channel
-                ax[2 * ch + 1, i].imshow(pred[:, :, t, ch], cmap='gist_ncar')
+                im2 = ax[2 * ch + 1, i].imshow(pred[:, :, t, ch], cmap='gist_ncar', vmin=pred_min, vmax=pred_max)
                 ax[2 * ch + 1, i].set_title(f"Prediction - {channels[ch]} - Time {t+10}")
                 ax[2 * ch + 1, i].axis('off')
+                fig.colorbar(im2, ax=ax[2 * ch + 1, i], orientation='vertical', fraction=0.046, pad=0.04)
 
         # Add loss as text to the figure
         train_loss_text = f"Train Loss: {train_l2:.4f}"
@@ -388,34 +408,7 @@ for ep in range(epochs):
         fig.text(0.5, 0.01, train_loss_text + " | " + test_loss_text, ha='center', fontsize=12)
 
         plt.tight_layout()
-        # Save the plot in the dataset-specific folder
         fig.savefig(os.path.join(output_folder, f"output_epoch_{ep}.png"))
         plt.close(fig)  # Close the figure to avoid memory issues
-
-
-
-    # if ep%50==0:
-    #     # torch.save(model, '../model/plas_101'+str(ep))
-
-    #     truth = y[0].squeeze().detach().cpu().numpy()
-    #     pred = out[0].squeeze().detach().cpu().numpy()
-    #     ZERO = torch.zeros(s1,s2)
-    #     truth_du = np.linalg.norm(truth[:,:,:,2:], axis=-1)
-    #     pred_du = np.linalg.norm(pred[:,:,:,2:], axis=-1)
-
-    #     lims = dict(cmap='RdBu_r', vmin=truth_du.min(), vmax=truth_du.max())
-    #     fig, ax = plt.subplots(nrows=2, ncols=5, figsize=(20, 6))
-    #     t0,t1,t2,t3,t4 = 0,4,9,14,19
-    #     ax[0,0].scatter(truth[:,:,0,0], truth[:,:,0,1], 10, truth_du[:,:,0],    **lims)
-    #     ax[1,0].scatter(pred[:,:,0,0], pred[:,:,0,1],   10, pred_du[:,:,0],     **lims)
-    #     ax[0,1].scatter(truth[:,:,4,0], truth[:,:,4,1], 10, truth_du[:,:,4],    **lims)
-    #     ax[1,1].scatter(pred[:,:,4,0], pred[:,:,4,1],   10, pred_du[:,:,4],     **lims)
-    #     ax[0,2].scatter(truth[:,:,9,0], truth[:,:,9,1], 10, truth_du[:,:,9],    **lims)
-    #     ax[1,2].scatter(pred[:,:,9,0], pred[:,:,9,1],   10, pred_du[:,:,9],     **lims)
-    #     ax[0,3].scatter(truth[:,:,14,0], truth[:,:,14,1],10, truth_du[:,:,14],  **lims)
-    #     ax[1,3].scatter(pred[:,:,14,0], pred[:,:,14,1], 10, pred_du[:,:,14],    **lims)
-    #     ax[0,4].scatter(truth[:,:,19,0], truth[:,:,19,1],10, truth_du[:,:,19],  **lims)
-    #     ax[1,4].scatter(pred[:,:,19,0], pred[:,:,19,1], 10, pred_du[:,:,19],    **lims)
-    #     fig.show()
 
 wandb.finish()

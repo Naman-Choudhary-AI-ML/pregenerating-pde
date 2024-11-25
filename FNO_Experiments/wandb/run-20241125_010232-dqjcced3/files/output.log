@@ -1,0 +1,30 @@
+Traceback (most recent call last):
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/wandb/sdk/wandb_config.py", line 165, in __getattr__
+    return self.__getitem__(key)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/wandb/sdk/wandb_config.py", line 130, in __getitem__
+    return self._items[key]
+KeyError: 'scheduler_step_size'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/FNO_Experiments/fno_poseidon.py", line 211, in <module>
+    scheduler = StepLR(optimizer, step_size=wandb.config.scheduler_step_size, gamma=wandb.config.scheduler_gamma)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/wandb/sdk/wandb_config.py", line 167, in __getattr__
+    raise AttributeError(
+AttributeError: <class 'wandb.sdk.wandb_config.Config'> object has no attribute 'scheduler_step_size'
+Traceback (most recent call last):
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/wandb/sdk/wandb_config.py", line 165, in __getattr__
+    return self.__getitem__(key)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/wandb/sdk/wandb_config.py", line 130, in __getitem__
+    return self._items[key]
+KeyError: 'scheduler_step_size'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/FNO_Experiments/fno_poseidon.py", line 211, in <module>
+    scheduler = StepLR(optimizer, step_size=wandb.config.scheduler_step_size, gamma=wandb.config.scheduler_gamma)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/wandb/sdk/wandb_config.py", line 167, in __getattr__
+    raise AttributeError(
+AttributeError: <class 'wandb.sdk.wandb_config.Config'> object has no attribute 'scheduler_step_size'

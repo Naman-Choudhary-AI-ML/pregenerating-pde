@@ -105,7 +105,7 @@ class FNO3d(nn.Module):
         self.modes3 = modes3
         self.width = width
         self.padding = 5  # pad the domain if input is non-periodic
-        self.fc0 = nn.Linear(4, self.width) # 3 velocity channels + 2 positional encodings
+        self.fc0 = nn.Linear(5, self.width) # 3 velocity channels + 2 positional encodings
         # input channel is 12: the solution of the first 10 timesteps + 3 locations (u(1, x, y), ..., u(10, x, y),  x, y, t)
 
         self.conv0 = SpectralConv3d(self.width, self.width, self.modes1, self.modes2, self.modes3)
@@ -127,7 +127,7 @@ class FNO3d(nn.Module):
 
     def forward(self, x):
         grid = self.get_grid(x.shape, x.device)
-        grid = grid.unsqueeze(3).repeat(1, 1, 1, x.size(3), 1) #To add timesteps to grid
+        # grid = grid.unsqueeze(3).repeat(1, 1, 1, x.size(3), 1) #To add timesteps to grid
         # print("Shape of x before concatenation:", x.shape)
         # print("Shape of grid:", grid.shape)
         x = torch.cat((x, grid), dim=-1)
@@ -170,31 +170,31 @@ class FNO3d(nn.Module):
         return x
 
 
-    def get_grid(self, shape, device):
-        batchsize, size_x, size_y = shape[0], shape[1], shape[2]
-        gridx = torch.tensor(np.linspace(0, 1, size_x), dtype=torch.float)
-        gridx = gridx.reshape(1, size_x, 1, 1).repeat([batchsize, 1, size_y, 1])
-        gridy = torch.tensor(np.linspace(0, 1, size_y), dtype = torch.float)
-        gridy = gridy.reshape(1, 1, size_y, 1).repeat([batchsize, size_x, 1, 1])
-        return torch.cat((gridx, gridy), dim=-1).to(device)
-
     # def get_grid(self, shape, device):
-    #     batchsize, size_x, size_y, size_z = shape[0], shape[1], shape[2], shape[3]
+    #     batchsize, size_x, size_y = shape[0], shape[1], shape[2]
     #     gridx = torch.tensor(np.linspace(0, 1, size_x), dtype=torch.float)
-    #     gridx = gridx.reshape(1, size_x, 1, 1, 1).repeat([batchsize, 1, size_y, size_z, 1])
-    #     gridy = torch.tensor(np.linspace(0, 1, size_y), dtype=tocd NSrch.float)
-    #     gridy = gridy.reshape(1, 1, size_y, 1, 1).repeat([batchsize, size_x, 1, size_z, 1])
-    #     gridz = torch.tensor(np.linspace(0, 1, size_z), dtype=torch.float)
-    #     gridz = gridz.reshape(1, 1, 1, size_z, 1).repeat([batchsize, size_x, size_y, 1, 1])
-    #     return torch.cat((gridx, gridy, gridz), dim=-1).to(device)
+    #     gridx = gridx.reshape(1, size_x, 1, 1).repeat([batchsize, 1, size_y, 1])
+    #     gridy = torch.tensor(np.linspace(0, 1, size_y), dtype = torch.float)
+    #     gridy = gridy.reshape(1, 1, size_y, 1).repeat([batchsize, size_x, 1, 1])
+    #     return torch.cat((gridx, gridy), dim=-1).to(device)
+
+    def get_grid(self, shape, device):
+        batchsize, size_x, size_y, size_z = shape[0], shape[1], shape[2], shape[3]
+        gridx = torch.tensor(np.linspace(0, 1, size_x), dtype=torch.float)
+        gridx = gridx.reshape(1, size_x, 1, 1, 1).repeat([batchsize, 1, size_y, size_z, 1])
+        gridy = torch.tensor(np.linspace(0, 1, size_y), dtype=torch.float)
+        gridy = gridy.reshape(1, 1, size_y, 1, 1).repeat([batchsize, size_x, 1, size_z, 1])
+        gridz = torch.tensor(np.linspace(0, 1, size_z), dtype=torch.float)
+        gridz = gridz.reshape(1, 1, 1, size_z, 1).repeat([batchsize, size_x, size_y, 1, 1])
+        return torch.cat((gridx, gridy, gridz), dim=-1).to(device)
 
 ################################################################
 # configs
 ################################################################
 DATA_PATH = '/home/namancho/datasets/NS-PwC-Openfoam/openfoam.npy'
 dataset_name = os.path.basename(os.path.dirname(DATA_PATH))  # This gives the folder name like 'NS-PwC'
-output_folder = dataset_name
-# output_folder = "NS-G-Openfoam-2"
+# output_folder = dataset_name
+output_folder = "NS-PwC-Openfoam-2"
 
 # Create the directory if it doesn't exist
 os.makedirs(output_folder, exist_ok=True)

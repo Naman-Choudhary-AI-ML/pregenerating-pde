@@ -1,0 +1,30 @@
+/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/loss.py:608: UserWarning: Using a target size (torch.Size([32, 128, 128, 3])) that is different to the input size (torch.Size([32, 128, 128, 2])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
+  return F.mse_loss(input, target, reduction=self.reduction)
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/FNO_Experiments/fno_poseidon.py", line 229, in <module>
+    loss = criterion(outputs, targets)  # L2 loss
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/loss.py", line 608, in forward
+    return F.mse_loss(input, target, reduction=self.reduction)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/functional.py", line 3791, in mse_loss
+    expanded_input, expanded_target = torch.broadcast_tensors(input, target)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/functional.py", line 76, in broadcast_tensors
+    return _VF.broadcast_tensors(tensors)  # type: ignore[attr-defined]
+RuntimeError: The size of tensor a (2) must match the size of tensor b (3) at non-singleton dimension 3
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/FNO_Experiments/fno_poseidon.py", line 229, in <module>
+    loss = criterion(outputs, targets)  # L2 loss
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/loss.py", line 608, in forward
+    return F.mse_loss(input, target, reduction=self.reduction)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/functional.py", line 3791, in mse_loss
+    expanded_input, expanded_target = torch.broadcast_tensors(input, target)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/functional.py", line 76, in broadcast_tensors
+    return _VF.broadcast_tensors(tensors)  # type: ignore[attr-defined]
+RuntimeError: The size of tensor a (2) must match the size of tensor b (3) at non-singleton dimension 3

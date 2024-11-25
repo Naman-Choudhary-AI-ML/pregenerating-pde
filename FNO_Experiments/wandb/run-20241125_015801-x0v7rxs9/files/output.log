@@ -1,0 +1,40 @@
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/FNO_Experiments/fno_openfoam.py", line 232, in <module>
+    outputs = model(inputs)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/namancho/Geo-UPSplus/FNO_Experiments/fno_openfoam.py", line 171, in forward
+    x1 = s(x)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/namancho/Geo-UPSplus/FNO_Experiments/fno_openfoam.py", line 116, in forward
+    self.compl_mul2d(x_ft[:, :, :self.modes1, :self.modes2], self.weights1)
+  File "/home/namancho/Geo-UPSplus/FNO_Experiments/fno_openfoam.py", line 106, in compl_mul2d
+    return torch.einsum("bixy,ioxy->boxy", input, weights)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/functional.py", line 402, in einsum
+    return _VF.einsum(equation, operands)  # type: ignore[attr-defined]
+RuntimeError: einsum(): subscript y has size 12 for operand 1 which does not broadcast with previously seen size 2
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/FNO_Experiments/fno_openfoam.py", line 232, in <module>
+    outputs = model(inputs)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/namancho/Geo-UPSplus/FNO_Experiments/fno_openfoam.py", line 171, in forward
+    x1 = s(x)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/namancho/Geo-UPSplus/FNO_Experiments/fno_openfoam.py", line 116, in forward
+    self.compl_mul2d(x_ft[:, :, :self.modes1, :self.modes2], self.weights1)
+  File "/home/namancho/Geo-UPSplus/FNO_Experiments/fno_openfoam.py", line 106, in compl_mul2d
+    return torch.einsum("bixy,ioxy->boxy", input, weights)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/torch/functional.py", line 402, in einsum
+    return _VF.einsum(equation, operands)  # type: ignore[attr-defined]
+RuntimeError: einsum(): subscript y has size 12 for operand 1 which does not broadcast with previously seen size 2

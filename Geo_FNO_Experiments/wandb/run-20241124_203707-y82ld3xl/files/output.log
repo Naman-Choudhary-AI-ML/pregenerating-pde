@@ -1,0 +1,10 @@
+18883361
+OUTPUT 0 30.07754811097402 1.0174025959438748 0.0 1.0167696639518875
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/geofnotrial2.py", line 391, in <module>
+    im1 = ax[2 * ch, i].imshow(truth[:, :, t, ch], cmap='gist_ncar', vmin=vmin, vmax=vmax)
+IndexError: too many indices for array: array is 3-dimensional, but 4 were indexed
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/geofnotrial2.py", line 391, in <module>
+    im1 = ax[2 * ch, i].imshow(truth[:, :, t, ch], cmap='gist_ncar', vmin=vmin, vmax=vmax)
+IndexError: too many indices for array: array is 3-dimensional, but 4 were indexed

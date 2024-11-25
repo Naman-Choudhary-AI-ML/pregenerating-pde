@@ -1,0 +1,16 @@
+{"time":"2024-11-25T01:03:46.653794012-05:00","level":"INFO","msg":"using version","core version":"0.18.7"}
+{"time":"2024-11-25T01:03:46.653810433-05:00","level":"INFO","msg":"created symlink","path":"/home/namancho/Geo-UPSplus/FNO_Experiments/wandb/run-20241125_010346-819r2sfx/logs/debug-core.log"}
+{"time":"2024-11-25T01:03:46.763027064-05:00","level":"INFO","msg":"created new stream","id":"819r2sfx"}
+{"time":"2024-11-25T01:03:46.763084262-05:00","level":"INFO","msg":"stream: started","id":"819r2sfx"}
+{"time":"2024-11-25T01:03:46.763117374-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"819r2sfx"}
+{"time":"2024-11-25T01:03:46.763151248-05:00","level":"INFO","msg":"sender: started","stream_id":"819r2sfx"}
+{"time":"2024-11-25T01:03:46.763222041-05:00","level":"INFO","msg":"handler: started","stream_id":"819r2sfx"}
+{"time":"2024-11-25T01:03:46.954822572-05:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-25T01:03:48.232011686-05:00","level":"INFO","msg":"stream: closing","id":"819r2sfx"}
+{"time":"2024-11-25T01:03:48.232083682-05:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-25T01:03:48.233001693-05:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-25T01:03:49.305466984-05:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-11-25T01:03:49.427825323-05:00","level":"INFO","msg":"handler: closed","stream_id":"819r2sfx"}
+{"time":"2024-11-25T01:03:49.427890526-05:00","level":"INFO","msg":"sender: closed","stream_id":"819r2sfx"}
+{"time":"2024-11-25T01:03:49.42788211-05:00","level":"INFO","msg":"writer: Close: closed","stream_id":"819r2sfx"}
+{"time":"2024-11-25T01:03:49.428479977-05:00","level":"INFO","msg":"stream: closed","id":"819r2sfx"}

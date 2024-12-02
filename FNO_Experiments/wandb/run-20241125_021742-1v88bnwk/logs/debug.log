@@ -23,3 +23,10 @@ config: {'learning_rate': 0.001, 'epochs': 400, 'batch_size': 32, 'modes': 12, '
 2024-11-25 02:17:43,536 INFO    MainThread:3730226 [wandb_run.py:_redirect():2370] Wrapping output streams.
 2024-11-25 02:17:43,536 INFO    MainThread:3730226 [wandb_run.py:_redirect():2395] Redirects installed.
 2024-11-25 02:17:43,539 INFO    MainThread:3730226 [wandb_init.py:init():911] run started, returning control to user process
+2024-11-25 03:00:22,811 INFO    MainThread:3730226 [wandb_run.py:_finish():2155] finishing run namancho/GeoFNO1/1v88bnwk
+2024-11-25 03:00:22,811 INFO    MainThread:3730226 [wandb_run.py:_atexit_cleanup():2420] got exitcode: 0
+2024-11-25 03:00:22,812 INFO    MainThread:3730226 [wandb_run.py:_restore():2402] restore
+2024-11-25 03:00:22,812 INFO    MainThread:3730226 [wandb_run.py:_restore():2408] restore done
+2024-11-25 03:00:24,376 INFO    MainThread:3730226 [wandb_run.py:_footer_history_summary_info():3960] rendering history
+2024-11-25 03:00:24,376 INFO    MainThread:3730226 [wandb_run.py:_footer_history_summary_info():3992] rendering summary
+2024-11-25 03:00:24,382 INFO    MainThread:3730226 [wandb_run.py:_footer_sync_info():3921] logging synced files

@@ -18,7 +18,7 @@ if device.type == "cuda":
 
 
 # dataset with shape (1177, 21, 128, 128, 2)
-path = '/home/namancho/datasets/NS-PwC-Openfoam/openfoam.npy'
+path = '/home/namancho/datasets/NS-SL-Openfoam/openfoam.npy'
 
 
 # # Load the .nc file
@@ -193,7 +193,7 @@ wandb.init(
     name=f"FNO_{dataset_name}_{1}",  # Optional, gives each run a unique name
     config={  # Optional configuration logging
         "learning_rate": 0.001,
-        "epochs": 400,
+        "epochs": 401,
         "batch_size": 32,
         "modes": 12,
         "width": 32,
@@ -298,9 +298,10 @@ for epoch in range(1, epochs + 1):
 
         # Save and log the plot
         plt.tight_layout()
-        plot_path = os.path.join(output_folder, f"epoch_{epoch}.png")
+        plot_path = os.path.join(output_folder, f"epoch_{epoch-1}.png")
         plt.savefig(plot_path)
-        wandb.log({"Prediction Plots": wandb.Image(plot_path)})
+        if (epoch-1)%200 == 0:
+            wandb.log({"Prediction Plots": wandb.Image(plot_path)})
         plt.close(fig)
 
 wandb.finish()

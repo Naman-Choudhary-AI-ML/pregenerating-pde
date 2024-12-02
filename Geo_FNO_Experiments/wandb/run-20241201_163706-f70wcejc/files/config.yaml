@@ -1,0 +1,37 @@
+_wandb:
+    value:
+        cli_version: 0.18.7
+        code_path: code/Geo_FNO_Experiments/plasticity_3d.py
+        m: []
+        python_version: 3.9.20
+        t:
+            "1":
+                - 1
+                - 55
+            "2":
+                - 1
+                - 55
+            "3":
+                - 2
+                - 13
+                - 16
+                - 23
+                - 55
+            "4": 3.9.20
+            "5": 0.18.7
+            "8":
+                - 5
+            "12": 0.18.7
+            "13": linux-x86_64
+batch_size:
+    value: 20
+epochs:
+    value: 501
+learning_rate:
+    value: 0.001
+modes:
+    value: 12
+output_dim:
+    value: 4
+width:
+    value: 32

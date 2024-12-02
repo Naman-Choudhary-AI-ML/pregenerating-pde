@@ -1,0 +1,38 @@
+18883748
+0 11.852328078006394 0.9990659756130642 0.0 0.997576642036438
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/plasticity_3d.py", line 297, in <module>
+    fig.savefig(os.path.join(output_folder, f"output_epoch_{ep}.png"))
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/matplotlib/figure.py", line 3395, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2204, in print_figure
+    result = print_method(
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2054, in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 496, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 445, in _print_pil
+    mpl.image.imsave(
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/matplotlib/image.py", line 1676, in imsave
+    image.save(fname, **pil_kwargs)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/PIL/Image.py", line 2600, in save
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/plasticity_baseline/output_epoch_0.png'
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/plasticity_3d.py", line 297, in <module>
+    fig.savefig(os.path.join(output_folder, f"output_epoch_{ep}.png"))
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/matplotlib/figure.py", line 3395, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2204, in print_figure
+    result = print_method(
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2054, in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 496, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 445, in _print_pil
+    mpl.image.imsave(
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/matplotlib/image.py", line 1676, in imsave
+    image.save(fname, **pil_kwargs)
+  File "/home/namancho/miniconda3/envs/geofno/lib/python3.9/site-packages/PIL/Image.py", line 2600, in save
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/home/namancho/Geo-UPSplus/Geo_FNO_Experiments/plasticity_baseline/output_epoch_0.png'

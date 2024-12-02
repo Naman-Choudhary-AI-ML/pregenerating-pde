@@ -17,14 +17,14 @@ if device.type == "cuda":
     print(f"GPU: {torch.cuda.get_device_name(0)}")
 
 
-# Assume 'data.npy' is your dataset with shape (1177, 21, 2, 128, 128)
-path = '/home/namancho/datasets/NS-Gauss-Poseidon/velocity_0.nc'
+# 'data.npy' is your dataset with shape (1177, 21, 2, 128, 128)
+path = '/home/namancho/datasets/FNS-KF-Poseidon/solution_0.nc'
 
 
 # Load the .nc file
 with Dataset(path, mode='r') as nc:
-    data = nc.variables['velocity'][:]  # Assuming 'velocity' is the data key
-# data = np.load(path)  # Replace 'data.npy' with your actual data file
+    data = nc.variables['solution'][:]  # 'velocity' is the data key for NS, 'solution' is the key for FNS-KF
+# data = np.load(path)  
 
 dataset_name = os.path.basename(os.path.dirname(path))  # This gives the folder name like 'NS-PwC'
 output_folder = dataset_name
@@ -132,9 +132,9 @@ class FNO2d(nn.Module):
         3. Project from the channel space to the output space by self.fc1 and self.fc2 .
 
         input: the solution of the coefficient function and locations (a(x, y), x, y)
-        input shape: (batchsize, x=s, y=s, c=3)
+        input shape: (batchsize, x=s, y=s, c=4)
         output: the solution
-        output shape: (batchsize, x=s, y=s, c=1)
+        output shape: (batchsize, x=s, y=s, c=2)
         """
         self.modes1 = fno_architecture["modes"]
         self.modes2 = fno_architecture["modes"]
@@ -181,18 +181,18 @@ class FNO2d(nn.Module):
         return x
 
 # Define L2 Loss
-criterion = nn.MSELoss()  # Equivalent to L2 loss
+criterion = nn.MSELoss()  
 
 #Wandb Logging
 #######################################################
 # Initialize wandb
 wandb.init(
-    project="GeoFNO1",  # Your personal project name
-    entity="namancho",  # Replace with your WandB username
-    name=f"FNO_{dataset_name}_{1}",  # Optional, gives each run a unique name
-    config={  # Optional configuration logging
+    project="GeoFNO1",  # personal project name
+    entity="namancho",  # WandB username
+    name=f"FNO_{dataset_name}_{1}", 
+    config={ 
         "learning_rate": 0.001,
-        "epochs": 400,
+        "epochs": 401,
         "batch_size": 32,
         "modes": 12,
         "width": 32,
@@ -277,7 +277,7 @@ for epoch in range(1, epochs + 1):
 
         fig, ax = plt.subplots(2, 2, figsize=(14, 10))  # 2x2 grid for horizontal and vertical velocity
         channels = ["Horizontal Velocity (u)", "Vertical Velocity (v)"]
-        cmap = "gist_ncar"  # Colormap as per your previous setup
+        cmap = "gist_ncar" 
 
         for ch in range(2):  # Loop over horizontal and vertical velocity channels
             vmin = min(truth[:, :, ch].min(), pred[:, :, ch].min())
@@ -297,9 +297,10 @@ for epoch in range(1, epochs + 1):
 
         # Save and log the plot
         plt.tight_layout()
-        plot_path = os.path.join(output_folder, f"epoch_{epoch}.png")
+        plot_path = os.path.join(output_folder, f"epoch_{epoch-1}.png")
         plt.savefig(plot_path)
-        wandb.log({"Prediction Plots": wandb.Image(plot_path)})
+        if (epoch-1)%200 == 0:
+            wandb.log({"Prediction Plots": wandb.Image(plot_path)})
         plt.close(fig)
 
 wandb.finish()

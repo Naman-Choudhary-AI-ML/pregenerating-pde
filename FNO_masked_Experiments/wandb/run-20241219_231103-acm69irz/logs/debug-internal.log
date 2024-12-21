@@ -1,0 +1,17 @@
+{"time":"2024-12-19T23:11:03.189928461-05:00","level":"INFO","msg":"using version","core version":"0.18.7"}
+{"time":"2024-12-19T23:11:03.189946021-05:00","level":"INFO","msg":"created symlink","path":"/home/namancho/Geo-UPSplus/FNO_masked_Experiments/wandb/run-20241219_231103-acm69irz/logs/debug-core.log"}
+{"time":"2024-12-19T23:11:03.321592828-05:00","level":"INFO","msg":"created new stream","id":"acm69irz"}
+{"time":"2024-12-19T23:11:03.321628318-05:00","level":"INFO","msg":"stream: started","id":"acm69irz"}
+{"time":"2024-12-19T23:11:03.321706358-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"acm69irz"}
+{"time":"2024-12-19T23:11:03.322373007-05:00","level":"INFO","msg":"handler: started","stream_id":"acm69irz"}
+{"time":"2024-12-19T23:11:03.322458667-05:00","level":"INFO","msg":"sender: started","stream_id":"acm69irz"}
+{"time":"2024-12-19T23:11:03.455209723-05:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-12-19T23:11:03.457721772-05:00","level":"ERROR","msg":"git repo not found","error":"repository does not exist"}
+{"time":"2024-12-19T23:11:05.154103742-05:00","level":"INFO","msg":"stream: closing","id":"acm69irz"}
+{"time":"2024-12-19T23:11:05.154129242-05:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-12-19T23:11:05.154932902-05:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-12-19T23:11:05.481009389-05:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-12-19T23:11:05.576019421-05:00","level":"INFO","msg":"handler: closed","stream_id":"acm69irz"}
+{"time":"2024-12-19T23:11:05.57606553-05:00","level":"INFO","msg":"writer: Close: closed","stream_id":"acm69irz"}
+{"time":"2024-12-19T23:11:05.576201401-05:00","level":"INFO","msg":"sender: closed","stream_id":"acm69irz"}
+{"time":"2024-12-19T23:11:05.57646663-05:00","level":"INFO","msg":"stream: closed","id":"acm69irz"}

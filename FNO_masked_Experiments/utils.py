@@ -134,14 +134,142 @@ def masked_mse_loss(outputs, targets, mask):
     num_valid_cells = mask.sum()  # Total number of valid (non-hole) cells
     return mse_loss / num_valid_cells
 
+# def plot_predictions_with_centers(outputs, targets, mask, C_file_path, output_folder, epoch):
+#     """
+#     Plot predictions and ground truth using irregular grid coordinates from C_updated.
+#     This version avoids NaN handling by directly using mask-based indexing.
+
+#     Args:
+#         outputs: Predicted values (batchsize, 128, 128, 2).
+#         targets: Ground truth values (batchsize, 128, 128, 2).
+#         mask: Binary mask (batchsize, 128, 128), where 1 = valid, 0 = hole.
+#         C_file_path: Path to the updated C file containing grid coordinates.
+#         output_folder: Folder to save plots.
+#         epoch: Current epoch number.
+#     """
+#     # Load the updated C file
+#     with open(C_file_path, "r") as file:
+#         lines = file.readlines()
+
+#     start_index = 2
+#     num_points = int(lines[0].strip())
+
+#     coords = []
+#     for line in lines[start_index : start_index + num_points]:
+#         x, y, _ = map(float, line.strip("()\n").split())
+#         coords.append((x, y))
+#     coords = np.array(coords)  # Shape: (16384, 2)
+
+#     # Extract predictions, ground truth, and mask
+#     outputs = outputs[0].detach().cpu().numpy()  # Take the first example from the batch
+#     targets = targets[0].detach().cpu().numpy()
+#     mask = mask[0].detach().cpu().numpy()
+
+#     # Filter valid points based on the mask
+#     valid_indices = mask.flatten() == 1  # Boolean array of valid points
+#     valid_coords = coords[valid_indices]  # Filtered coordinates for valid points
+#     valid_truth = targets.reshape(-1, 2)[valid_indices]  # Filtered ground truth velocities
+#     valid_pred = outputs.reshape(-1, 2)[valid_indices]  # Filtered predicted velocities
+
+#     # Prepare figure
+#     fig, ax = plt.subplots(1, 2, figsize=(14, 7))  # 1x2 grid for ground truth and prediction
+#     channels = ["Horizontal Velocity (u)", "Vertical Velocity (v)"]
+#     cmap = "gist_ncar"
+
+#     for i, (data, title) in enumerate(zip([valid_truth, valid_pred], ["Ground Truth", "Prediction"])):
+#         # Flatten the velocities for plotting
+#         velocity_u = data[:, 0]  # Horizontal velocity (u)
+#         velocity_v = data[:, 1]  # Vertical velocity (v)
+
+#         # Plot horizontal velocity
+#         sc = ax[i].scatter(valid_coords[:, 0], valid_coords[:, 1], c=velocity_u, cmap=cmap)
+#         ax[i].set_title(f"{title} - Horizontal Velocity (u)")
+#         ax[i].axis("off")
+#         fig.colorbar(sc, ax=ax[i], orientation="vertical", fraction=0.046, pad=0.04)
+
+#     # Save and log the plot
+#     plt.tight_layout()
+#     plot_path = os.path.join(output_folder, f"epoch_{epoch}.png")
+#     plt.savefig(plot_path)
+#     plt.close(fig)
+
+
 def plot_predictions_with_centers(outputs, targets, mask, C_file_path, output_folder, epoch):
     """
-    Plot predictions and ground truth using irregular grid coordinates from C_updated.
+    Plot predictions and ground truth excluding hole centers using the mask.
 
     Args:
         outputs: Predicted values (batchsize, 128, 128, 2).
         targets: Ground truth values (batchsize, 128, 128, 2).
         mask: Binary mask (batchsize, 128, 128), where 1 = valid, 0 = hole.
+        C_file_path: Path to the updated C file containing grid coordinates.
+        output_folder: Folder to save plots.
+        epoch: Current epoch number.
+    """
+    with open(C_file_path, 'r') as file:
+        lines = file.readlines()
+
+    start_index = 2
+    num_points = int(lines[0].strip())
+
+    coords = []
+    for line in lines[start_index : start_index + num_points]:
+        x, y, _ = map(float, line.strip("()\n").split())
+        coords.append((x, y))
+    coords = np.array(coords) #shape: 16384, 2
+    coords = np.round(coords, 6)
+
+    outputs = outputs[0].detach().cpu().numpy()
+    targets = targets[0].detach().cpu().numpy()
+    mask = mask[0].detach().cpu().numpy()
+
+    mask_flat = mask.flatten() #shape (16384,)
+    valid_indices = mask_flat == 1
+
+    coords_filtered = coords[valid_indices]
+    outputs_flat = outputs.reshape(-1, 2)[valid_indices]
+    targets_flat = targets.reshape(-1, 2)[valid_indices]
+
+    fig, ax = plt.subplots(2, 2, figsize=(14, 10)) #2x2 grid for both channels
+    channels = ["Horizontal Velocity (u)", "Vertical Velocity (v)"]
+    cmap = "gist_ncar"
+
+    for ch in range(len(channels)):
+        truth = targets_flat[:, ch]
+        pred = outputs_flat[:, ch]
+
+        vmin = min(truth.min(), pred.min())
+        vmax = max(truth.max(), pred.max())
+
+        #plot GT
+        sc1 = ax[ch, 0].scatter(coords_filtered[:, 0], coords_filtered[:, 1], c=truth, cmap=cmap, vmin = vmin, vmax=vmax, s=10)
+        ax[ch, 0].set_title(f"Ground Truth - {channels[ch]}")
+        ax[ch, 0].axis("off")
+        fig.colorbar(sc1, ax=ax[ch, 0], orientation = "vertical", fraction=0.046, pad=0.04)
+
+        #plot pred
+        sc2 = ax[ch, 1].scatter(coords_filtered[:, 0], coords_filtered[:, 1], c=pred, cmap=cmap, vmin=vmin, vmax=vmax, s=10)
+        ax[ch, 1].set_title(f"Prediction - {channels[ch]}")
+        ax[ch, 1].axis("off")
+        fig.colorbar(sc2, ax=ax[ch, 1], orientation="vertical", fraction=0.046, pad=0.04)
+    
+    plt.tight_layout()
+    plot_path=os.path.join(output_folder, f"epoch_{epoch}_filtered.png")
+    plt.savefig(plot_path)
+    plt.close(fig)
+
+
+
+
+
+
+def _plot_predictions_with_centers(outputs, targets, C_file_path, output_folder, epoch):
+    """
+    Plot predictions and ground truth using all centers, including hole centers.
+
+    Args:
+        outputs: Predicted values (batchsize, 128, 128, 2).
+        targets: Ground truth values (batchsize, 128, 128, 2).
         C_file_path: Path to the updated C file containing grid coordinates.
         output_folder: Folder to save plots.
         epoch: Current epoch number.
@@ -158,15 +286,15 @@ def plot_predictions_with_centers(outputs, targets, mask, C_file_path, output_fo
         x, y, _ = map(float, line.strip("()\n").split())
         coords.append((x, y))
     coords = np.array(coords)  # Shape: (16384, 2)
+    coords = np.round(coords, 6)
 
-    # Extract predictions, ground truth, and mask
+    # Extract predictions and ground truth
     outputs = outputs[0].detach().cpu().numpy()  # Take the first example from the batch
     targets = targets[0].detach().cpu().numpy()
-    mask = mask[0].detach().cpu().numpy()
 
-    # Split coordinates into x and y
-    x_coords = coords[:, 0].reshape(128, 128)
-    y_coords = coords[:, 1].reshape(128, 128)
+    # Reshape outputs and targets to align with the coordinates
+    outputs_flat = outputs.reshape(-1, 2)  # Shape: (16384, 2)
+    targets_flat = targets.reshape(-1, 2)  # Shape: (16384, 2)
 
     # Prepare figure
     fig, ax = plt.subplots(2, 2, figsize=(14, 10))  # 2x2 grid for horizontal and vertical velocity
@@ -174,26 +302,89 @@ def plot_predictions_with_centers(outputs, targets, mask, C_file_path, output_fo
     cmap = "gist_ncar"
 
     for ch in range(2):  # Loop over horizontal and vertical velocity channels
-        truth = np.where(mask == 1, targets[:, :, ch], np.nan)  # Mask invalid regions in ground truth
-        pred = np.where(mask == 1, outputs[:, :, ch], np.nan)  # Mask invalid regions in predictions
-
-        vmin = np.nanmin([truth.min(), pred.min()])
-        vmax = np.nanmax([truth.max(), pred.max()])
+        vmin = min(targets_flat[:, ch].min(), outputs_flat[:, ch].min())
+        vmax = max(targets_flat[:, ch].max(), outputs_flat[:, ch].max())
 
         # Plot ground truth
-        sc1 = ax[ch, 0].scatter(x_coords, y_coords, c=truth.flatten(), cmap=cmap, vmin=vmin, vmax=vmax)
+        sc1 = ax[ch, 0].scatter(coords[:, 0], coords[:, 1], c=targets_flat[:, ch], cmap=cmap, vmin=-0.8, vmax=0.8, s=10)
         ax[ch, 0].set_title(f"Ground Truth - {channels[ch]}")
         ax[ch, 0].axis("off")
         fig.colorbar(sc1, ax=ax[ch, 0], orientation="vertical", fraction=0.046, pad=0.04)
 
-        # Plot prediction
-        sc2 = ax[ch, 1].scatter(x_coords, y_coords, c=pred.flatten(), cmap=cmap, vmin=vmin, vmax=vmax)
+        # Plot predictions
+        sc2 = ax[ch, 1].scatter(coords[:, 0], coords[:, 1], c=outputs_flat[:, ch], cmap=cmap, vmin=-0.8, vmax=0.8)
         ax[ch, 1].set_title(f"Prediction - {channels[ch]}")
         ax[ch, 1].axis("off")
         fig.colorbar(sc2, ax=ax[ch, 1], orientation="vertical", fraction=0.046, pad=0.04)
 
     # Save and log the plot
     plt.tight_layout()
-    plot_path = os.path.join(output_folder, f"epoch_{epoch}.png")
+    plot_path = os.path.join(output_folder, f"epoch_{epoch}_all.png")
     plt.savefig(plot_path)
     plt.close(fig)
+
+
+
+# def plot_predictions_with_centers(outputs, targets, mask, C_file_path, output_folder, epoch):
+#     """
+#     Plot predictions and ground truth using irregular grid coordinates from C_updated.
+
+#     Args:
+#         outputs: Predicted values (batchsize, 128, 128, 2).
+#         targets: Ground truth values (batchsize, 128, 128, 2).
+#         mask: Binary mask (batchsize, 128, 128), where 1 = valid, 0 = hole.
+#         C_file_path: Path to the updated C file containing grid coordinates.
+#         output_folder: Folder to save plots.
+#         epoch: Current epoch number.
+#     """
+#     # Load the updated C file
+#     with open(C_file_path, "r") as file:
+#         lines = file.readlines()
+
+#     start_index = 2
+#     num_points = int(lines[0].strip())
+
+#     coords = []
+#     for line in lines[start_index : start_index + num_points]:
+#         x, y, _ = map(float, line.strip("()\n").split())
+#         coords.append((x, y))
+#     coords = np.array(coords)  # Shape: (16384, 2)
+
+#     # Extract predictions, ground truth, and mask
+#     outputs = outputs[0].detach().cpu().numpy()  # Take the first example from the batch
+#     targets = targets[0].detach().cpu().numpy()
+#     mask = mask[0].detach().cpu().numpy()
+
+#     # Split coordinates into x and y
+#     x_coords = coords[:, 0]
+#     y_coords = coords[:, 1]
+
+#     # Prepare figure
+#     fig, ax = plt.subplots(2, 2, figsize=(14, 10))  # 2x2 grid for horizontal and vertical velocity
+#     channels = ["Horizontal Velocity (u)", "Vertical Velocity (v)"]
+#     cmap = "gist_ncar"
+
+#     for ch in range(2):  # Loop over horizontal and vertical velocity channels
+#         truth = np.where(mask == 1, targets[:, :, ch], np.nan)  # Mask invalid regions in ground truth
+#         pred = np.where(mask == 1, outputs[:, :, ch], np.nan)  # Mask invalid regions in predictions
+
+#         vmin = np.nanmin([truth.min(), pred.min()])
+#         vmax = np.nanmax([truth.max(), pred.max()])
+
+#         # Plot ground truth
+#         sc1 = ax[ch, 0].scatter(x_coords, y_coords, c=truth.flatten(), cmap=cmap, vmin=vmin, vmax=vmax)
+#         ax[ch, 0].set_title(f"Ground Truth - {channels[ch]}")
+#         ax[ch, 0].axis("off")
+#         fig.colorbar(sc1, ax=ax[ch, 0], orientation="vertical", fraction=0.046, pad=0.04)
+
+#         # Plot prediction
+#         sc2 = ax[ch, 1].scatter(x_coords, y_coords, c=pred.flatten(), cmap=cmap, vmin=vmin, vmax=vmax)
+#         ax[ch, 1].set_title(f"Prediction - {channels[ch]}")
+#         ax[ch, 1].axis("off")
+#         fig.colorbar(sc2, ax=ax[ch, 1], orientation="vertical", fraction=0.046, pad=0.04)
+
+#     # Save and log the plot
+#     plt.tight_layout()
+#     plot_path = os.path.join(output_folder, f"epoch_{epoch}.png")
+#     plt.savefig(plot_path)
+#     plt.close(fig)

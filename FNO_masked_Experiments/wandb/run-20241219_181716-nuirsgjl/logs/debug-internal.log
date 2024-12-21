@@ -1,0 +1,18 @@
+{"time":"2024-12-19T18:17:16.581313818-05:00","level":"INFO","msg":"using version","core version":"0.18.7"}
+{"time":"2024-12-19T18:17:16.581325688-05:00","level":"INFO","msg":"created symlink","path":"/home/namancho/Geo-UPSplus/FNO_masked_Experiments/wandb/run-20241219_181716-nuirsgjl/logs/debug-core.log"}
+{"time":"2024-12-19T18:17:16.691100781-05:00","level":"INFO","msg":"created new stream","id":"nuirsgjl"}
+{"time":"2024-12-19T18:17:16.691132661-05:00","level":"INFO","msg":"stream: started","id":"nuirsgjl"}
+{"time":"2024-12-19T18:17:16.691447898-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"nuirsgjl"}
+{"time":"2024-12-19T18:17:16.691710686-05:00","level":"INFO","msg":"handler: started","stream_id":"nuirsgjl"}
+{"time":"2024-12-19T18:17:16.691726776-05:00","level":"INFO","msg":"sender: started","stream_id":"nuirsgjl"}
+{"time":"2024-12-19T18:17:16.846052289-05:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-12-19T18:17:16.848742186-05:00","level":"ERROR","msg":"git repo not found","error":"repository does not exist"}
+{"time":"2024-12-19T18:19:42.578300235-05:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-12-19T18:19:42.57882499-05:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-12-19T18:19:43.578729492-05:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"saving job artifact","runtime_seconds":0.900483155}],"total_operations":1}}
+{"time":"2024-12-19T18:19:43.66518468-05:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-12-19T18:19:44.764827296-05:00","level":"INFO","msg":"stream: closing","id":"nuirsgjl"}
+{"time":"2024-12-19T18:19:44.764843946-05:00","level":"INFO","msg":"handler: closed","stream_id":"nuirsgjl"}
+{"time":"2024-12-19T18:19:44.764853976-05:00","level":"INFO","msg":"writer: Close: closed","stream_id":"nuirsgjl"}
+{"time":"2024-12-19T18:19:44.764973625-05:00","level":"INFO","msg":"sender: closed","stream_id":"nuirsgjl"}
+{"time":"2024-12-19T18:19:44.765079214-05:00","level":"INFO","msg":"stream: closed","id":"nuirsgjl"}

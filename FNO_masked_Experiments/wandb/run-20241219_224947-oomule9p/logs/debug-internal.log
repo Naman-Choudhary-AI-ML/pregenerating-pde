@@ -1,0 +1,17 @@
+{"time":"2024-12-19T22:49:47.329755224-05:00","level":"INFO","msg":"using version","core version":"0.18.7"}
+{"time":"2024-12-19T22:49:47.329775734-05:00","level":"INFO","msg":"created symlink","path":"/home/namancho/Geo-UPSplus/FNO_masked_Experiments/wandb/run-20241219_224947-oomule9p/logs/debug-core.log"}
+{"time":"2024-12-19T22:49:47.439003823-05:00","level":"INFO","msg":"created new stream","id":"oomule9p"}
+{"time":"2024-12-19T22:49:47.439054833-05:00","level":"INFO","msg":"stream: started","id":"oomule9p"}
+{"time":"2024-12-19T22:49:47.439434463-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"oomule9p"}
+{"time":"2024-12-19T22:49:47.439674813-05:00","level":"INFO","msg":"handler: started","stream_id":"oomule9p"}
+{"time":"2024-12-19T22:49:47.439693093-05:00","level":"INFO","msg":"sender: started","stream_id":"oomule9p"}
+{"time":"2024-12-19T22:49:47.626305134-05:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-12-19T22:49:47.631557905-05:00","level":"ERROR","msg":"git repo not found","error":"repository does not exist"}
+{"time":"2024-12-19T22:50:10.437242093-05:00","level":"INFO","msg":"stream: closing","id":"oomule9p"}
+{"time":"2024-12-19T22:50:10.437390333-05:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-12-19T22:50:10.437922553-05:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-12-19T22:50:10.771737118-05:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-12-19T22:50:10.895185629-05:00","level":"INFO","msg":"handler: closed","stream_id":"oomule9p"}
+{"time":"2024-12-19T22:50:10.895213439-05:00","level":"INFO","msg":"writer: Close: closed","stream_id":"oomule9p"}
+{"time":"2024-12-19T22:50:10.895367719-05:00","level":"INFO","msg":"sender: closed","stream_id":"oomule9p"}
+{"time":"2024-12-19T22:50:10.895806419-05:00","level":"INFO","msg":"stream: closed","id":"oomule9p"}

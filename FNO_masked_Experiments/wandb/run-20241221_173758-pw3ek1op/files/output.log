@@ -1,0 +1,153 @@
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([8, 128, 128, 2])
+Output: 1 68.73246307373047 67.99251174926758
+Output of model shape: torch.Size([32, 128, 128, 2])
+Number of hole points: 64
+Hole coordinates: [[0.003906 0.488281]
+ [0.011719 0.488281]
+ [0.019531 0.488281]
+ [0.027344 0.488281]
+ [0.035156 0.488281]
+ [0.042969 0.488281]
+ [0.050781 0.488281]
+ [0.058594 0.488281]
+ [0.066406 0.503906]
+ [0.074219 0.503906]
+ [0.082031 0.503906]
+ [0.089844 0.503906]
+ [0.097656 0.503906]
+ [0.105469 0.503906]
+ [0.113281 0.503906]
+ [0.121094 0.503906]
+ [0.128906 0.519531]
+ [0.136719 0.519531]
+ [0.144531 0.519531]
+ [0.152344 0.519531]
+ [0.160156 0.519531]
+ [0.167969 0.519531]
+ [0.175781 0.519531]
+ [0.183594 0.519531]
+ [0.722656 0.472656]
+ [0.730469 0.472656]
+ [0.738281 0.472656]
+ [0.746094 0.472656]
+ [0.753906 0.472656]
+ [0.761719 0.472656]
+ [0.769531 0.472656]
+ [0.777344 0.472656]
+ [0.785156 0.488281]
+ [0.792969 0.488281]
+ [0.800781 0.488281]
+ [0.808594 0.488281]
+ [0.816406 0.488281]
+ [0.824219 0.488281]
+ [0.832031 0.488281]
+ [0.839844 0.488281]
+ [0.847656 0.503906]
+ [0.855469 0.503906]
+ [0.863281 0.503906]
+ [0.871094 0.503906]
+ [0.878906 0.503906]
+ [0.886719 0.503906]
+ [0.894531 0.503906]
+ [0.902344 0.503906]
+ [0.910156 0.519531]
+ [0.917969 0.519531]
+ [0.925781 0.519531]
+ [0.933594 0.519531]
+ [0.941406 0.519531]
+ [0.949219 0.519531]
+ [0.957031 0.519531]
+ [0.964844 0.519531]
+ [0.527344 0.472656]
+ [0.527344 0.480469]
+ [0.527344 0.488281]
+ [0.527344 0.496094]
+ [0.527344 0.503906]
+ [0.527344 0.511719]
+ [0.527344 0.519531]
+ [0.527344 0.527344]]
+Coords filtered (16320, 2)
+Output shate (16320, 2)
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([8, 128, 128, 2])
+Output: 2 66.98460540771484 65.03350067138672
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([8, 128, 128, 2])
+Output: 3 62.65190124511719 58.072519302368164
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([8, 128, 128, 2])
+Output: 4 52.89113235473633 43.345014572143555
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([8, 128, 128, 2])
+Output: 5 34.731970977783206 22.33120346069336
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([8, 128, 128, 2])
+Output: 6 15.997496795654296 7.429085731506348
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([8, 128, 128, 2])
+Output: 7 3.7190506935119627 0.8657177090644836
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([8, 128, 128, 2])
+Output: 8 0.8479703307151795 0.8304314911365509
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([8, 128, 128, 2])
+Output: 9 0.6808580875396728 0.5936857163906097
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Output of model shape: torch.Size([32, 128, 128, 2])
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/FNO_masked_Experiments/fno_masked_openfoam.py", line 276, in <module>
+    train_loss += loss.item()
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/FNO_masked_Experiments/fno_masked_openfoam.py", line 276, in <module>
+    train_loss += loss.item()
+KeyboardInterrupt

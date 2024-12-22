@@ -7,3 +7,11 @@
 {"time":"2024-12-20T21:21:55.683464939-05:00","level":"INFO","msg":"handler: started","stream_id":"899gekyh"}
 {"time":"2024-12-20T21:21:57.724207525-05:00","level":"INFO","msg":"Starting system monitor"}
 {"time":"2024-12-20T21:21:58.118090548-05:00","level":"ERROR","msg":"git repo not found","error":"repository does not exist"}
+{"time":"2024-12-20T21:25:32.58103056-05:00","level":"INFO","msg":"stream: closing","id":"899gekyh"}
+{"time":"2024-12-20T21:25:32.581068968-05:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-12-20T21:25:32.581541098-05:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-12-20T21:25:33.069536848-05:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-12-20T21:25:33.163023124-05:00","level":"INFO","msg":"handler: closed","stream_id":"899gekyh"}
+{"time":"2024-12-20T21:25:33.163053213-05:00","level":"INFO","msg":"writer: Close: closed","stream_id":"899gekyh"}
+{"time":"2024-12-20T21:25:33.16309108-05:00","level":"INFO","msg":"sender: closed","stream_id":"899gekyh"}
+{"time":"2024-12-20T21:25:33.192503961-05:00","level":"INFO","msg":"stream: closed","id":"899gekyh"}

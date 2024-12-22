@@ -1,0 +1,17 @@
+{"time":"2024-12-21T20:44:52.016732202-05:00","level":"INFO","msg":"using version","core version":"0.18.7"}
+{"time":"2024-12-21T20:44:52.016749381-05:00","level":"INFO","msg":"created symlink","path":"/home/namancho/Geo-UPSplus/FNO_masked_Experiments/wandb/run-20241221_204451-q7vrustv/logs/debug-core.log"}
+{"time":"2024-12-21T20:44:52.255497554-05:00","level":"INFO","msg":"created new stream","id":"q7vrustv"}
+{"time":"2024-12-21T20:44:52.255533736-05:00","level":"INFO","msg":"stream: started","id":"q7vrustv"}
+{"time":"2024-12-21T20:44:52.255572959-05:00","level":"INFO","msg":"handler: started","stream_id":"q7vrustv"}
+{"time":"2024-12-21T20:44:52.255791771-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"q7vrustv"}
+{"time":"2024-12-21T20:44:52.25579069-05:00","level":"INFO","msg":"sender: started","stream_id":"q7vrustv"}
+{"time":"2024-12-21T20:44:52.873757312-05:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-12-21T20:44:53.117305038-05:00","level":"ERROR","msg":"git repo not found","error":"repository does not exist"}
+{"time":"2024-12-21T20:46:08.967362322-05:00","level":"INFO","msg":"stream: closing","id":"q7vrustv"}
+{"time":"2024-12-21T20:46:08.967424395-05:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-12-21T20:46:08.978967023-05:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-12-21T20:46:09.392900236-05:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-12-21T20:46:09.497491779-05:00","level":"INFO","msg":"handler: closed","stream_id":"q7vrustv"}
+{"time":"2024-12-21T20:46:09.497526071-05:00","level":"INFO","msg":"writer: Close: closed","stream_id":"q7vrustv"}
+{"time":"2024-12-21T20:46:09.497585252-05:00","level":"INFO","msg":"sender: closed","stream_id":"q7vrustv"}
+{"time":"2024-12-21T20:46:09.515864678-05:00","level":"INFO","msg":"stream: closed","id":"q7vrustv"}

@@ -1,0 +1,88 @@
+{
+  "os": "Linux-5.14.0-427.42.1.el9_4.x86_64-x86_64-with-glibc2.34",
+  "python": "3.9.20",
+  "startedAt": "2024-12-22T01:57:06.150492Z",
+  "program": "/home/namancho/Geo-UPSplus/FNO_masked_Experiments/fno_masked_openfoam.py",
+  "codePath": "FNO_masked_Experiments/fno_masked_openfoam.py",
+  "git": {
+    "remote": "git@github.com:Naman-Choudhary-AI-ML/Geo-UPSplus.git",
+    "commit": "cd6f51649bd49e43f219c85e30739c25d7debc9f"
+  },
+  "email": "namancho@andrew.cmu.edu",
+  "root": "/home/namancho/Geo-UPSplus/FNO_masked_Experiments",
+  "host": "babel-3-9",
+  "username": "namancho",
+  "executable": "/home/namancho/miniconda3/envs/geofno/bin/python",
+  "codePathLocal": "fno_masked_openfoam.py",
+  "cpu_count": 32,
+  "cpu_count_logical": 64,
+  "gpu": "NVIDIA L40S",
+  "gpu_count": 8,
+  "disk": {
+    "/": {
+      "total": "2158065074176",
+      "used": "1608847142912"
+    }
+  },
+  "memory": {
+    "total": "1081293643776"
+  },
+  "cpu": {
+    "count": 32,
+    "countLogical": 64
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA L40S",
+      "memoryTotal": "48305799168",
+      "cudaCores": 18176,
+      "architecture": "Ada"
+    },
+    {
+      "name": "NVIDIA L40S",
+      "memoryTotal": "48305799168",
+      "cudaCores": 18176,
+      "architecture": "Ada"
+    },
+    {
+      "name": "NVIDIA L40S",
+      "memoryTotal": "48305799168",
+      "cudaCores": 18176,
+      "architecture": "Ada"
+    },
+    {
+      "name": "NVIDIA L40S",
+      "memoryTotal": "48305799168",
+      "cudaCores": 18176,
+      "architecture": "Ada"
+    },
+    {
+      "name": "NVIDIA L40S",
+      "memoryTotal": "48305799168",
+      "cudaCores": 18176,
+      "architecture": "Ada"
+    },
+    {
+      "name": "NVIDIA L40S",
+      "memoryTotal": "48305799168",
+      "cudaCores": 18176,
+      "architecture": "Ada"
+    },
+    {
+      "name": "NVIDIA L40S",
+      "memoryTotal": "48305799168",
+      "cudaCores": 18176,
+      "architecture": "Ada"
+    },
+    {
+      "name": "NVIDIA L40S",
+      "memoryTotal": "48305799168",
+      "cudaCores": 18176,
+      "architecture": "Ada"
+    }
+  ],
+  "slurm": {
+    "job_id": "3740764"
+  },
+  "cudaVersion": "12.6"
+}

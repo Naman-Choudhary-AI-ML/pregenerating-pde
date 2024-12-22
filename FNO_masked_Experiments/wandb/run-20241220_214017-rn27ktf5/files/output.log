@@ -1,0 +1,42 @@
+Output: 1 68.73246307373047 67.99251174926758
+valid indices [False False False False False False False False False False False False
+ False False False False False False False False False False False False
+ False False False False False False False False False False False False
+ False False False False False False False False False False False False
+ False False False False False False False False False False False False
+ False False False False]
+Valid indices (16384,)
+Coords filtered (16320, 2)
+Output shate (16320, 2)
+Output: 2 66.98460540771484 65.03350067138672
+Output: 3 62.65190124511719 58.072519302368164
+Output: 4 52.89113235473633 43.345014572143555
+Output: 5 34.731970977783206 22.33120346069336
+Output: 6 15.997496795654296 7.429085731506348
+Output: 7 3.7190506935119627 0.8657177090644836
+Output: 8 0.8479703307151795 0.8304314911365509
+Output: 9 0.6808580875396728 0.5936857163906097
+Output: 10 0.509467625617981 0.5209880769252777
+Output: 11 0.45338636040687563 0.48624570667743683
+Output: 12 0.4196066677570343 0.45141273736953735
+Output: 13 0.3944836616516113 0.43338246643543243
+Output: 14 0.38217737674713137 0.42080144584178925
+Output: 15 0.3741491973400116 0.416263148188591
+Output: 16 0.36794720888137816 0.40855321288108826
+Output: 17 0.36337066888809205 0.40583275258541107
+Output: 18 0.3584818124771118 0.3997408598661423
+Output: 19 0.354550302028656 0.3960607051849365
+Output: 20 0.3498814821243286 0.39203310012817383
+Output: 21 0.34587234258651733 0.3868909031152725
+Output: 22 0.3416681706905365 0.38377992808818817
+Output: 23 0.33748918771743774 0.3761524260044098
+Output: 24 0.3322041153907776 0.37265367805957794
+Output: 25 0.3277123212814331 0.36504554748535156
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/FNO_masked_Experiments/fno_masked_openfoam.py", line 289, in <module>
+    test_loss += loss.item()
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/FNO_masked_Experiments/fno_masked_openfoam.py", line 289, in <module>
+    test_loss += loss.item()
+KeyboardInterrupt

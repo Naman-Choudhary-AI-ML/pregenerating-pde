@@ -1,0 +1,18 @@
+{"time":"2024-12-21T23:47:32.837087665-05:00","level":"INFO","msg":"using version","core version":"0.18.7"}
+{"time":"2024-12-21T23:47:32.837106233-05:00","level":"INFO","msg":"created symlink","path":"/home/namancho/Geo-UPSplus/FNO_masked_Experiments/wandb/run-20241221_234732-2wv1fsky/logs/debug-core.log"}
+{"time":"2024-12-21T23:47:33.098127755-05:00","level":"INFO","msg":"created new stream","id":"2wv1fsky"}
+{"time":"2024-12-21T23:47:33.098170489-05:00","level":"INFO","msg":"stream: started","id":"2wv1fsky"}
+{"time":"2024-12-21T23:47:33.09818449-05:00","level":"INFO","msg":"handler: started","stream_id":"2wv1fsky"}
+{"time":"2024-12-21T23:47:33.09821758-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"2wv1fsky"}
+{"time":"2024-12-21T23:47:33.09821756-05:00","level":"INFO","msg":"sender: started","stream_id":"2wv1fsky"}
+{"time":"2024-12-21T23:47:34.114903264-05:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-12-21T23:47:34.461885513-05:00","level":"ERROR","msg":"git repo not found","error":"repository does not exist"}
+{"time":"2024-12-21T23:51:55.891500412-05:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-12-21T23:51:55.926738626-05:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-12-21T23:51:56.582648561-05:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-12-21T23:51:56.703959619-05:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2024-12-21T23:51:58.305511355-05:00","level":"INFO","msg":"stream: closing","id":"2wv1fsky"}
+{"time":"2024-12-21T23:51:58.305535771-05:00","level":"INFO","msg":"handler: closed","stream_id":"2wv1fsky"}
+{"time":"2024-12-21T23:51:58.305549612-05:00","level":"INFO","msg":"sender: closed","stream_id":"2wv1fsky"}
+{"time":"2024-12-21T23:51:58.305544865-05:00","level":"INFO","msg":"writer: Close: closed","stream_id":"2wv1fsky"}
+{"time":"2024-12-21T23:51:58.377457447-05:00","level":"INFO","msg":"stream: closed","id":"2wv1fsky"}

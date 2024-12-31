@@ -1,0 +1,16 @@
+{"time":"2024-12-29T17:20:43.961982588-05:00","level":"INFO","msg":"using version","core version":"0.18.4"}
+{"time":"2024-12-29T17:20:43.961997375-05:00","level":"INFO","msg":"created symlink","path":"/home/vhsingh/Geo-UPSplus/FNO_Experiments/wandb/run-20241229_172043-76g1c8s7/logs/debug-core.log"}
+{"time":"2024-12-29T17:20:44.066798713-05:00","level":"INFO","msg":"created new stream","id":"76g1c8s7"}
+{"time":"2024-12-29T17:20:44.066841663-05:00","level":"INFO","msg":"stream: started","id":"76g1c8s7"}
+{"time":"2024-12-29T17:20:44.066873633-05:00","level":"INFO","msg":"sender: started","stream_id":"76g1c8s7"}
+{"time":"2024-12-29T17:20:44.066869705-05:00","level":"INFO","msg":"handler: started","stream_id":{"value":"76g1c8s7"}}
+{"time":"2024-12-29T17:20:44.066875757-05:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"76g1c8s7"}}
+{"time":"2024-12-29T17:20:44.331782235-05:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-12-29T17:20:45.715956829-05:00","level":"INFO","msg":"stream: closing","id":"76g1c8s7"}
+{"time":"2024-12-29T17:20:45.716009798-05:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-12-29T17:20:45.716658791-05:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-12-29T17:20:46.972769727-05:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-12-29T17:20:47.086680937-05:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"76g1c8s7"}}
+{"time":"2024-12-29T17:20:47.086706235-05:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"76g1c8s7"}}
+{"time":"2024-12-29T17:20:47.086760115-05:00","level":"INFO","msg":"sender: closed","stream_id":"76g1c8s7"}
+{"time":"2024-12-29T17:20:47.086957695-05:00","level":"INFO","msg":"stream: closed","id":"76g1c8s7"}

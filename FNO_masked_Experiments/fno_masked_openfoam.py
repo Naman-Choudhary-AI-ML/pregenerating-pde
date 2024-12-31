@@ -18,7 +18,7 @@ if device.type == "cuda":
     print(f"GPU: {torch.cuda.get_device_name(0)}")
 
 
-path = '/home/namancho/datasets/NS-Gauss-Irr-Openfoam/openfoam.npy'
+path = '/home/vhsingh/Geo-UPSplus/FNO_masked_Experiments/CE-KH_Openfoam_Irregular/results.npy'
 
 dataset_name = os.path.basename(os.path.dirname(path))  # This gives the folder name like 'NS-PwC'
 output_folder = dataset_name
@@ -29,7 +29,7 @@ os.makedirs(output_folder, exist_ok=True)
 
 # dataset with shape (1177, 21, 128, 128, 2)
 
-C_input = "./C"
+C_input = "/home/vhsingh/Geo-UPSplus/FNO_masked_Experiments/CE-KH_Openfoam_Irregular/C"
 C_output = output_folder + "/C_updated"
 
 
@@ -223,8 +223,8 @@ class FNO2d(nn.Module):
 #######################################################
 # Initialize wandb
 wandb.init(
-    project="GeoFNO1",  # Your personal project name
-    entity="namancho",  # Replace with your WandB username
+    project="Research",  # Your personal project name
+    entity="ved100-carnegie-mellon-university",  # Replace with your WandB username
     name=f"FNO_masked_{dataset_name}_{200}_BL",  # Optional, gives each run a unique name
     config={  # Optional configuration logging
         "learning_rate": 0.001,

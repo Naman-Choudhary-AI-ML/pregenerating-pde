@@ -1,0 +1,17 @@
+{"time":"2024-12-26T09:00:06.135300882-05:00","level":"INFO","msg":"using version","core version":"0.18.4"}
+{"time":"2024-12-26T09:00:06.135319392-05:00","level":"INFO","msg":"created symlink","path":"/home/vhsingh/Geo-UPSplus/FNO_masked_Experiments/wandb/run-20241226_090006-ibwepcns/logs/debug-core.log"}
+{"time":"2024-12-26T09:00:06.245441825-05:00","level":"INFO","msg":"created new stream","id":"ibwepcns"}
+{"time":"2024-12-26T09:00:06.245468445-05:00","level":"INFO","msg":"stream: started","id":"ibwepcns"}
+{"time":"2024-12-26T09:00:06.245536374-05:00","level":"INFO","msg":"handler: started","stream_id":{"value":"ibwepcns"}}
+{"time":"2024-12-26T09:00:06.245808262-05:00","level":"INFO","msg":"sender: started","stream_id":"ibwepcns"}
+{"time":"2024-12-26T09:00:06.245794372-05:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"ibwepcns"}}
+{"time":"2024-12-26T09:00:06.442075324-05:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-12-26T09:10:23.470323984-05:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-12-26T09:10:23.471221436-05:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-12-26T09:10:23.938909277-05:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-12-26T09:10:24.066556115-05:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2024-12-26T09:10:25.077661025-05:00","level":"INFO","msg":"stream: closing","id":"ibwepcns"}
+{"time":"2024-12-26T09:10:25.077687235-05:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"ibwepcns"}}
+{"time":"2024-12-26T09:10:25.077712804-05:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"ibwepcns"}}
+{"time":"2024-12-26T09:10:25.077736024-05:00","level":"INFO","msg":"sender: closed","stream_id":"ibwepcns"}
+{"time":"2024-12-26T09:10:25.078133441-05:00","level":"INFO","msg":"stream: closed","id":"ibwepcns"}

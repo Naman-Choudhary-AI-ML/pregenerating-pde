@@ -18,7 +18,7 @@ if device.type == "cuda":
 
 
 # dataset with shape (1177, 21, 128, 128, 2)
-path = '/home/vhsingh/Geo-UPSplus/FNO_Experiments/CE-Gauss_Openfoam/CE-Gauss_results.npy'
+path = '/home/vhsingh/Geo-UPSplus/FNO_Experiments/CE_KH_Openfoam/CE-KH_Openfoam'
 
 
 # # Load the .nc file

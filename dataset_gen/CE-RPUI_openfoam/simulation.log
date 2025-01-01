@@ -1,0 +1,20 @@
+2024-12-14 20:11:50,545 - INFO - Checking if generate_setfields.py exists in the original path: Design_Point_0/generate_setfields.py
+2024-12-14 20:11:50,558 - INFO - Created folder: Design_Point_0_copy_1
+2024-12-14 20:11:51,569 - INFO - Created folder: Design_Point_0_copy_2
+2024-12-14 20:11:52,581 - INFO - Created folder: Design_Point_0_copy_3
+2024-12-14 20:11:53,581 - INFO - Checking for generate_setfields.py in: Design_Point_0_copy_1/generate_setfields.py
+2024-12-14 20:11:53,582 - INFO - Running Design_Point_0_copy_1/generate_setfields.py to generate U file in Design_Point_0_copy_1
+2024-12-14 20:11:55,935 - INFO - U file generated successfully in folder: Design_Point_0_copy_1
+2024-12-14 20:11:56,506 - WARNING - rhoPimpleFoam simulation failed or did not converge in folder: Design_Point_0_copy_1
+2024-12-14 20:11:56,506 - WARNING - Skipping adding results from Design_Point_0_copy_1 since simulation did not converge.
+2024-12-14 20:11:56,506 - INFO - Checking for generate_setfields.py in: Design_Point_0_copy_2/generate_setfields.py
+2024-12-14 20:11:56,506 - INFO - Running Design_Point_0_copy_2/generate_setfields.py to generate U file in Design_Point_0_copy_2
+2024-12-14 20:11:58,846 - INFO - U file generated successfully in folder: Design_Point_0_copy_2
+2024-12-14 20:12:05,098 - WARNING - rhoPimpleFoam simulation failed or did not converge in folder: Design_Point_0_copy_2
+2024-12-14 20:12:05,099 - WARNING - Skipping adding results from Design_Point_0_copy_2 since simulation did not converge.
+2024-12-14 20:12:05,099 - INFO - Checking for generate_setfields.py in: Design_Point_0_copy_3/generate_setfields.py
+2024-12-14 20:12:05,099 - INFO - Running Design_Point_0_copy_3/generate_setfields.py to generate U file in Design_Point_0_copy_3
+2024-12-14 20:12:07,448 - INFO - U file generated successfully in folder: Design_Point_0_copy_3
+2024-12-14 20:12:12,607 - WARNING - rhoPimpleFoam simulation failed or did not converge in folder: Design_Point_0_copy_3
+2024-12-14 20:12:12,607 - WARNING - Skipping adding results from Design_Point_0_copy_3 since simulation did not converge.
+2024-12-14 20:12:12,607 - INFO - No converged simulations found. No results saved.

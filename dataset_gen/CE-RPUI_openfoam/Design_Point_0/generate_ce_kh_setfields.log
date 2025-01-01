@@ -1,0 +1,22 @@
+2024-12-13 18:47:31,648 - INFO - Generated alpha0: [0.36540759 0.08456618]
+2024-12-13 18:47:31,649 - INFO - Generated beta0: [0.34268236 0.45508197]
+2024-12-13 18:47:31,649 - INFO - Generated alpha1: [0.22479446 0.83377645]
+2024-12-13 18:47:31,649 - INFO - Generated beta1: [0.39372371 0.2696733 ]
+2024-12-13 21:53:37,269 - INFO - Generated alpha0: [0.49630535 0.69043281]
+2024-12-13 21:53:37,270 - INFO - Generated beta0: [0.6629518  0.23936412]
+2024-12-13 21:53:37,270 - INFO - Generated alpha1: [0.86866296 0.89135079]
+2024-12-13 21:53:37,270 - INFO - Generated beta1: [0.68412781 0.23675886]
+2024-12-13 22:01:05,568 - INFO - Generated alpha0: [0.48210335 0.02352256]
+2024-12-13 22:01:05,568 - INFO - Generated beta0: [0.58371182 0.75102571]
+2024-12-13 22:01:05,569 - INFO - Generated alpha1: [0.80144106 0.71286179]
+2024-12-13 22:01:05,569 - INFO - Generated beta1: [0.9603056  0.98564827]
+2024-12-13 22:01:05,571 - INFO - rho_field statistics: min=1.0, max=2.0, mean=1.5001220703125
+2024-12-13 22:01:05,571 - INFO - vx_field statistics: min=-0.5, max=0.5, mean=-0.0001220703125
+2024-12-13 22:01:05,571 - INFO - vy_field statistics: min=0.0, max=0.0, mean=0.0
+2024-12-13 22:01:05,572 - INFO - p_field statistics: min=2.5, max=2.5, mean=2.5
+2024-12-13 22:01:05,572 - INFO - T_field statistics: min=0.004355400696864111, max=0.008710801393728223, mean=0.006532569380172038
+2024-12-13 22:01:05,591 - INFO - Wrote scalar field to 0/rho
+2024-12-13 22:01:05,604 - INFO - Wrote scalar field to 0/p
+2024-12-13 22:01:05,615 - INFO - Wrote scalar field to 0/T
+2024-12-13 22:01:05,635 - INFO - Wrote vector field to 0/U
+2024-12-13 22:01:05,635 - INFO - All fields have been written successfully.

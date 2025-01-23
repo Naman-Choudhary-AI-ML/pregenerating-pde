@@ -33,12 +33,17 @@ C_input = "/home/vhsingh/Geo-UPSplus/FNO_masked_Experiments/CE-KH_Openfoam_Irreg
 C_output = output_folder + "/C_updated"
 
 
+
 plot_mesh_centers(C_input, C_output)
 # # Load the .nc file
 # with Dataset(path, mode='r') as nc:
 #     data = nc.variables['velocity'][:]  # Assuming 'velocity' is the data key
 data = np.load(path)  # Replace 'data.npy' with your actual data file
 print("SHAPE", data.shape)
+
+resolution = (128, 128)
+missing_points = resolution[0] * resolution[1] - data[2]
+print("CHECKKKKKKKKKKKKKKKKKKKKKKK for missing_points: ", missing_points)
 
 hole_dummy_values = np.full((data.shape[0], data.shape[1], 64, data.shape[3]), -100, dtype=data.dtype)
 data_with_holes = np.concatenate([data, hole_dummy_values], axis = 2) #New shape: (trajectories, timesteps 21, 16384, 2)

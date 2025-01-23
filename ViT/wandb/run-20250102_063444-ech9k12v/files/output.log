@@ -1,0 +1,26 @@
+/home/namancho/Geo-UPSplus/ViT/vit_basic.py:230: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  input_data = torch.tensor(item["input_fields"][0]).type(torch.float32)  # Shape: [Lx, Ly, F]
+/home/namancho/Geo-UPSplus/ViT/vit_basic.py:231: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  output_data = torch.tensor(item["output_fields"][0]).type(torch.float32)  # Shape: [Lx, Ly, F]
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/ViT/vit_basic.py", line 332, in <module>
+    output_pred_batch = model(input_batch)
+  File "/home/namancho/miniconda3/envs/well/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/namancho/miniconda3/envs/well/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/namancho/Geo-UPSplus/ViT/vit_basic.py", line 183, in forward
+    x = self.transformer(x)
+  File "/home/namancho/miniconda3/envs/well/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/namancho/miniconda3/envs/well/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/namancho/Geo-UPSplus/ViT/vit_basic.py", line 116, in forward
+    x = attn(x) + x
+  File "/home/namancho/miniconda3/envs/well/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/namancho/miniconda3/envs/well/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/namancho/Geo-UPSplus/ViT/vit_basic.py", line 89, in forward
+    dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 9.00 GiB. GPU 0 has a total capacity of 47.43 GiB of which 868.56 MiB is free. Including non-PyTorch memory, this process has 46.57 GiB memory in use. Of the allocated memory 40.34 GiB is allocated by PyTorch, and 5.93 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

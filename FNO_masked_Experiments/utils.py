@@ -2,6 +2,9 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter, FixedLocator
+import gc
+from tqdm import tqdm
+import torch
 
 def plot_mesh_centers(input_path, output_path, precision=6):
     """
@@ -410,3 +413,117 @@ def plot_predictions_with_centers(outputs, targets, mask, C_file_path, output_fo
 # #     plot_path = os.path.join(output_folder, f"epoch_{epoch}.png")
 # #     plt.savefig(plot_path)
 # #     plt.close(fig)
+
+def reorder_data_to_row_by_row(data, x_coords, y_coords, save_path=None):
+    """
+    Reorders the data from blockwise mesh ordering to row-by-row grid ordering, with a progress bar.
+
+    Args:
+        data: The data array of shape (trajectories, timesteps, height, width, channels).
+        x_coords: x-coordinates of the grid.
+        y_coords: y-coordinates of the grid.
+        save_path: Optional path to save reordered data. If None, returns the data in memory.
+
+    Returns:
+        Reordered data of the same shape as input (if not saving to disk).
+    """
+
+    # Flatten spatial coordinates and determine row-major order
+    flat_coords = np.stack((x_coords.flatten(), y_coords.flatten()), axis=-1)
+    row_order = np.lexsort((flat_coords[:, 1], flat_coords[:, 0]))  # Row-major order
+    print("Row order shape:", row_order.shape)  # Expect (16384,)
+    print("Row order max:", row_order.max())  # Should be < 16384
+    print("Row order min:", row_order.min())  # Should be >= 0
+
+    trajectories, timesteps, height, width, channels = data.shape
+    reordered_data = np.empty_like(data)
+
+    # Progress bar for trajectories
+    with tqdm(total=trajectories, desc="Reordering Trajectories", unit="traj") as pbar:
+        for traj in range(trajectories):
+            for t in range(timesteps):
+                flat_data = data[traj, t].reshape(-1, channels)  # Flatten spatial dimensions
+                reordered_flat = flat_data[row_order]  # Apply row-by-row order
+                reshaped_data = reordered_flat.reshape(height, width, channels)  # Reshape back
+                reordered_data[traj, t] = reshaped_data
+
+            # Update progress bar
+            pbar.update(1)
+            gc.collect()  # Clear unused memory
+
+    if save_path is not None:
+        np.save(save_path, reordered_data)
+        print(f"Reordered data saved to {save_path}")
+    return reordered_data
+
+
+def plot_reordered_predictions(outputs, targets, mask, output_folder, epoch, resolution=128):
+    """
+    Plot predictions and ground truth using row-wise reordered data.
+
+    Args:
+        outputs: Predicted values (batchsize, 128, 128, 2).
+        targets: Ground truth values (batchsize, 128, 128, 2).
+        mask: Binary mask (batchsize, 128, 128), where 1 = valid, 0 = hole.
+        output_folder: Folder to save plots.
+        epoch: Current epoch number.
+        resolution: Resolution of the grid (default: 128).
+    """
+    # Generate grid coordinates for plotting
+    x_coords = np.linspace(0, 1, resolution)  # Assuming normalized coordinates
+    y_coords = np.linspace(0, 1, resolution)
+    xv, yv = np.meshgrid(x_coords, y_coords)
+
+    # Prepare data for plotting
+    outputs = outputs[0].detach().cpu().numpy()
+    targets = targets[0].detach().cpu().numpy()
+    mask = mask[0].detach().cpu().numpy()
+
+    # Apply mask to exclude hole regions
+    mask_flat = mask.flatten()  # Shape: (16384,)
+    valid_indices = mask_flat == 1  # Only valid points
+    xv_flat = xv.flatten()[valid_indices]
+    yv_flat = yv.flatten()[valid_indices]
+
+    outputs_flat = outputs.reshape(-1, 2)[valid_indices]
+    targets_flat = targets.reshape(-1, 2)[valid_indices]
+
+    # Plotting setup
+    fig, ax = plt.subplots(2, 2, figsize=(14, 10))  # 2x2 grid for both channels
+    channels = ["Horizontal Velocity (u)", "Vertical Velocity (v)"]
+    cmap = "gist_ncar"
+
+    for ch in range(len(channels)):
+        truth = targets_flat[:, ch]
+        pred = outputs_flat[:, ch]
+
+        # Determine color scale range for consistent plots
+        vmin = min(truth.min(), pred.min())
+        vmax = max(truth.max(), pred.max())
+        num_ticks = 5  # Define the number of ticks (must be odd for symmetry)
+        max_abs = max(abs(vmin), abs(vmax))  # Symmetric range
+        symmetric_ticks = np.linspace(-max_abs, max_abs, num_ticks)
+
+        # Plot Ground Truth
+        sc1 = ax[ch, 0].scatter(xv_flat, yv_flat, c=truth, cmap=cmap, vmin=vmin, vmax=vmax, s=10)
+        ax[ch, 0].set_title(f"Ground Truth - {channels[ch]}")
+        ax[ch, 0].axis("off")
+        cb1 = fig.colorbar(sc1, ax=ax[ch, 0], orientation="vertical", fraction=0.046, pad=0.01, shrink=0.95)
+        cb1.formatter = FormatStrFormatter('%.1f')
+        cb1.locator = FixedLocator(symmetric_ticks)
+        cb1.update_ticks()
+
+        # Plot Predictions
+        sc2 = ax[ch, 1].scatter(xv_flat, yv_flat, c=pred, cmap=cmap, vmin=vmin, vmax=vmax, s=10)
+        ax[ch, 1].set_title(f"Prediction - {channels[ch]}")
+        ax[ch, 1].axis("off")
+        cb2 = fig.colorbar(sc2, ax=ax[ch, 1], orientation="vertical", fraction=0.046, pad=0.01, shrink=0.95)
+        cb2.formatter = FormatStrFormatter('%.1f')
+        cb2.locator = FixedLocator(symmetric_ticks)
+        cb2.update_ticks()
+
+    plt.tight_layout()
+    plot_path = os.path.join(output_folder, f"epoch_{epoch}_reordered.png")
+    plt.savefig(plot_path)
+    plt.close(fig)
+    print(f"Plot saved to {plot_path}")

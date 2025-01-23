@@ -1,0 +1,9 @@
+/home/namancho/Geo-UPSplus/ViT/vit_basic.py:230: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  input_data = torch.tensor(item["input_fields"][0]).type(torch.float32)  # Shape: [Lx, Ly, F]
+/home/namancho/Geo-UPSplus/ViT/vit_basic.py:231: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  output_data = torch.tensor(item["output_fields"][0]).type(torch.float32)  # Shape: [Lx, Ly, F]
+Epoch 1/200 | Train Loss: 540.991661 | Test Loss: 249.423995
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/ViT/vit_basic.py", line 389, in <module>
+    shared_vmin = min(np.min(output_sample[field]))
+TypeError: 'numpy.float32' object is not iterable

@@ -1,0 +1,45 @@
+/home/namancho/Geo-UPSplus/ViT/vit_basic.py:230: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  input_data = torch.tensor(item["input_fields"][0]).type(torch.float32)  # Shape: [Lx, Ly, F]
+/home/namancho/Geo-UPSplus/ViT/vit_basic.py:231: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  output_data = torch.tensor(item["output_fields"][0]).type(torch.float32)  # Shape: [Lx, Ly, F]
+Epoch 1/400 | Train Loss: 685.122146 | Test Loss: 550.104884
+Epoch 2/400 | Train Loss: 397.468983 | Test Loss: 249.356146
+Epoch 3/400 | Train Loss: 149.977896 | Test Loss: 75.077517
+Epoch 4/400 | Train Loss: 43.987053 | Test Loss: 26.175507
+Epoch 5/400 | Train Loss: 19.623733 | Test Loss: 16.976146
+Epoch 6/400 | Train Loss: 18.106424 | Test Loss: 15.706277
+Epoch 7/400 | Train Loss: 14.372760 | Test Loss: 14.651067
+Epoch 8/400 | Train Loss: 13.629060 | Test Loss: 14.233828
+Epoch 9/400 | Train Loss: 13.225514 | Test Loss: 13.843123
+Epoch 10/400 | Train Loss: 12.945265 | Test Loss: 13.656737
+Epoch 11/400 | Train Loss: 12.681639 | Test Loss: 13.771877
+Epoch 12/400 | Train Loss: 12.410543 | Test Loss: 13.330134
+Epoch 13/400 | Train Loss: 12.234746 | Test Loss: 13.316992
+Epoch 14/400 | Train Loss: 11.989877 | Test Loss: 13.116342
+Epoch 15/400 | Train Loss: 11.800477 | Test Loss: 13.002105
+Traceback (most recent call last):
+  File "/home/namancho/Geo-UPSplus/ViT/vit_basic.py", line 327, in <module>
+    for step, (input_batch, output_batch) in enumerate(train_loader):
+  File "/home/namancho/miniconda3/envs/well/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 701, in __next__
+    data = self._next_data()
+  File "/home/namancho/miniconda3/envs/well/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 757, in _next_data
+    data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+  File "/home/namancho/miniconda3/envs/well/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 52, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/home/namancho/miniconda3/envs/well/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 52, in <listcomp>
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/home/namancho/Geo-UPSplus/ViT/vit_basic.py", line 229, in __getitem__
+    item = self.dataset[index]
+  File "/home/namancho/miniconda3/envs/well/lib/python3.10/site-packages/the_well/data/datasets.py", line 728, in __getitem__
+    data["variable_fields"], data["constant_fields"] = self._reconstruct_fields(
+  File "/home/namancho/miniconda3/envs/well/lib/python3.10/site-packages/the_well/data/datasets.py", line 532, in _reconstruct_fields
+    field = file[order_fields][field_name]
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "/home/namancho/miniconda3/envs/well/lib/python3.10/site-packages/h5py/_hl/group.py", line 366, in __getitem__
+    return dataset.Dataset(oid, readonly=(self.file.mode == 'r'))
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "/home/namancho/miniconda3/envs/well/lib/python3.10/site-packages/h5py/_hl/dataset.py", line 667, in __init__
+    self._dcpl = self.id.get_create_plist()
+KeyboardInterrupt

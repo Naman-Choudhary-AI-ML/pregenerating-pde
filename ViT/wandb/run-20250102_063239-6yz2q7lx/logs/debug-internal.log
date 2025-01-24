@@ -1,0 +1,17 @@
+{"time":"2025-01-02T06:32:39.493714755-05:00","level":"INFO","msg":"using version","core version":"0.19.1"}
+{"time":"2025-01-02T06:32:39.493729214-05:00","level":"INFO","msg":"created symlink","path":"/home/namancho/Geo-UPSplus/ViT/wandb/run-20250102_063239-6yz2q7lx/logs/debug-core.log"}
+{"time":"2025-01-02T06:32:39.601319445-05:00","level":"INFO","msg":"created new stream","id":"6yz2q7lx"}
+{"time":"2025-01-02T06:32:39.60135916-05:00","level":"INFO","msg":"stream: started","id":"6yz2q7lx"}
+{"time":"2025-01-02T06:32:39.601453589-05:00","level":"INFO","msg":"handler: started","stream_id":"6yz2q7lx"}
+{"time":"2025-01-02T06:32:39.60144689-05:00","level":"INFO","msg":"writer: Do: started","stream_id":"6yz2q7lx"}
+{"time":"2025-01-02T06:32:39.601481689-05:00","level":"INFO","msg":"sender: started","stream_id":"6yz2q7lx"}
+{"time":"2025-01-02T06:32:39.757240225-05:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-02T06:32:39.759116255-05:00","level":"ERROR","msg":"git repo not found","error":"repository does not exist"}
+{"time":"2025-01-02T06:32:40.583523254-05:00","level":"INFO","msg":"stream: closing","id":"6yz2q7lx"}
+{"time":"2025-01-02T06:32:40.583563353-05:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-02T06:32:40.584356012-05:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-02T06:32:40.889677122-05:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-01-02T06:32:40.993495243-05:00","level":"INFO","msg":"handler: closed","stream_id":"6yz2q7lx"}
+{"time":"2025-01-02T06:32:40.993524559-05:00","level":"INFO","msg":"writer: Close: closed","stream_id":"6yz2q7lx"}
+{"time":"2025-01-02T06:32:40.993569206-05:00","level":"INFO","msg":"sender: closed","stream_id":"6yz2q7lx"}
+{"time":"2025-01-02T06:32:40.993997011-05:00","level":"INFO","msg":"stream: closed","id":"6yz2q7lx"}

@@ -208,6 +208,37 @@ def run_rhoPimpleFoam(folder):
         logging.error(f"Error running rhoPimpleFoam: {e}")
         return False
 
+def run_icoFoam(folder):
+    """
+    Runs icoFoam for the specified folder and returns True if it converged, False otherwise.
+    """
+    command = ["icoFoam"]
+    print(f"Running icoFoam in folder: {folder}")
+    
+    try:
+        process = subprocess.Popen(command, cwd=folder)
+        process.communicate()
+
+        # Check the return code
+        if process.returncode == 0:
+            print(f"icoFoam simulation completed successfully in folder: {folder}")
+            logging.info(f"icoFoam simulation completed successfully in folder: {folder}")
+            return True
+        else:
+            print(f"icoFoam simulation failed or did not converge in folder: {folder}")
+            logging.warning(f"icoFoam simulation failed or did not converge in folder: {folder}")
+            return False
+
+    except FileNotFoundError:
+        print("Error: icoFoam command not found.")
+        logging.error("Error: icoFoam command not found.")
+        return False
+
+    except Exception as e:
+        print(f"Error running icoFoam: {e}")
+        logging.error(f"Error running icoFoam: {e}")
+        return False
+
 def run_setfields(folder):
     """Runs setFields in the specified folder."""
     command = ["setFields"]
@@ -369,109 +400,120 @@ def parse_internal_field(file_path, field_type="vector"):
     else:
         raise ValueError("field_type must be either 'vector' or 'scalar'.")
 
-def parse_simulation(sim_folder):
+def parse_simulation(sim_folder, pde_name="default"):
     """
-    Parses a single simulation folder containing time-step directories 
-    (e.g. 0, 0.1, 0.2, ...).
-    
+    Parses a single simulation folder containing time-step directories.
+
+    For NS_Gauss (incompressible flow), skips temperature (T) and density (rho).
+
     Returns:
         time_steps: Sorted list of time-step strings (e.g. ["0", "0.1", "0.2", ...])
         results_array: np.ndarray of shape (num_time_steps, num_points, 4) 
-                       for channels [rho, Ux, Uy, p].
+                       for channels [rho, Ux, Uy, p] or [Ux, Uy, p] for NS_Gauss.
     """
-    # Collect all numeric time directories (excluding things like "constant", "system", etc.)
+    # Collect all numeric time directories
     all_entries = os.listdir(sim_folder)
-    time_dirs = []
-    for entry in all_entries:
-        # Test if `entry` is something like "0", "0.1", "10", etc.
-        try:
-            float(entry)  # If this works, it is likely a time directory
-            if os.path.isdir(os.path.join(sim_folder, entry)):
-                time_dirs.append(entry)
-        except ValueError:
-            # Not a numeric directory
-            pass
-    
-    # Sort them by numerical value
+    time_dirs = [entry for entry in all_entries if entry.replace('.', '', 1).isdigit() and os.path.isdir(os.path.join(sim_folder, entry))]
     time_dirs.sort(key=lambda x: float(x))
-
-    # We expect to parse for each time step:
-    #   - rho  (scalar)
-    #   - U    (vector)
-    #   - p    (scalar)
-    # You also mentioned T; if you want T, add it in similarly.
-    # But your final request was channels: [rho, Ux, Uy, P], so let's do that.
 
     results_per_time = []
     for tdir in time_dirs:
         this_tdir_path = os.path.join(sim_folder, tdir)
+
+        # File paths
+        u_file = os.path.join(this_tdir_path, "U")
         
-        # Prepare file paths
-        T_file = os.path.join(this_tdir_path, "T")
-        u_file   = os.path.join(this_tdir_path, "U")
-        p_file   = os.path.join(this_tdir_path, "p")
 
-        # Parse each field
-        T_data = parse_internal_field(T_file, field_type="scalar")  # shape=(n_points,)
-        u_data   = parse_internal_field(u_file,  field_type="vector")   # shape=(n_points,2 or 3)
-        p_data   = parse_internal_field(p_file,  field_type="scalar")   # shape=(n_points,)
+        # Parse velocity and pressure
+        u_data = parse_internal_field(u_file, field_type="vector")   # shape=(n_points, 2)
+        
 
-        try:
-            rho_data = p_data / (T_data * 287)
-        except ZeroDivisionError:
-            raise ValueError("Encountered division by zero")
+        if pde_name != "ns_gauss":
+            # Parse temperature and density for other PDEs
+            T_file = os.path.join(this_tdir_path, "T")
+            p_file = os.path.join(this_tdir_path, "p")
+            T_data = parse_internal_field(T_file, field_type="scalar")
+            p_data = parse_internal_field(p_file, field_type="scalar")   # shape=(n_points,)
 
-        # If you have 3D velocity (Ux, Uy, Uz), you’d need to slice out just Ux, Uy 
-        # or keep all three. For your example, let’s assume 2D: shape=(n_points, 2).
+            try:
+                rho_data = p_data / (T_data * 287)
+            except ZeroDivisionError:
+                raise ValueError("Encountered division by zero")
 
-        # Reorganize into [rho, Ux, Uy, p] per point
-        # So shape will be: (n_points, 4)
-        combined_data = np.column_stack([rho_data, 
-                                         u_data[:, 0],  # Ux
-                                         u_data[:, 1],  # Uy
-                                         p_data])
+            # Combine [rho, Ux, Uy, p]
+            combined_data = np.column_stack([rho_data, u_data[:, 0], u_data[:, 1], p_data])
+        else:
+            # For NS_Gauss, skip T and rho
+            combined_data = np.column_stack([u_data[:, 0], u_data[:, 1]])  # Shape: (n_points, 3)
+
         results_per_time.append(combined_data)
 
-    # Now we have a list of length num_time_steps, 
-    # each element shape (n_points, 4)
-    results_array = np.stack(results_per_time, axis=0)  
-    # => shape (num_time_steps, n_points, 4)
-
+    results_array = np.stack(results_per_time, axis=0)
     return time_dirs, results_array
 
+def reconstruct_row_by_row(data, hole_centers, grid_size=128, hole_size=8):
+    num_trajectories, timesteps, _, channels = data.shape
+    full_data = np.zeros((num_trajectories, timesteps, grid_size, grid_size, channels+1))
 
-def gather_all_simulations(sim_folders):
-    """
-    Given a list of simulation folders, parse them all and stack results into a single array.
-    
-    Returns:
-        final_time_dirs (list of str): The time steps used (assuming all sims have same times).
-        final_results (np.ndarray): shape (num_sims, num_time_steps, n_points, 4).
-    """
+    for traj_idx in range(num_trajectories):
+        i_c, j_c = hole_centers[traj_idx]  # Hole center for this trajectory
+        block_slices = get_block_slices(i_c, j_c, N=grid_size, hole_size=hole_size)
+
+        # Create hole mask (1 for hole, 0 for valid points)
+        hole_mask = np.zeros((grid_size, grid_size))
+        half = hole_size // 2
+        i_hole_min = i_c - half
+        i_hole_max = i_hole_min + hole_size - 1  # Corrected
+        j_hole_min = j_c - half
+        j_hole_max = j_hole_min + hole_size - 1  # Corrected
+
+        # Apply mask
+        hole_mask[i_hole_min:i_hole_max + 1, j_hole_min:j_hole_max + 1] = 1
+
+
+        for t in range(timesteps):
+            # Initialize grid with zeros (hole regions will remain zero)
+            grid = np.zeros((grid_size, grid_size, channels))  
+
+            flat_index = 0  # Index to track the flattened OpenFOAM data
+
+            # Place values in the **row-by-row** grid (reversing block order)
+            for (i_range, j_range) in block_slices:
+                for j_ in j_range:       # Loop over rows first (row-major order)
+                    for i_ in i_range:   # Then columns
+                        grid[i_, j_, :] = data[traj_idx, t, flat_index, :]
+                        flat_index += 1  # Move to the next data point
+
+            combined = np.concatenate((grid, hole_mask[..., np.newaxis]), axis=-1)
+            # Store the reconstructed grid
+            full_data[traj_idx, t] = combined
+
+    return full_data
+
+
+def gather_all_simulations(sim_folders, hole_centers, pde_name="default"):
     all_sim_results = []
     final_time_dirs = None
-    
+
     for i, folder in enumerate(sim_folders):
         logging.info(f"Parsing simulation folder {folder}")
-        tdirs, results_array = parse_simulation(folder)
+        tdirs, results_array = parse_simulation(folder, pde_name=pde_name)  # Pass pde_name
+
         if i == 0:
-            # Keep track of the "canonical" time steps
             final_time_dirs = tdirs
         else:
-            # (Optional) check that tdirs == final_time_dirs if you assume they must match
             if tdirs != final_time_dirs:
-                logging.warning(
-                    f"Simulation {folder} has different time steps than the first simulation. "
-                    f"This code assumes consistent time steps across simulations."
-                )
-        all_sim_results.append(results_array)
-    
-    # Stack them: from list of [ (num_time_steps, n_points, 4), ... ] 
-    # into (num_sims, num_time_steps, n_points, 4)
+                logging.warning(f"Simulation {folder} has different time steps than the first simulation.")
+
+        full_grid_data = reconstruct_row_by_row(
+            results_array[np.newaxis, ...],
+            [hole_centers[i]]
+        )[0]
+        all_sim_results.append(full_grid_data)
+
     final_results = np.stack(all_sim_results, axis=0)
-    # => shape (num_sims, num_time_steps, n_points, 4)
-    
     return final_time_dirs, final_results
+
 
 def generate_blockMeshDict(i_c, j_c, output_path="blockMeshDict", run_blockMesh=False):
     """

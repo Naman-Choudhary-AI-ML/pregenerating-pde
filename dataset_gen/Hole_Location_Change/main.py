@@ -5,10 +5,10 @@ import json
 import numpy as np
 from pde_getter import get_pde_variant
 from util import copy_main_folder, random_hole_centers, generate_blockMeshDict, run_rhoPimpleFoam, gather_all_simulations, generate_cell_centers, parse_cell_centers, validate_missing_coordinates 
-
+from util import run_icoFoam
 def main():
     # PDE variant name from user:
-    pde_name = input("Enter which PDE variant to use (pde1/pde2): ").strip().lower()
+    pde_name = input("Enter which PDE variant to use (ce_xy/ns_xy): ").strip().lower()
 
     # Instantiate PDE object
     pde_obj, base_folder = get_pde_variant(pde_name)
@@ -27,6 +27,8 @@ def main():
     N = 128
     hole_centers = random_hole_centers(num_copies, N)
     # hole_centers = ((0.4,0.6))
+    # Store hole centers to save later
+    hole_center_list = []
 
     # Sanity check: If your user wants to create e.g. 2 new folders,
     # make sure you have at least 2 hole centers
@@ -50,6 +52,7 @@ def main():
     for i, folder in enumerate(new_folders, start=1):
         # Retrieve the hole center for this design point
         i_c, j_c = hole_centers[i - 1]
+        hole_center_list.append((i_c, j_c)) #save hole centre
         # cx, cy = hole_centers
         logging.info(f"Processing folder {folder} with hole center ({i_c:.4f}, {j_c:.4f})")
         # Convert continuous coords [0..1] => integer indices [0..127]
@@ -69,9 +72,14 @@ def main():
         pde_obj.generate_U_file(folder, i_c, j_c, random_coeffs, hole_size=0.0625)         # This replaces the old generate_setfields.py call
         # run_setfields(folder)         # If you do use setFields or additional steps
         # 3C) Run solver
-        if not run_rhoPimpleFoam(folder):
-            logging.warning(f"Solver failed for folder {folder}. Skipping.")
-            continue
+        if pde_name == "ns_gauss":
+            if not run_icoFoam(folder):
+                logging.warning(f"icoFoam solver failed for folder {folder}. Skipping.")
+                continue
+        else:
+            if not run_rhoPimpleFoam(folder):
+                logging.warning(f"rhoPimpleFoam solver failed for folder {folder}. Skipping.")
+                continue
         
         # 3D) Generate and validate cell centers
         c_file = generate_cell_centers(folder)
@@ -114,16 +122,23 @@ def main():
     else:
         logging.warning("No valid simulations or cell center validations. No sim data generated.")
 
+    # Save hole centers to JSON
+    hole_center_path = os.path.join(base_folder, "hole_centers.json")
+    with open(hole_center_path, "w") as f:
+        json.dump(hole_center_list, f)
+
     # 5) Gather final results only from converged folders
     if converged_folders:
         try:
-            time_dirs, final_results = gather_all_simulations(converged_folders)
+            # time_dirs, final_results = gather_all_simulations(converged_folders)
+            time_dirs, final_results = gather_all_simulations(converged_folders, hole_center_list, pde_name=pde_name)
+
         except FileNotFoundError as e:
             logging.error(f"Error processing converged folders: {e}")
             return
 
         # Save final results to .npy
-        results_path = os.path.join(base_folder, "results.npy")
+        results_path = os.path.join(base_folder, "results2.npy")
         np.save(results_path, final_results)
         logging.info(f"Saved final results with shape: {final_results.shape}")
         print(f"\nFinal results saved to results.npy with shape {final_results.shape}")

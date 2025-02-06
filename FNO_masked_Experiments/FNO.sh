@@ -13,7 +13,7 @@
 #SBATCH --signal=B:USR1@60
 #SBATCH --requeue
 
-PYTHON_SCRIPT="/home/vhsingh/Geo-UPSplus/FNO_masked_Experiments/fno_masked_openfoam.py"
+PYTHON_SCRIPT="/home/vhsingh/Geo-UPSplus/FNO_masked_Experiments/fno_masked_openfoam_hole_location.py"
 CHECKPOINT_FILE="/home/vhsingh/Geo-UPSplus/logs/checkpoint-${SLURM_JOB_ID}.txt"
 export WANDB_API_KEY=3ff6a13421fb5921502235dde3f9a4700f33b5b8
 

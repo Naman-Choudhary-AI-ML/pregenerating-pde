@@ -36,45 +36,43 @@ width = 32
 ################################################################
 # load data and data normalization
 ################################################################
-PATH_Sigma = '/home/vhsingh/Geo-UPSplus/Diff_FNO_Experiments/CE-CRP_openfoam/CE-RP_Openfoam_Irregular.npy'
-PATH_XY = '/home/vhsingh/Geo-UPSplus/Diff_FNO_Experiments/CE-CRP_openfoam/C'
+PATH_Sigma = '/home/vhsingh/Geo-UPSplus/Diff_FNO_Experiments/CE-CRP/results.npy'
+PATH_XY = '/home/vhsingh/Geo-UPSplus/Diff_FNO_Experiments/CE-CRP/C'
 dataset_name = os.path.basename(os.path.dirname(PATH_Sigma))
 XY = read_mesh_coordinates(PATH_XY)
 XY = XY[:,:2]
+coords = XY[np.newaxis, :, :]
 
-X, Y = sigma_formation(PATH_Sigma)
 sigma = np.load(PATH_Sigma)
-coords_expanded = XY[np.newaxis, np.newaxis, :, :]  # shape: (1, 1, 16320, 2)
-# print(coords_expanded.shape)
-xy_data = np.tile(coords_expanded, (sigma.shape[0], sigma.shape[1], 1, 1))
-print(xy_data.shape)
+
+print(XY.shape)
 print(sigma.shape)
+xy_data = np.tile(coords, (sigma.shape[0], 1, 1))
 xy_torch = torch.tensor(xy_data, dtype=torch.float)
-X_expanded = np.concatenate([sigma, xy_data], axis=-1)
 
-input = X_expanded[:, 0, :, :]
-target = X_expanded[:, 1, :, :4]
+input = sigma[:, 0, :, :]
+target = sigma[:, 1, :, :]
 
-X_torch = torch.tensor(input, dtype=torch.float)         # shape (20000, 16320, 6)
-Y_torch = torch.tensor(target, dtype=torch.float)         # shape (20000, 16320, 4)
+PDE_Data = torch.tensor(input, dtype=torch.float)         # shape (1000, 16320, 4)
+Target_Data = torch.tensor(target, dtype=torch.float)         # shape (1000, 16320, 4)
 
-print(xy_torch.shape, X_torch.shape, Y_torch.shape)
+print(xy_torch.shape, PDE_Data.shape, Target_Data.shape)
 
-n_samples = X_torch.shape[0]
+n_samples = PDE_Data.shape[0]
 n_train = int(0.8 * n_samples)
 n_test = n_samples - n_train
 
 # Option 1: a simple split
-train_X = X_torch[:n_train]
+train_X = PDE_Data[:n_train]
 train_xy = xy_torch[:n_train]
-train_Y = Y_torch[:n_train]
+train_Y = Target_Data[:n_train]
 
-test_X = X_torch[n_train:]
+test_X = PDE_Data[n_train:]
 test_xy = xy_torch[n_train:]
-test_Y = Y_torch[n_train:]
+test_Y = Target_Data[n_train:]
 
-train_dataset = TensorDataset(train_X, train_Y)
-test_dataset  = TensorDataset(test_X, test_Y)
+train_dataset = TensorDataset(train_X, train_xy, train_Y)
+test_dataset  = TensorDataset(test_X, test_xy, test_Y)
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader  = DataLoader(test_dataset,  batch_size=batch_size, shuffle=False)
@@ -370,9 +368,9 @@ model_iphi = IPHI().cuda()
 print(count_params(model), count_params(model_iphi))
 
 optimizer_fno = Adam(model.parameters(), lr=learning_rate_fno, weight_decay=1e-4)
-scheduler_fno = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_fno, T_max = 200)
+scheduler_fno = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_fno, T_max = 400)
 optimizer_iphi = Adam(model_iphi.parameters(), lr=learning_rate_iphi, weight_decay=1e-4)
-scheduler_iphi = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_iphi, T_max = 200)
+scheduler_iphi = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_iphi, T_max = 400)
 
 wandb.init(
     project="Research",  # Replace with your project name
@@ -407,17 +405,15 @@ for ep in range(epochs):
     t1 = default_timer()
     train_l2 = 0
     train_reg = 0
-    for input_data, target in train_loader:
-        input_data, target = input_data.cuda(), target.cuda()
-        pde_b= input_data[:,:,:4]
-        coords_b = input_data[:,:,4:]
+    for PDE_data, coords_data, target_data in train_loader:
+        PDE_data, coords_data, target_data = PDE_data.cuda(), coords_data.cuda(), target_data.cuda()
 
         optimizer_fno.zero_grad()
         optimizer_iphi.zero_grad()
-        out = model(u=pde_b, x_in=coords_b, x_out=coords_b, iphi=model_iphi)
+        out = model(u=PDE_data, x_in=coords_data, x_out=coords_data, iphi=model_iphi)
 
         # loss = myloss(out.view(batch_size, -1), sigma.view(batch_size, -1))
-        loss = criterion(out, target)
+        loss = criterion(out, target_data)
         loss.backward()
 
         optimizer_fno.step()
@@ -430,13 +426,11 @@ for ep in range(epochs):
     model.eval()
     test_l2 = 0.0
     with torch.no_grad():
-        for input_data, target in test_loader:
-            input_data, target = input_data.cuda(), target.cuda()
-            pde_b= input_data[:,:,:4]
-            coords_b = input_data[:,:,4:]
-            out = model(u=pde_b, x_in=coords_b, x_out=coords_b, iphi=model_iphi)
+        for PDE_data, coords_data, target_data in test_loader:
+            PDE_data, coords_data, target_data = PDE_data.cuda(), coords_data.cuda(), target_data.cuda()
+            out = model(u=PDE_data, x_in=coords_data, x_out=coords_data, iphi=model_iphi)
             # test_l2 += myloss(out.view(batch_size, -1), sigma.view(batch_size, -1)).item()
-            test_l2 += criterion(out, target).item()
+            test_l2 += criterion(out, target_data).item()
 
     train_l2 /= ntrain
     test_l2 /= ntest
@@ -474,8 +468,8 @@ for ep in range(epochs):
         channel_names = ["Density", "Horizontal Velocity", "Vertical Velocity", "Pressure"]
 
         # Flatten spatial data for scatter plot
-        XY_flat = coords_b.reshape(-1, 2).detach().cpu().numpy()  # Flatten XY to [num_points, 2]
-        truth_flat = target.reshape(-1, 4).detach().cpu().numpy()   # Flatten truth to [num_points, 4]
+        XY_flat = coords_data.reshape(-1, 2).detach().cpu().numpy()  # Flatten XY to [num_points, 2]
+        truth_flat = target_data.reshape(-1, 4).detach().cpu().numpy()   # Flatten truth to [num_points, 4]
         pred_flat = out.reshape(-1, 4).detach().cpu().numpy()   # Flatten pred to [num_points, 4]
 
         # Number of channels
@@ -486,7 +480,7 @@ for ep in range(epochs):
         # global_max = max(truth_flat.max(), pred_flat.max())
         global_min = truth_flat.min()
         global_max = truth_flat.max()
-        norm = Normalize(vmin=global_min, vmax=global_max)
+        norm = Normalize(vmin=0, vmax=1)
 
         fig, axes = plt.subplots(nrows=num_channels, ncols=3, figsize=(15, 5 * num_channels))
 

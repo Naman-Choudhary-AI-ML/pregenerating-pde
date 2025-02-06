@@ -17,8 +17,8 @@ print(f"Using device: {device}")
 if device.type == "cuda":
     print(f"GPU: {torch.cuda.get_device_name(0)}")
 
-PATH_Sigma = '/home/vhsingh/Geo-UPSplus/Diff_FNO_Experiments/CE-CRP_openfoam/CE-RP_Openfoam_Irregular.npy'
-PATH_XY = '/home/vhsingh/Geo-UPSplus/Diff_FNO_Experiments/CE-CRP_openfoam/C'
+PATH_Sigma = '/home/vhsingh/Geo-UPSplus/Diff_FNO_Experiments/CE-CRP/results.npy'
+PATH_XY = '/home/vhsingh/Geo-UPSplus/Diff_FNO_Experiments/CE-CRP/C'
 dataset_name = os.path.basename(os.path.dirname(PATH_Sigma))
 XY = read_mesh_coordinates(PATH_XY)
 XY = XY[:,:2]

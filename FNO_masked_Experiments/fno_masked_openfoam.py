@@ -32,8 +32,6 @@ os.makedirs(output_folder, exist_ok=True)
 C_input = "/home/vhsingh/Geo-UPSplus/FNO_masked_Experiments/CE-KH_Openfoam_Irregular/C"
 C_output = output_folder + "/C_updated"
 
-
-
 plot_mesh_centers(C_input, C_output)
 # # Load the .nc file
 # with Dataset(path, mode='r') as nc:

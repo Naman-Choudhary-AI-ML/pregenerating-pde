@@ -59,7 +59,7 @@ def sigma_formation(PATH_Sigma):
 
     X_list = []  # will hold sigma(t)
     Y_list = []  # will hold sigma(t+1)
-    for s in range(1000):    # loop over simulations
+    for s in range(751):    # loop over simulations
         for t in range(20):  # T-1 = 20
             # sigma_data[s, t, ...] is shape (16320, 4)
             # sigma_data[s, t+1, ...] is shape (16320, 4)

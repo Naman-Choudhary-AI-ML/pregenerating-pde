@@ -21,13 +21,11 @@ boundaryField
     }
     bottom
     {
-        type            fixedValue;
-        value           uniform 310; // Fixed temperature for the bottom wall (e.g., 310 K)
+        type            zeroGradient;
     }
     top
     {
-        type            fixedValue;
-        value           uniform 300; // Fixed temperature for the top wall (e.g., 300 K)
+        type            zeroGradient;
     }
     hole
     {

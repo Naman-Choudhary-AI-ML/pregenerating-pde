@@ -183,155 +183,6 @@ def get_block_slices(i_c, j_c, N=128, hole_size=16):
 
     return blocks_slices
 
-# def generate_U_file(folder, i_c, j_c, coefficients, hole_size=0.0625):
-#     # -------------------------
-#     # User Parameters
-#     # -------------------------
-#     p = 4              # Number of modes for perturbations
-#     N = 128            # Mesh resolution (N x N)
-#     epsilon = 0.05     # Perturbation amplitude
-#     R = 287.0          # Specific gas constant for air (J/(kg·K))
-
-#     # Initial condition parameters
-#     rho_low = 1.0      # Density for regions y < 0.25 + sigma0 or y > 0.75 + sigma1
-#     rho_high = 2.0     # Density for regions 0.25 + sigma0 <= y <= 0.75 + sigma1
-#     vx_low = 0.5       # Velocity vx for rho_low regions
-#     vx_high = -0.5     # Velocity vx for rho_high regions
-#     vy = 0.0           # Velocity vy (constant)
-#     p_initial = 2.5    # Pressure (constant)
-
-#     Nx, Ny = 128, 128
-
-#     # -------------------------
-#     # Generate Random Coefficients for Perturbations
-#     # -------------------------
-#     # Generate Random Coefficients for Perturbations
-#     # coefficients = generate_random_coefficients(p)
-#     alpha0 = coefficients["alpha0"]
-#     beta0 = coefficients["beta0"]
-#     alpha1 = coefficients["alpha1"]
-#     beta1 = coefficients["beta1"]
-
-#     logging.info(f"Generated alpha0: {alpha0}")
-#     logging.info(f"Generated beta0: {beta0}")
-#     logging.info(f"Generated alpha1: {alpha1}")
-#     logging.info(f"Generated beta1: {beta1}")
-
-#     # -------------------------
-#     # Define sigma0(x) and sigma1(x)
-#     # -------------------------
-#     def sigma(x, alpha, beta, p):
-#         """
-#         sigma function for x array, combining p modes.
-#         x, alpha, beta are 1D arrays or scalars
-#         """
-#         val = np.zeros_like(x)
-#         j_indices = np.arange(1, p+1)
-#         for j in range(p):
-#             val += alpha[j] * np.cos(2 * np.pi * j_indices[j] * (x + beta[j]))
-#         return epsilon * val
-
-#     # -------------------------
-#     # Create Coordinate Arrays for Cell Centers
-#     # -------------------------
-#     dx = 1.0 / N
-#     dy = 1.0 / N
-
-#     x_coords = (np.arange(N) + 0.5) * dx  # Cell centers in x
-#     y_coords = (np.arange(N) + 0.5) * dy  # Cell centers in y
-
-#     # Make 2D meshgrid (N x N)
-#     X, Y = np.meshgrid(x_coords, y_coords, indexing='ij')  # shape: (N, N)
-
-#     # -------------------------
-#     # Compute Perturbations
-#     # -------------------------
-#     # We only need sigma0(x) and sigma1(x) for x in [0..N-1], so let's use X[:,0]
-#     # i.e. the x-values for the first column, repeated across y dimension
-#     sigma0_1D = sigma(X[:,0], alpha0, beta0, p)  # shape (N,)
-#     sigma1_1D = sigma(X[:,0], alpha1, beta1, p)  # shape (N,)
-
-#     # Broadcast sigma0 and sigma1 across columns
-#     sigma0_2D = np.tile(sigma0_1D[:, np.newaxis], (1, N))  # shape: (N, N)
-#     sigma1_2D = np.tile(sigma1_1D[:, np.newaxis], (1, N))  # shape: (N, N)
-
-#     # -------------------------
-#     # Assign Initial Conditions (full NxN)
-#     # -------------------------
-#     rho_field_full = np.where(
-#         (Y < (0.25 + sigma0_2D)) | (Y > (0.75 + sigma1_2D)),
-#         rho_low,
-#         rho_high
-#     )
-
-#     vx_field_full = np.where(
-#         (Y < (0.25 + sigma0_2D)) | (Y > (0.75 + sigma1_2D)),
-#         vx_low,
-#         vx_high
-#     )
-
-#     vy_field_full = np.full((N, N), vy)
-#     p_field_full  = np.full((N, N), p_initial)
-
-#     # Temperature using Ideal Gas
-#     with np.errstate(divide='ignore', invalid='ignore'):
-#         T_field_full = p_field_full / (rho_field_full * R)
-#         T_field_full = np.nan_to_num(T_field_full)
-
-#     # Log some stats
-#     logging.info(f"rho_field statistics: min={rho_field_full.min()}, max={rho_field_full.max()}, mean={rho_field_full.mean()}")
-#     logging.info(f"vx_field statistics: min={vx_field_full.min()}, max={vx_field_full.max()}, mean={vx_field_full.mean()}")
-#     logging.info(f"vy_field statistics: min={vy_field_full.min()}, max={vy_field_full.max()}, mean={vy_field_full.mean()}")
-#     logging.info(f"p_field statistics: min={p_field_full.min()}, max={p_field_full.max()}, mean={p_field_full.mean()}")
-#     logging.info(f"T_field statistics: min={T_field_full.min()}, max={T_field_full.max()}, mean={T_field_full.mean()}")
-
-#     # -------------------------
-#     # Now reorder by blocks to align with blockMesh ordering
-#     # -------------------------
-#     rho_blockOrder = []
-#     p_blockOrder   = []
-#     T_blockOrder   = []
-#     vx_blockOrder  = []
-#     vy_blockOrder  = []
-
-#     block_slices = get_block_slices(i_c=i_c, j_c=j_c, N=N, hole_size=8)
-    
-#     for (iRange, jRange) in block_slices:
-#         for j_ in jRange:
-#             for i_ in iRange:
-#                 # if (i_hole_min <= i_ <= i_hole_max) and (j_hole_min <= j_ <= j_hole_max):
-#                 #     # It's in the hole or out of domain, skip
-#                 #     continue
-#                 rho_blockOrder.append(rho_field_full[i_, j_])
-#                 p_blockOrder.append(p_field_full[i_, j_])
-#                 T_blockOrder.append(T_field_full[i_, j_])
-#                 vx_blockOrder.append(vx_field_full[i_, j_])
-#                 vy_blockOrder.append(vy_field_full[i_, j_])
-
-#     Ntot = len(rho_blockOrder)
-#     logging.info(f"Block-ordered enumeration: total valid cells = {Ntot}")
-
-#     # Finally write
-#     zero_dir = os.path.join(folder, "0")
-#     os.makedirs(zero_dir, exist_ok=True)
-
-#     write_scalar_field(os.path.join(zero_dir, "rho"), "rho", rho_blockOrder, "[1 -3 0 0 0 0 0]")
-#     write_scalar_field(os.path.join(zero_dir, "p"),   "p",   p_blockOrder,   "[1 -1 -2 0 0 0 0]")
-#     write_scalar_field(os.path.join(zero_dir, "T"),   "T",   T_blockOrder,   "[0 0 0 1 0 0 0]")
-#     write_vector_field(os.path.join(zero_dir, "U"),   "U",   vx_blockOrder, vy_blockOrder, "[0 1 -1 0 0 0 0]")
-
-#     logging.info("All fields have been written successfully in block order.")
-#     print("Initial condition fields (rho, U, p, T) have been generated in the '0' directory, skipping the hole and reordering by blocks.")
-
-#     # Optional: Check that U file was created
-#     u_file = os.path.join(zero_dir, "U")
-#     if os.path.exists(u_file):
-#         print(f"U file generated successfully in folder: {folder}")
-#         logging.info(f"U file generated successfully in folder: {folder}")
-#     else:
-#         print(f"Error: U file was not created in {folder}. Check generation logic.")
-#         logging.error(f"Error: U file was not created in {folder}. Check generation logic.")
-
 def run_rhoPimpleFoam(folder):
     """Runs rhoPimpleFoam for the specified folder and returns True if it converged, False otherwise."""
     command = ["rhoPimpleFoam"]
@@ -356,27 +207,6 @@ def run_rhoPimpleFoam(folder):
         print(f"Error running rhoPimpleFoam: {e}")
         logging.error(f"Error running rhoPimpleFoam: {e}")
         return False
-
-# def run_setfields(folder):
-#     """Runs setFields in the specified folder."""
-#     command = ["setFields"]
-#     print(f"Running setFields in folder: {folder}")
-#     logging.info(f"Running setFields in folder: {folder}")
-#     try:
-#         process = subprocess.Popen(command, cwd=folder)
-#         process.communicate()
-#         if process.returncode == 0:
-#             print(f"setFields completed in folder: {folder}")
-#             logging.info(f"setFields completed in folder: {folder}")
-#         else:
-#             print(f"setFields failed in folder: {folder}")
-#             logging.warning(f"setFields failed in folder: {folder}")
-#     except FileNotFoundError:
-#         print("Error: setFields command not found.")
-#         logging.error("Error: setFields command not found.")
-#     except Exception as e:
-#         print(f"Error running setFields: {e}")
-#         logging.error(f"Error running setFields: {e}")
 
 def generate_cell_centers(folder):
     """Generates cell center coordinates using OpenFOAM post-processing utilities."""
@@ -581,7 +411,7 @@ def parse_internal_field(file_path, field_type="vector", expected_n_points=16128
     else:
         raise ValueError("field_type must be either 'vector' or 'scalar'.")
 
-def parse_simulation(sim_folder, expected_n_points=16128):
+def parse_simulation(sim_folder, expected_n_points=16128, Umax_simulation=None, L=64, nu=1.53e-5):
     """
     Parses a single simulation folder containing time-step directories 
     (e.g. "0", "0.1", "0.2", ...). **Time step "0" is skipped.**
@@ -604,6 +434,10 @@ def parse_simulation(sim_folder, expected_n_points=16128):
 
     # Sort directories numerically
     time_dirs.sort(key=lambda x: float(x))
+
+    if Umax_simulation is None:
+        raise ValueError("Umax_simulation must be provided to compute the Reynolds number.")
+    Re_sim = Umax_simulation * L / nu
     
     results_per_time = []
     for tdir in time_dirs:
@@ -628,13 +462,18 @@ def parse_simulation(sim_folder, expected_n_points=16128):
         # Combine channels into one array per time step.
         # Each point: [rho, Ux, Uy, p]
         combined_data = np.column_stack([rho_data, u_data[:, 0], u_data[:, 1], p_data])
-        results_per_time.append(combined_data)
+        # Create a Reynolds number channel (constant across all cells in this time step).
+        Re_channel = np.full((combined_data.shape[0], 1), Re_sim)
+        
+        # Append the Reynolds number channel.
+        combined_data_with_Re = np.column_stack([combined_data, Re_channel])
+        results_per_time.append(combined_data_with_Re)
     
     results_array = np.stack(results_per_time, axis=0)  # shape: (num_time_steps, n_points, 4)
     return time_dirs, results_array
 
 
-def gather_all_simulations(sim_folders, expected_n_points=16128):
+def gather_all_simulations(sim_folders, expected_n_points=16128, L=64, nu=1.53e-5):
     """
     Given a list of simulation folders, parse them all and stack results into a single array.
     
@@ -647,7 +486,10 @@ def gather_all_simulations(sim_folders, expected_n_points=16128):
     
     for i, folder in enumerate(sim_folders):
         logging.info(f"Parsing simulation folder {folder}")
-        tdirs, results_array = parse_simulation(folder, expected_n_points)
+        # Read Umax for the simulation from the file.
+        Umax_simulation = get_Umax_from_sim_folder(folder)
+        logging.info(f"Umax for simulation {folder} is {Umax_simulation}")
+        tdirs, results_array = parse_simulation(folder, expected_n_points, Umax_simulation, L, nu)
         if i == 0:
             # Keep track of the "canonical" time steps
             final_time_dirs = tdirs
@@ -663,7 +505,7 @@ def gather_all_simulations(sim_folders, expected_n_points=16128):
     # Stack them: from list of [ (num_time_steps, n_points, 4), ... ] 
     # into (num_sims, num_time_steps, n_points, 4)
     final_results = np.stack(all_sim_results, axis=0)
-    # => shape (num_sims, num_time_steps, n_points, 4)
+    # => shape (num_sims, num_time_steps, n_points, 5)
     
     return final_time_dirs, final_results
 
@@ -1109,14 +951,43 @@ def update_Umax_in_simulation_folder(sim_folder, min_value=1.0, max_value=10.0):
     """
     Updates the Umax value in the U file (located in the '0' subfolder) of the given simulation folder.
     A random Umax value is chosen between min_value and max_value.
+    Also writes the new Umax value to a Umax.txt file in the simulation folder.
     """
+    import os
+    import random
+    import logging
+
     u_file_path = os.path.join(sim_folder, "0", "U")
     if not os.path.exists(u_file_path):
         raise FileNotFoundError(f"U file not found at {u_file_path}")
     
     # Choose a new random Umax value in the specified range
     new_value = random.uniform(min_value, max_value)
+    
+    # Update the U file with the new Umax value
     update_Umax(u_file_path, new_value)
+    
+    # Write the Umax value to a separate file in the simulation folder for later reference.
+    Umax_txt_path = os.path.join(sim_folder, "Umax.txt")
+    with open(Umax_txt_path, "w") as f:
+        f.write(str(new_value))
+    
+    logging.info(f"Updated {u_file_path}: Umax set to {new_value}")
+    logging.info(f"Saved Umax value {new_value} in {Umax_txt_path}")
+
+
+def get_Umax_from_sim_folder(sim_folder):
+    """
+    Reads the Umax value for the simulation from a file.
+    This assumes that each simulation folder contains a file 'Umax.txt'
+    with a single number representing the Umax for that simulation.
+    """
+    Umax_file = os.path.join(sim_folder, "Umax.txt")
+    if not os.path.exists(Umax_file):
+        raise FileNotFoundError(f"Umax.txt not found in {sim_folder}")
+    with open(Umax_file, "r") as f:
+        Umax_simulation = float(f.read().strip())
+    return Umax_simulation
 
 def main():
     total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
@@ -1158,7 +1029,7 @@ def main():
                 continue  # Skip this folder
 
             # Run solver
-            update_Umax_in_simulation_folder(folder, min_value=1.125e-3, max_value=1.125e-1)
+            update_Umax_in_simulation_folder(folder, min_value=2.39e-5, max_value=2.39e-3)
             if not run_rhoPimpleFoam(folder):
                 logging.warning(f"Solver failed for folder {folder}. Skipping.")
                 continue

@@ -11,6 +11,7 @@ import torch
 import random
 import gc
 from tqdm import tqdm
+from scipy.ndimage import distance_transform_edt
 # Configure logging
 logging.basicConfig(
     filename="simulation.log",
@@ -448,49 +449,67 @@ def parse_c_file(file_path):
 
 def reshape_trajectory_data(sim_data, cell_centers, grid_shape):
     """
-    Reshape simulation data (timesteps, num_cells, 4) to a fixed grid of shape
-    (timesteps, n_rows, n_cols, 5). The five channels are:
-       - Channel 0: ρ
-       - Channel 1: Ux
-       - Channel 2: Uy
-       - Channel 3: P
-       - Channel 4: hole indicator (0 if cell exists; 1 if hole)
+    Reshape simulation data (timesteps, num_cells, 5) to a fixed grid of shape
+         (timesteps, n_rows, n_cols, 9). The channels are:
+           0: ρ
+           1: Uₓ
+           2: U_y
+           3: P
+           4: Reynolds number
+           5: Binary mask (0 if cell exists; 1 if hole)
+           6: SDF (signed distance: positive in fluid, negative in hole)
+           7: x‑coordinate
+           8: y‑coordinate
     
-    Each cell center (x,y) is mapped to a grid index based on the bounding box of cell_centers:
+    Mapping: For each cell center (x, y), compute
          col = round((x - x_min) / (x_max - x_min) * (n_cols - 1))
          row = round((y - y_min) / (y_max - y_min) * (n_rows - 1))
     
-    Cells that are not filled by any simulation cell remain zero in the first four channels,
-    and their hole indicator is left as 1.
+    Cells not mapped by any simulation cell retain a hole indicator of 1.
+    The SDF is computed using a distance transform on the binary mask.
     """
     n_rows, n_cols = grid_shape
     T = sim_data.shape[0]
-    
-    # Determine domain boundaries from the provided cell centers
+
+    # Determine domain boundaries from cell_centers.
     x_min, x_max = np.min(cell_centers[:, 0]), np.max(cell_centers[:, 0])
     y_min, y_max = np.min(cell_centers[:, 1]), np.max(cell_centers[:, 1])
-    
-    # Initialize grid with zeros; add one extra channel for the binary mask
-    reshaped = np.zeros((T, n_rows, n_cols, 5))
-    mask = np.ones((n_rows, n_cols))  # default: hole everywhere
-    
-    # Compute mapping for each cell center in this simulation.
+
+    # Allocate output grid: (T, n_rows, n_cols, 9)
+    reshaped = np.zeros((T, n_rows, n_cols, 9), dtype=np.float32)
+
+    # Fill the x and y coordinate channels (channels 7 and 8).
+    x_grid = np.linspace(x_min, x_max, n_cols)
+    y_grid = np.linspace(y_min, y_max, n_rows)
+    for row in range(n_rows):
+        for col in range(n_cols):
+            reshaped[:, row, col, 7] = x_grid[col]
+            reshaped[:, row, col, 8] = y_grid[row]
+
+    # Create a binary mask: default is 1 (hole) everywhere.
+    mask = np.ones((n_rows, n_cols), dtype=np.float32)
     mapping = []
     for (x, y) in cell_centers:
         col = int(round((x - x_min) / (x_max - x_min) * (n_cols - 1)))
         row = int(round((y - y_min) / (y_max - y_min) * (n_rows - 1)))
         mapping.append((row, col))
-        mask[row, col] = 0  # mark that a cell exists here
+        mask[row, col] = 0  # mark that a cell exists (fluid)
 
-    # We now assume that sim_data.shape[1] is the number of simulation cells.
-    # We'll fill the grid for each timestep using the mapping computed from the cell centers.
-    # Note: If the number of simulation cells differs from the number of cell centers,
-    #       you may decide to fill only up to the available count.
+    # Compute the signed distance function (SDF).
+    # Our mask is defined as: 0 for fluid, 1 for hole.
+    # Convert to fluid mask: 1 for fluid, 0 for hole.
+    fluid_mask = 1 - mask
+    dist_fluid = distance_transform_edt(fluid_mask)
+    dist_hole  = distance_transform_edt(1 - fluid_mask)
+    sdf = dist_fluid - dist_hole  # positive in fluid, negative in hole
+
+    # Fill simulation data into the grid using the computed mapping.
+    # sim_data has shape: (T, num_cells, 5) where channels are:
+    # 0: ρ, 1: Uₓ, 2: U_y, 3: P, 4: Reynolds number.
     n_cells_sim = sim_data.shape[1]
     n_cells_mapping = len(mapping)
     if n_cells_mapping != n_cells_sim:
-        logging.warning(f"Number of cell centers ({n_cells_mapping}) does not match simulation cells ({n_cells_sim}). "
-                        "Mapping will be computed using available cell centers.")
+        logging.warning(f"Number of cell centers ({n_cells_mapping}) does not match simulation cells ({n_cells_sim}). Using min(n_cells).")
         n_cells = min(n_cells_mapping, n_cells_sim)
         mapping = mapping[:n_cells]
     else:
@@ -500,30 +519,30 @@ def reshape_trajectory_data(sim_data, cell_centers, grid_shape):
         for i, (row, col) in enumerate(mapping):
             if i >= n_cells:
                 break
-            reshaped[t, row, col, 0:4] = sim_data[t, i, :]
-            reshaped[t, row, col, 4] = 0  # cell exists
-        reshaped[t, :, :, 4] = mask  # fill any remaining holes
+            # Fill channels 0-4 from simulation data.
+            reshaped[t, row, col, 0:5] = sim_data[t, i, :]
+        # Fill binary mask (channel 5) and SDF (channel 6) for every time step.
+        reshaped[t, :, :, 5] = mask
+        reshaped[t, :, :, 6] = sdf
+
     return reshaped
 
 def combine_and_reshape_trajectories(dataset, cell_centers, grid_shape):
     """
     Combine all trajectory data (from a single results.npy file with shape
-         (num_trajectories, timesteps, num_cells, 4))
+         (num_trajectories, timesteps, num_cells, 5))
     and reshape them into a fixed grid of shape
-         (num_trajectories, timesteps, n_rows, n_cols, 5)
+         (num_trajectories, timesteps, n_rows, n_cols, 9)
     using the provided cell centers and grid shape.
     """
-    # num_trajectories = dataset.shape[0]
     combined_list = []
     
     for sim_data in tqdm(dataset, desc="Reshaping Trajectories"):
-        # Extract the simulation data for trajectory i (all timesteps, all cells, all 4 channels)
-        # sim_data = dataset[i, :, :, :]  # shape: (timesteps, 16320, 4)
-        reshaped_data = reshape_trajectory_data(sim_data, cell_centers, grid_shape)  # shape: (timesteps, 128, 128, 5)
+        reshaped_data = reshape_trajectory_data(sim_data, cell_centers, grid_shape)
         combined_list.append(reshaped_data)
-        gc.collect()  # free memory if needed
+        gc.collect()
         
-    combined = np.array(combined_list)
+    combined = np.array(combined_list, dtype=np.float32)
     return combined
 
 def parse_internal_field(file_path, field_type="vector", default_value=None):
@@ -666,7 +685,7 @@ def parse_internal_field(file_path, field_type="vector", default_value=None):
         raise ValueError("field_type must be either 'vector' or 'scalar'.")
 
 
-def parse_simulation(sim_folder):
+def parse_simulation(sim_folder, Umax_simulation=None, L=64, nu=1.53e-5):
     """
     Parses a single simulation folder containing time-step directories 
     (e.g. 0, 0.1, 0.2, ...).
@@ -698,6 +717,9 @@ def parse_simulation(sim_folder):
 
     # Sort time directories numerically.
     time_dirs.sort(key=lambda x: float(x))
+    if Umax_simulation is None:
+        raise ValueError("Umax_simulation must be provided to compute the Reynolds number.")
+    Re_sim = Umax_simulation * L / nu
 
     valid_time_dirs = []
     results_per_time = []
@@ -729,7 +751,12 @@ def parse_simulation(sim_folder):
         # Combine data for each point: [rho, Ux, Uy, p]
         combined_data = np.column_stack([rho_data, U_data[:, 0], U_data[:, 1], p_data])
         valid_time_dirs.append(tdir)
-        results_per_time.append(combined_data)
+        # Create a Reynolds number channel (constant across all cells in this time step).
+        Re_channel = np.full((combined_data.shape[0], 1), Re_sim)
+        
+        # Append the Reynolds number channel.
+        combined_data_with_Re = np.column_stack([combined_data, Re_channel])
+        results_per_time.append(combined_data_with_Re)
 
     if len(valid_time_dirs) == 0 or len(results_per_time) == 0:
         logging.warning(f"No valid timesteps found in simulation folder {sim_folder}.")
@@ -739,32 +766,44 @@ def parse_simulation(sim_folder):
     return valid_time_dirs, results_array
 
 
-def gather_all_simulations(sim_folders, grid_shape=(128, 128), c_file_name="0/C"):
+def gather_all_simulations(sim_folders, grid_shape=(128, 128), c_file_name="0/C", L=64, nu=1.53e-5):
     """
-    Given a list of simulation folders, parse them all (via parse_simulation),
-    then reshape each simulation's data onto a fixed grid of shape (timesteps, n_rows, n_cols, 5).
+    Given a list of simulation folders, parse each simulation (via parse_simulation),
+    then reshape its data onto a fixed grid of shape (timesteps, n_rows, n_cols, 9).
     
     Each simulation uses its own cell centers (parsed from its own "C" file) to compute the mapping.
     This avoids mismatches when simulations have different numbers of cells.
     
+    The final 9 channels are:
+       0: ρ
+       1: Uₓ
+       2: U_y
+       3: P
+       4: Reynolds number
+       5: Binary mask (0 if cell exists; 1 if hole)
+       6: SDF (signed distance function: positive in fluid, negative in hole)
+       7: x‑coordinate
+       8: y‑coordinate
+
     Returns:
         common_time_dirs (list of str): The time step labels from the first successful simulation.
-        combined_dataset (np.ndarray): Array of shape (num_sims, timesteps, n_rows, n_cols, 5).
+        combined_dataset (np.ndarray): Array of shape (num_sims, timesteps, n_rows, n_cols, 9).
     """
-    all_reshaped = []  # List to store reshaped simulation arrays (each: (timesteps, 128, 128, 5))
+    all_reshaped = []
     common_time_dirs = None
 
     for folder in sim_folders:
-        # Parse simulation data (raw data: (timesteps, num_cells, 4))
-        sim_result = parse_simulation(folder)
+        # Parse simulation data (raw data: shape (timesteps, num_cells, 5))
+        Umax_simulation = get_Umax_from_sim_folder(folder)
+        logging.info(f"Umax for simulation {folder} is {Umax_simulation}")
+        sim_result = parse_simulation(folder, Umax_simulation, L, nu)
         if sim_result is None:
             logging.error(f"No valid timesteps found in simulation folder {folder}. Skipping folder.")
             continue
-        time_dirs, sim_array = sim_result
-        logging.info(f"Folder {folder} => sim_array shape: {sim_array.shape} (timesteps, num_cells, 4)")
+        time_dirs, sim_array = sim_result  # sim_array shape: (timesteps, num_cells, 5)
+        logging.info(f"Folder {folder} => sim_array shape: {sim_array.shape} (timesteps, num_cells, 5)")
         logging.info(f"Time directories: {time_dirs}")
 
-        # For the first successful simulation, record the time directories as reference.
         if common_time_dirs is None:
             common_time_dirs = time_dirs
         else:
@@ -788,8 +827,8 @@ def gather_all_simulations(sim_folders, grid_shape=(128, 128), c_file_name="0/C"
         logging.warning("No simulations were successfully processed.")
         return None, None
 
-    # Stack the reshaped simulations along a new axis.
-    combined_dataset = np.stack(all_reshaped, axis=0)  # (num_sims, timesteps, 128, 128, 5)
+    # Stack reshaped simulations along a new axis.
+    combined_dataset = np.stack(all_reshaped, axis=0)  # shape: (num_sims, timesteps, n_rows, n_cols, 9)
     return common_time_dirs, combined_dataset
 
 
@@ -1495,14 +1534,42 @@ def update_Umax_in_simulation_folder(sim_folder, min_value=1.0, max_value=10.0):
     """
     Updates the Umax value in the U file (located in the '0' subfolder) of the given simulation folder.
     A random Umax value is chosen between min_value and max_value.
+    Also writes the new Umax value to a Umax.txt file in the simulation folder.
     """
+    import os
+    import random
+    import logging
+
     u_file_path = os.path.join(sim_folder, "0", "U")
     if not os.path.exists(u_file_path):
         raise FileNotFoundError(f"U file not found at {u_file_path}")
     
     # Choose a new random Umax value in the specified range
     new_value = random.uniform(min_value, max_value)
+    
+    # Update the U file with the new Umax value
     update_Umax(u_file_path, new_value)
+    
+    # Write the Umax value to a separate file in the simulation folder for later reference.
+    Umax_txt_path = os.path.join(sim_folder, "Umax.txt")
+    with open(Umax_txt_path, "w") as f:
+        f.write(str(new_value))
+    
+    logging.info(f"Updated {u_file_path}: Umax set to {new_value}")
+    logging.info(f"Saved Umax value {new_value} in {Umax_txt_path}")
+
+def get_Umax_from_sim_folder(sim_folder):
+    """
+    Reads the Umax value for the simulation from a file.
+    This assumes that each simulation folder contains a file 'Umax.txt'
+    with a single number representing the Umax for that simulation.
+    """
+    Umax_file = os.path.join(sim_folder, "Umax.txt")
+    if not os.path.exists(Umax_file):
+        raise FileNotFoundError(f"Umax.txt not found in {sim_folder}")
+    with open(Umax_file, "r") as f:
+        Umax_simulation = float(f.read().strip())
+    return Umax_simulation
 
 import os
 import time
@@ -1554,7 +1621,7 @@ def main():
                 logging.error(f"BlockMesh failed for {folder}: {e}")
                 continue  # Skip this folder
 
-            update_Umax_in_simulation_folder(folder, min_value=1.125e-3, max_value=1.125e-1)
+            update_Umax_in_simulation_folder(folder, min_value=2.39e-5, max_value=2.39e-3)
 
             if not run_rhoPimpleFoam(folder):
                 logging.warning(f"Solver failed for folder {folder}. Skipping.")

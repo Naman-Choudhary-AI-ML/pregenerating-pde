@@ -3,9 +3,11 @@ import glob
 import numpy as np
 import subprocess
 from scipy.fftpack import dst, idst
+from scipy.spatial import cKDTree
+from scipy.ndimage import distance_transform_edt
 
 # ================= Configuration =================
-num_trajectories = 600      # Number of trajectories to simulate
+num_trajectories = 600     # Number of trajectories to simulate
 timesteps = 21              # Total timesteps (including t=0)
 # The simulation extracts 3 channels: Ux, Uy, p.
 # We add a fourth channel for hole info (0: cell exists, 1: hole).
@@ -13,7 +15,7 @@ final_channels = 4
 
 # Directories (change as needed)
 output_dir = "LDC_dataset"                  # Where individual trajectory .npy files are saved
-final_output_dir = "/home/namancho/datasets/LDC-Openfoam"  # Where the combined dataset is saved
+final_output_dir = "/home/namancho/datasets/LDC-Irr-Openfoam"  # Where the combined dataset is saved
 dataset_dir = output_dir                    # For combining, use the same directory
 base_case_dir = "./"                        # Base OpenFOAM case directory
 
@@ -169,14 +171,16 @@ def extract_velocity_data(case_dir, timesteps, cell_centers):
 
 # ================= Reshape Functions =================
 
-def reshape_trajectory_data(sim_data, cell_centers, grid_shape):
+def reshape_trajectory_data(sim_data, cell_centers, grid_shape, Re_value):
     """
     Reshape simulation data (timesteps, num_cells, 3) to a fixed grid of shape
-    (timesteps, n_rows, n_cols, 4). The four channels are:
+    (timesteps, n_rows, n_cols, 6). The four channels are:
        - Channel 0: Ux
        - Channel 1: Uy
        - Channel 2: p
        - Channel 3: hole indicator (0 if cell exists; 1 if hole)
+       - Channel 4: Reynolds number (constant)
+      - Channel 5: Signed Distance Field (SDF)
     
     The mapping from cell center coordinates to grid indices is computed based on the
     bounding box of the cell centers. Each cell center (x,y) is mapped to:
@@ -195,7 +199,7 @@ def reshape_trajectory_data(sim_data, cell_centers, grid_shape):
     y_min, y_max = np.min(cell_centers[:, 1]), np.max(cell_centers[:, 1])
     
     # Initialize final grid for all timesteps with zeros
-    reshaped = np.zeros((T, n_rows, n_cols, 4))
+    reshaped = np.zeros((T, n_rows, n_cols, 6))
     
     # Create a mask grid (hole indicator) initialized to 1 (i.e. hole)
     mask = np.ones((n_rows, n_cols))
@@ -209,19 +213,26 @@ def reshape_trajectory_data(sim_data, cell_centers, grid_shape):
         mapping.append((row, col))
         mask[row, col] = 0  # mark that a cell exists here
 
+    #Compute SDF
+    outside_dist = distance_transform_edt(mask == 0)
+    inside_dist = distance_transform_edt(mask == 1)
+    sdf_field = outside_dist - inside_dist
+
+
     # For each timestep, fill in the data according to the mapping
     for t in range(T):
         for i, (row, col) in enumerate(mapping):
             # Place the simulation values (Ux, Uy, p)
             reshaped[t, row, col, 0:3] = sim_data[t, i, :]
             # For an existing cell, we set hole indicator to 0.
-            reshaped[t, row, col, 3] = 0
+            reshaped[t, row, col, 4] = Re_value
         # For positions that were not filled (hole positions), set channel 3 to 1.
         reshaped[t, :, :, 3] = mask
+        reshaped[t, :, :, 5] = sdf_field
 
     return reshaped
 
-def combine_and_reshape_trajectories(dataset_dir, cell_centers, grid_shape, timesteps, final_channels=4):
+def combine_and_reshape_trajectories(dataset_dir, cell_centers, grid_shape, timesteps, Re_values):
     """
     Combine all trajectory .npy files (each originally of shape (timesteps, num_cells, 3))
     and reshape them into a fixed grid of shape
@@ -237,7 +248,8 @@ def combine_and_reshape_trajectories(dataset_dir, cell_centers, grid_shape, time
     for i, file in enumerate(files):
         print(f"Processing trajectory {i+1}/{num_trajectories}: {file}")
         sim_data = np.load(os.path.join(dataset_dir, file))
-        reshaped_data = reshape_trajectory_data(sim_data, cell_centers, grid_shape)
+        Re_value = Re_values[i]
+        reshaped_data = reshape_trajectory_data(sim_data, cell_centers, grid_shape, Re_value)
         combined_list.append(reshaped_data)
         
     combined = np.array(combined_list)
@@ -282,11 +294,11 @@ def main():
 
     # Combine and reshape all trajectories.
     # The final grid is defined by final_grid_shape.
-    combined_data = combine_and_reshape_trajectories(dataset_dir, cell_centers, final_grid_shape, timesteps, final_channels)
+    combined_data = combine_and_reshape_trajectories(dataset_dir, cell_centers, final_grid_shape, timesteps, Re_values)
     print(f"Combined dataset shape: {combined_data.shape}")
 
     # Save the combined dataset
-    combined_output_file = os.path.join(final_output_dir, "OpenFOAM_final.npy")
+    combined_output_file = os.path.join(final_output_dir, "Final_irr.npy")
     np.save(combined_output_file, combined_data)
     print(f"Saved combined dataset to {combined_output_file}")
 

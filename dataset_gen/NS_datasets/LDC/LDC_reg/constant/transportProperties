@@ -9,29 +9,12 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       volVectorField;
-    object      U;
+    class       dictionary;
+    object      transportProperties;
 }
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 1 -1 0 0 0 0];
+nu              1.5e-5;
 
-internalField   uniform (0 0 0);
 
-boundaryField
-{
-    movingWall
-    {
-        type            fixedValue;
-        value           uniform (0.0018187165307593733 0 0);
-    }
-
-    fixedWalls
-    {
-        type            noSlip;
-    }
-
-    frontAndBack
-    {
-        type            empty;
-    }
-}
+// ************************************************************************* //

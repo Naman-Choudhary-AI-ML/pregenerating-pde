@@ -66,8 +66,8 @@ class FNO(nn.Module):
         if self.in_channels == 7:
             self.in_channels_physical = 4
             self.in_channels_coords = 2
-        elif self.in_channels == 5:
-            self.in_channels_physical = 3
+        elif self.in_channels == 6:
+            self.in_channels_physical = 5
             self.in_channels_coords = 2
         else:
             raise ValueError(f"Unsupported in_channels: {self.in_channels}. Expected 5 or 7.")

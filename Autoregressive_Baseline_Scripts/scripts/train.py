@@ -171,7 +171,12 @@ for epoch in range(1, epochs + 1):
         sample_target_np = sample_target.detach().cpu().numpy()[0]  # (T, H, W, C)
         print("Prediction min/max:", sample_preds_np.min(), sample_preds_np.max())
         print("Ground truth min/max:", sample_target_np.min(), sample_target_np.max())
-        # Optionally, you can also pass in a mask_array if desired.
-        plot_autoregressive_sequence(sample_preds_np, sample_target_np, sim_idx=0, epoch=epoch)
+        # Optionally, pass in a mask_array if desired.
+        plot_autoregressive_sequence(
+            sample_preds_np, sample_target_np,
+            output_dim=config["data"].get("output_dim", None),
+            sim_idx=0, epoch=epoch
+        )
+
 
 wandb.finish()

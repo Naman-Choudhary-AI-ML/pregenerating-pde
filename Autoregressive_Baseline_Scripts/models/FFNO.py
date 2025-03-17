@@ -215,9 +215,19 @@ class FFNO(nn.Module):
         self.input_dim = input_dim
         self.n_layers  = n_layers
 
+        self.in_channels = input_dim  # 7 for CE, 5 for NS
+        if self.in_channels == 7:
+            self.in_channels_physical = 4
+            self.in_channels_coords = 2
+        elif self.in_channels == 6:
+            self.in_channels_physical = 5
+            self.in_channels_coords = 2
+        else:
+            raise ValueError(f"Unsupported in_channels: {self.in_channels}. Expected 5 or 7.")
+
         # Lifting layer
         # self.in_proj = WNLinear(input_dim + 2, self.width, wnorm = ff_weight_norm)
-        self.in_proj = WNLinear(4 + 2, self.width, wnorm = ff_weight_norm)
+        self.in_proj = WNLinear(self.in_channels_physical + 2, self.width, wnorm = ff_weight_norm)
 
         # Shared set of weights
         self.fourier_weight = None
@@ -258,9 +268,9 @@ class FFNO(nn.Module):
             WNLinear(128, output_dim, wnorm = ff_weight_norm))
 
     def forward(self, x):
-        mask     = x[..., -1]         # (B, H, W)
-        physical = x[..., :4]         # (B, H, W, 4) -> only the 4 physical channels
-        coords   = x[..., 4:6]        # (B, H, W, 2) -> the coordinate channels
+        mask = x[..., -1] 
+        physical = x[..., :self.in_channels_physical]
+        coords   = x[..., self.in_channels_physical:self.in_channels_physical + self.in_channels_coords]
     
         # Zero out holes in physical channels:
         physical = physical * mask.unsqueeze(-1)

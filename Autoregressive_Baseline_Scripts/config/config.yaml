@@ -1,5 +1,5 @@
 data:
-  data_path: "/home/vhsingh/Geo-UPSplus/FNO_masked_Experiments/Autoregressive/combined.npy"
+  data_path: "/home/vhsingh/test/NS_LDC_reg-001.npy"
   batch_size: 16
   train_split: 0.8
   debug: false
@@ -13,11 +13,11 @@ wandb:
   scheduler_gamma: 0.5
 
 model:
-  model_type: "FFNO"      # Options: "FFNO", "FNO", etc.
-  input_dim: 7       # For CE=7 and NS=5
+  model_type: "FNO"      # Options: "FFNO", "FNO", etc.
+  input_dim: 6       # For CE=7 and NS=5
   modes: 12
   width: 32
-  output_dim: 4           # For CE=4 and NS=3
+  output_dim: 5           # For CE=6 and NS=5
   n_layers: 4
   factor: 4
   retrain_fno: 42

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 with open("config/config.yaml", "r") as f:
     config = yaml.safe_load(f)
 model_type = config["model"]["model_type"]
-wandb_run_name = f"{model_type}_autoregressive"  # Example: "FNO_autoregressive" or "FFNO_autoregressive"
+wandb_run_name = f"{model_type}_FPO_cyl_Hole_Location_autoregressive"  # Example: "FNO_autoregressive" or "FFNO_autoregressive"
 wandb.init(
     project=config["wandb"]["project"],
     entity=config["wandb"]["entity"],

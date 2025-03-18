@@ -373,7 +373,7 @@ def update_Umax(file_path, new_value):
 
     logging.info(f"Updated {file_path}: Umax set to {new_value}")
 
-def compute_parabolic_inlet(Umax, H=64, num_points=128):
+def compute_parabolic_inlet(Umax, H=2, num_points=128):
     """
     Compute the parabolic velocity profile for the inlet.
     
@@ -475,7 +475,7 @@ def generate_normal_re_values(num_samples, mean=5000, std_dev=2000, min_re=100, 
     re_values = np.clip(re_values, min_re, max_re)  # Ensure values are within range
     return re_values
 
-def update_Umax_in_simulation_folder(sim_folder, re_value, L=64, nu=1.53e-5):
+def update_Umax_in_simulation_folder(sim_folder, re_value, L=2, nu=1.53e-5):
     """
     Updates the Umax value in the simulation folder using a precomputed Reynolds number.
     
@@ -706,7 +706,7 @@ def parse_internal_field(file_path, field_type="vector", expected_n_points=16384
     else:
         raise ValueError("field_type must be either 'vector' or 'scalar'.")
 
-def parse_simulation(sim_folder, expected_n_points=16384, Umax_simulation=None, L=64, nu=1.53e-5):
+def parse_simulation(sim_folder, expected_n_points=16384, Umax_simulation=None, L=2, nu=1.53e-5):
     """
     Parses a single simulation folder containing time-step directories 
     (e.g. "0", "0.1", "0.2", ...). **Time step "0" is skipped.**
@@ -769,7 +769,7 @@ def parse_simulation(sim_folder, expected_n_points=16384, Umax_simulation=None, 
     return time_dirs, results_array
 
 
-def gather_all_simulations(sim_folders, expected_n_points=16384, L=64, nu=1.53e-5):
+def gather_all_simulations(sim_folders, expected_n_points=16384, L=2, nu=1.53e-5):
     """
     Given a list of simulation folders, parse them all and stack results into a single array.
     
@@ -806,7 +806,7 @@ def gather_all_simulations(sim_folders, expected_n_points=16384, L=64, nu=1.53e-
     return final_time_dirs, final_results
 
 def main():
-    save_dir = "/home/namancho/datasets/FPO_NS_Reg"
+    save_dir = "/data/user_data/namancho/FPO_cylinder_reg_new"
     os.makedirs(save_dir, exist_ok=True)
     total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
     main_folder = "Design_Point_0"

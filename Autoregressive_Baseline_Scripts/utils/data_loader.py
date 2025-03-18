@@ -271,7 +271,7 @@ def get_data_loaders(config):
     #   4->Re
     #   5->SDF
     #   3->Mask
-    simulation_data = simulation_data[..., [0, 1, 2, 4, 5, 3]]
+    simulation_data = simulation_data[..., [0, 1, 2, 3, 5, 4]]
     logger.info("Reordered channels to [Ux, Uy, P, Re, SDF, Mask].")
 
     # ----------------------------------------------------------------

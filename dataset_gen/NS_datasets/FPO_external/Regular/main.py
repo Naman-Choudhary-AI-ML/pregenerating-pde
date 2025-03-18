@@ -806,7 +806,7 @@ def gather_all_simulations(sim_folders, expected_n_points=16384, L=64, nu=1.53e-
     return final_time_dirs, final_results
 
 def main():
-    save_dir = "/data/user_data/namancho/FPO_external_reg"
+    save_dir = "/data/user_data/namancho/FPO_external_reg_new"
     os.makedirs(save_dir, exist_ok=True)
     total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
     main_folder = "Design_Point_0"

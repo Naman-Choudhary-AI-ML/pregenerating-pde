@@ -1,20 +1,22 @@
-# Training Instructions
+# Dataset Intructions
 
-## Running the Training Script
-To start training, simply run the following command:
-```bash
-python -m scripts.train.py
-```
+## Intro
+The NS_datasets, and CE_datasets folder contain datasets for Lid driven cavity flow, and Flow past an object
 
-## Experiment Setup
-While running experiments, please ensure that you update the following in the `config.yaml` file:
+Different types of datasets across families:
 
-1. **Dataset Path**: Provide the correct dataset path.
-2. **WandB Project Name**: Set the appropriate project name for logging experiments.
-3. **Entity Name**: Specify the WandB entity name.
-4. **Model Configuration**:
-   - **`input_dim`**: Define the input dimension according to your dataset.
-   - **`output_dim`**: Set the output dimension correctly.
-5. **Model Type**: You have an option to choose between FNO and FFNO
+1. Lid driven cavity flow
+2. Flow past an object inside a cylinder (meaning top and bottom walls have no slip)
+3. Flow past an object externally (meaning top and bottom walls are free flowing)
 
-Once these configurations are updated, you are good to go!
+## Data Gen Setup
+To run the datagen code, in each folder for each PDE and setup, we have a main.py file, which needs to be run to develop datasets.
+You will need to first have openfoam installed, and working, either through apptainer or docker or any other way.
+In case of apptainer run
+apptainer exec openfoam.sif bash
+to use openfoam
+
+Then go inside the required folder and run python main.py
+
+Once data is generated, to restructure data correctly and add additional channels needed, you will find a ipynb file in each folder.
+Inside that, you should be able to restructure openfoam data, into row major format, and add gemeotry mask, SDF channels as well. It also contains code to visualize the data.

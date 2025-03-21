@@ -246,16 +246,6 @@ if __name__ == "__main__":
             data_path=config["hole_data_path"],
             **train_eval_set_kwargs
         )
-        # Load validation datasets
-        val_hole_dataset = get_dataset(
-            dataset=config["dataset"],
-            which="val",
-            num_trajectories=num_hole_train,  # We use number of hole points used in train
-            N_val=num_hole_val,
-            N_test=num_test_samples,
-            data_path=config["hole_data_path"],
-            **train_eval_set_kwargs
-        )
     if num_no_hole_train != 0 :
         train_no_hole_dataset = get_dataset(
             dataset=config["dataset"],
@@ -266,27 +256,38 @@ if __name__ == "__main__":
             data_path=config["no_hole_data_path"],
             **train_eval_set_kwargs
         )
-        val_no_hole_dataset = get_dataset(
-            dataset=config["dataset"],
-            which="val",
-            num_trajectories=num_no_hole_train,  # We use number of no-hole points used in train
-            N_val=num_no_hole_val,
-            N_test=num_test_samples,
-            data_path=config["no_hole_data_path"],
-            **train_eval_set_kwargs
-        )
+        
+    # Load validation datasets
+    val_hole_dataset = get_dataset(
+        dataset=config["dataset"],
+        which="val",
+        num_trajectories=num_finetune_samples,  #to keep the validation dataset same across experiments
+        N_val=num_hole_val,
+        N_test=num_test_samples,
+        data_path=config["hole_data_path"],
+        **train_eval_set_kwargs
+    )
+    val_no_hole_dataset = get_dataset(
+        dataset=config["dataset"],
+        which="val",
+        num_trajectories=num_finetune_samples,  #to keep the validation dataset same across experiments
+        N_val=num_no_hole_val,
+        N_test=num_test_samples,
+        data_path=config["no_hole_data_path"],
+        **train_eval_set_kwargs
+    )
     if num_hole_train == 0:
         train_dataset = train_no_hole_dataset
-        eval_dataset = val_no_hole_dataset
     elif num_no_hole_train == 0:
         train_dataset = train_hole_dataset
-        eval_dataset = val_hole_dataset
     else:
         # Combine hole and no-hole datasets for training
         train_dataset = train_hole_dataset + train_no_hole_dataset
-        eval_dataset = val_hole_dataset + val_no_hole_dataset
+        
+    eval_dataset = val_hole_dataset + val_no_hole_dataset
 
     print(f"Final dataset sizes: Train={len(train_dataset)}, Val={len(eval_dataset)}")
+    print(f"Val data split is for hole: {len(val_hole_dataset)}, and no hole: {len(val_no_hole_dataset)}")
 
     config["effective_train_set_size"] = len(train_dataset)
     time_involved = isinstance(train_dataset, BaseTimeDataset) or (
@@ -558,7 +559,7 @@ if __name__ == "__main__":
     test_no_hole_dataset = get_dataset(
         dataset=config["dataset"],
         which="test",
-        num_trajectories=num_no_hole_train,
+        num_trajectories=num_finetune_samples,
         N_val=num_no_hole_val,
         N_test=num_test_samples,
         data_path=config["no_hole_data_path"],
@@ -576,7 +577,7 @@ if __name__ == "__main__":
     test_hole_dataset = get_dataset(
         dataset=config["dataset"],
         which="test",
-        num_trajectories=num_hole_train,
+        num_trajectories=num_finetune_samples,
         N_val=num_hole_val,
         N_test=num_test_samples,
         data_path=config["hole_data_path"],
@@ -590,119 +591,3 @@ if __name__ == "__main__":
     #         f"test_hole/mean_relative_linf_error": predictions_hole.metrics["mean_relative_linf_error"]})
 
     print("Testing completed. All results logged to WandB under separate test categories.")
-
-    
-    # if (RANK == 0 or RANK == -1) and params.push_to_hf_hub is not None:
-    #     model.push_to_hub(params.push_to_hf_hub)
-
-    # do_test = (
-    #     True
-    #     if params.max_num_train_time_steps is None
-    #     and params.train_time_step_size is None
-    #     and not params.train_small_time_transition
-    #     and not ".time" in config["dataset"]
-    #     else False
-    # )
-    # if do_test:
-    #     print("Testing...")
-    #     test_set_kwargs = (
-    #         {"just_velocities": True}
-    #         if ("incompressible" in config["dataset"]) and params.just_velocities
-    #         else {}
-    #     )
-    #     out_test_set_kwargs = (
-    #         {"just_velocities": True}
-    #         if ("incompressible" in config["dataset"]) and params.just_velocities
-    #         else {}
-    #     )
-    #     if params.move_data is not None:
-    #         test_set_kwargs["move_to_local_scratch"] = params.move_data
-    #         out_test_set_kwargs["move_to_local_scratch"] = params.move_data
-    #     if time_involved:
-    #         test_set_kwargs = {
-    #             **test_set_kwargs,
-    #             "max_num_time_steps": 1,
-    #             "time_step_size": 14,
-    #             "allowed_time_transitions": [1],
-    #         }
-    #         out_test_set_kwargs = {
-    #             **out_test_set_kwargs,
-    #             "max_num_time_steps": 1,
-    #             "time_step_size": 20,
-    #             "allowed_time_transitions": [1],
-    #         }
-
-    #     test_dataset = get_dataset(
-    #         dataset=config["dataset"],
-    #         which="test",
-    #         num_trajectories=config["num_trajectories"],
-    #         data_path=params.data_path,
-    #         **test_set_kwargs,
-    #     )
-    #     try:
-    #         out_dist_test_dataset = get_dataset(
-    #             dataset=config["dataset"] + ".out",
-    #             which="test",
-    #             num_trajectories=config["num_trajectories"],
-    #             data_path=params.data_path,
-    #             **out_test_set_kwargs,
-    #         )
-    #     except:
-    #         out_dist_test_dataset = None
-    #     predictions = trainer.predict(test_dataset, metric_key_prefix="")
-    #     if RANK == 0 or RANK == -1:
-    #         metrics = {}
-    #         for key, value in predictions.metrics.items():
-    #             metrics["test/" + key[1:]] = value
-    #         wandb.log(metrics)
-    #         create_predictions_plot(
-    #             predictions.predictions,
-    #             predictions.label_ids,
-    #             wandb_prefix="test",
-    #         )
-
-    #     # evaluate on out-of-distribution test set
-    #     if out_dist_test_dataset is not None:
-    #         predictions = trainer.predict(out_dist_test_dataset, metric_key_prefix="")
-    #         if RANK == 0 or RANK == -1:
-    #             metrics = {}
-    #             for key, value in predictions.metrics.items():
-    #                 metrics["test_out_dist/" + key[1:]] = value
-    #             wandb.log(metrics)
-    #             create_predictions_plot(
-    #                 predictions.predictions,
-    #                 predictions.label_ids,
-    #                 wandb_prefix="test_out_dist",
-    #             )
-
-    #     if time_involved and (test_set_kwargs["time_step_size"] // 2 > 0):
-    #         trainer.set_ar_steps(test_set_kwargs["time_step_size"] // 2)
-    #         predictions = trainer.predict(test_dataset, metric_key_prefix="")
-    #         if RANK == 0 or RANK == -1:
-    #             metrics = {}
-    #             for key, value in predictions.metrics.items():
-    #                 metrics["test/ar/" + key[1:]] = value
-    #             wandb.log(metrics)
-    #             create_predictions_plot(
-    #                 predictions.predictions,
-    #                 predictions.label_ids,
-    #                 wandb_prefix="test/ar",
-    #             )
-
-    #         # evaluate on out-of-distribution test set
-    #         if out_dist_test_dataset is not None:
-    #             trainer.set_ar_steps(out_test_set_kwargs["time_step_size"] // 2)
-    #             predictions = trainer.predict(
-    #                 out_dist_test_dataset, metric_key_prefix=""
-    #             )
-    #             if RANK == 0 or RANK == -1:
-    #                 metrics = {}
-    #                 for key, value in predictions.metrics.items():
-    #                     metrics["test_out_dist/ar/" + key[1:]] = value
-    #                 wandb.log(metrics)
-    #                 create_predictions_plot(
-    #                     predictions.predictions,
-    #                     predictions.label_ids,
-    #                     wandb_prefix="test_out_dist/ar",
-    #                 )
-

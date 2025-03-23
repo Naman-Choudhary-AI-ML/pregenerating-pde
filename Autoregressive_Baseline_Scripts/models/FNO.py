@@ -62,12 +62,12 @@ class FNO(nn.Module):
         self.padding_frac = padding_frac
 
         # Infer input channel distribution
-        self.in_channels = input_dim  # 7 for CE, 5 for NS
-        if self.in_channels == 7:
-            self.in_channels_physical = 4
-            self.in_channels_coords = 2
-        elif self.in_channels == 6:
+        self.in_channels = input_dim  # 7 for CE, 6 for NS
+        if self.in_channels == 6:
             self.in_channels_physical = 5
+            self.in_channels_coords = 2
+        elif self.in_channels == 7:
+            self.in_channels_physical = 6
             self.in_channels_coords = 2
         else:
             raise ValueError(f"Unsupported in_channels: {self.in_channels}. Expected 5 or 7.")

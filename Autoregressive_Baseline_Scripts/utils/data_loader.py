@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader, Subset
 import os
+from utils.poseidon_dataloader import CEDataset
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -24,11 +25,11 @@ def get_channel_layout(num_channels):
     #   - fallback (7-channel)   => [0..3] = physical, [4..5] = coords, 6 = mask
 
     if num_channels == 8:
-        physical_channels = [0, 1, 2, 3, 4]
+        physical_channels = [0, 1, 2]
         coord_channels = [5, 6]
         mask_channel = 7
     elif num_channels == 9:
-        physical_channels = [0, 1, 2, 3, 4, 5]
+        physical_channels = [0, 1, 2, 3]
         coord_channels = [6, 7]
         mask_channel = 8
     else:
@@ -175,7 +176,10 @@ class SimulationDataset(Dataset):
                         logger.info(
                             f"[DEBUG] Timestep {t+1} target channel {ch}: min={ch_data.min().item()}, max={ch_data.max().item()}, mean={ch_data.mean().item()}"
                         )
-        return seed_input, target_sequence
+        return {
+            "pixel_values": seed_input,
+            "labels": target_sequence
+        }
 
 def compute_normalization_stats(tensor_data):
     """
@@ -238,6 +242,7 @@ def get_data_loaders(config):
     train_split = config["data"]["train_split"]
     debug_flag = config["data"].get("debug", False)
     domain_range = config["data"].get("domain_range", (0, 2))  # default (0..2)
+    input_dim = config["model"]["input_dim"]
 
     # Load raw simulation data
     try:
@@ -271,8 +276,12 @@ def get_data_loaders(config):
     #   4->Re
     #   5->SDF
     #   3->Mask
-    simulation_data = simulation_data[..., [0, 1, 2, 4, 5, 3]]
-    logger.info("Reordered channels to [Ux, Uy, P, Re, SDF, Mask].")
+    if input_dim == 6:
+        simulation_data = simulation_data[..., [0, 1, 2, 4, 5, 3]]
+        logger.info("Reordered channels to [Ux, Uy, P, Re, SDF, Mask].")
+    else:
+        simulation_data = simulation_data[..., [0, 1, 2, 3, 4, 6, 5]]
+        logger.info("Reordered channels to [Ux, Uy, P, Re, SDF, Mask].")
 
     # ----------------------------------------------------------------
     # 2) Create x and y coordinate channels
@@ -294,13 +303,24 @@ def get_data_loaders(config):
     # We want final => (num_sims, T, H, W, 8)
     #   indices:
     #       0->Ux, 1->Uy, 2->P, 3->Re, 4->SDF, 5->x, 6->y, 7->Mask
-    simulation_data = np.concatenate([
-        simulation_data[..., :5],  # [Ux, Uy, P, Re, SDF]
-        x_channel,                 # channel 5
-        y_channel,                 # channel 6
-        simulation_data[..., 5:6]  # channel 7 = Mask
-    ], axis=-1)
-    logger.info(f"Final data shape: {simulation_data.shape} (channels: Ux,Uy,P,Re,SDF,x,y,Mask)")
+    if input_dim == 6:
+        simulation_data = np.concatenate([
+            simulation_data[..., :5],  # [Ux, Uy, P, Re, SDF]
+            x_channel,                 # channel 5
+            y_channel,                 # channel 6
+            simulation_data[..., 5:6]  # channel 7 = Mask
+        ], axis=-1)
+    elif input_dim == 7:
+        simulation_data = np.concatenate([
+            simulation_data[..., :6],  # [Ux, Uy, P, Re, SDF]
+            x_channel,                 # channel 5
+            y_channel,                 # channel 6
+            simulation_data[..., 6:7]  # channel 7 = Mask
+        ], axis=-1)
+    else:
+        raise ValueError(f"Input dimensions not specified correctly")
+    logger.info(f"Final data shape: {simulation_data.shape}")
+    
     simulation_data[..., 7] = 1 - simulation_data[..., 7]
 
     # Convert to torch tensor
@@ -325,13 +345,28 @@ def get_data_loaders(config):
     # ----------------------------------------------------------------
     # We pass 'simulation_data' (the np.array) directly, so SimulationDataset
     # must accept a pre-loaded array.
-    full_dataset = SimulationDataset(
-        npy_file=simulation_data,
-        phys_stats=phys_stats,
-        coord_stats=coord_stats,
-        teacher_channels=None,  # auto-detect # of physical channels
-        debug=debug_flag
-    )
+    if config["model"]["model_type"] == "FNO" or config["model"]["model_type"] == "FFNO":
+        full_dataset = SimulationDataset(
+            npy_file=simulation_data,
+            phys_stats=phys_stats,
+            coord_stats=coord_stats,
+            teacher_channels=None,  # auto-detect # of physical channels
+            debug=debug_flag
+        )
+    else:
+        full_dataset = CEDataset(
+            file_path=config["data"]["data_path"],
+            max_num_time_steps=config["data"].get("max_num_time_steps", 20),
+            time_step_size=config["data"].get("time_step_size", 1),
+            fix_input_to_time_step=config["data"].get("fix_input_to_time_step", None),
+            allowed_time_transitions=config["data"].get("allowed_time_transitions", [1]),
+            resolution=config["data"].get("resolution", 128),
+            num_trajectories=config["data"].get("num_trajectories", 400),
+            N_val=config["data"].get("N_val", 100),
+            N_test=config["data"].get("N_test", 80),
+            which="train",
+            use_all_channels=config["data"].get("use_all_channels", False)
+        )
 
     train_dataset = Subset(full_dataset, train_indices)
     test_dataset = Subset(full_dataset, test_indices)

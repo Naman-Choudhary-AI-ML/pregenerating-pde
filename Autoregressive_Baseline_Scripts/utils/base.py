@@ -306,6 +306,7 @@ class BaseTimeDataset(BaseDataset, ABC):
         time_step_size: Optional[int] = None,
         fix_input_to_time_step: Optional[int] = None,
         allowed_time_transitions: Optional[List[int]] = None,
+        autoregressive: bool = False,
         **kwargs,
     ) -> None:
         """
@@ -360,36 +361,41 @@ class BaseTimeDataset(BaseDataset, ABC):
         assert self.N_test is not None and self.N_test > 0
         assert self.max_num_time_steps is not None and self.max_num_time_steps > 0
 
-        if self.fix_input_to_time_step is not None:
-            self.multiplier = self.max_num_time_steps
-        else:
-            self.time_indices = []
-            for i in range(self.max_num_time_steps + 1):
-                for j in range(i, self.max_num_time_steps + 1):
-                    if (
-                        self.allowed_time_transitions is not None
-                        and (j - i) not in self.allowed_time_transitions
-                    ):
-                        continue
-                    self.time_indices.append(
-                        (self.time_step_size * i, self.time_step_size * j)
-                    )
-            self.multiplier = len(self.time_indices)
 
-        if self.which == "train":
-            self.length = self.num_trajectories * self.multiplier
-            self.start = 0
-        elif self.which == "val":
-            self.length = self.N_val * self.multiplier
-            self.start = self.N_max - self.N_val - self.N_test
+        if self.autoregressive:
+            self.length = self.num_trajectories
+            self.multiplier = 1
         else:
-            self.length = self.N_test * self.multiplier
-            self.start = self.N_max - self.N_test
+            if self.fix_input_to_time_step is not None:
+                self.multiplier = self.max_num_time_steps
+            else:
+                self.time_indices = []
+                for i in range(self.max_num_time_steps + 1):
+                    for j in range(i, self.max_num_time_steps + 1):
+                        if (
+                            self.allowed_time_transitions is not None
+                            and (j - i) not in self.allowed_time_transitions
+                        ):
+                            continue
+                        self.time_indices.append(
+                            (self.time_step_size * i, self.time_step_size * j)
+                        )
+                self.multiplier = len(self.time_indices)
 
-        self.output_dim = self.label_description.count(",") + 1
-        descriptors, channel_slice_list = self.get_channel_lists(self.label_description)
-        self.printable_channel_description = descriptors
-        self.channel_slice_list = channel_slice_list
+            if self.which == "train":
+                self.length = self.num_trajectories * self.multiplier
+                self.start = 0
+            elif self.which == "val":
+                self.length = self.N_val * self.multiplier
+                self.start = self.N_max - self.N_val - self.N_test
+            else:
+                self.length = self.N_test * self.multiplier
+                self.start = self.N_max - self.N_test
+
+            self.output_dim = self.label_description.count(",") + 1
+            descriptors, channel_slice_list = self.get_channel_lists(self.label_description)
+            self.printable_channel_description = descriptors
+            self.channel_slice_list = channel_slice_list
 
 
 class TimeWrapper(BaseTimeDataset):

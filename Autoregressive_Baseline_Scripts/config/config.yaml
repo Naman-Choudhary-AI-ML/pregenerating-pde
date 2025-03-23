@@ -1,6 +1,6 @@
 data:
-  data_path: "/home/vhsingh/test/NS_LDC_reg-001.npy"
-  batch_size: 16
+  data_path: "/home/vhsingh/Geo-UPSplus/Autoregressive_Baseline_Scripts/Dataset/scaled_trajectories.npy"
+  batch_size: 8
   train_split: 0.8
   debug: false
 wandb:
@@ -13,11 +13,12 @@ wandb:
   scheduler_gamma: 0.5
 
 model:
-  model_type: "FNO"      # Options: "FFNO", "FNO", etc.
-  input_dim: 6       # For CE=7 and NS=5
+  model_type: "scOT"      # Options: "FFNO", "FNO", etc.
+  model_name: "T"
+  input_dim: 6       # For CE=7 and NS=6
   modes: 12
   width: 32
-  output_dim: 5           # For CE=6 and NS=5
+  output_dim: 3           # For CE=4 and NS=3
   n_layers: 4
   factor: 4
   retrain_fno: 42

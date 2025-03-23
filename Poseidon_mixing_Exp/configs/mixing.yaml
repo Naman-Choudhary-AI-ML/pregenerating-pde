@@ -29,8 +29,8 @@ max_num_train_time_steps:
 train_time_step_size:
   value: 1 
 hole_data_path:
-  value: "/home/namancho/datasets/LDC-Irr-Openfoam/Final_irr.npy"
+  value: "/home/vhsingh/Geo-UPSplus/Poseidon_mixing_Exp/Dataset/LDC_holelocation.npy"
 no_hole_data_path:
-  value: "/home/namancho/datasets/LDC-Openfoam/Final_irr.npy"
+  value: "/home/vhsingh/Geo-UPSplus/Poseidon_mixing_Exp/Dataset/NS_LDC_Regular.npy"
 alpha:
-  value: 1.0
+  value: 0.15

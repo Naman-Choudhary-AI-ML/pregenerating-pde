@@ -4,8 +4,8 @@ data:
   train_split: 0.8
   debug: false
 wandb:
-  project: "GeoFNO1"
-  entity: "namancho"
+  project: "Research"
+  entity: "ved100-carnegie-mellon-university"
   learning_rate: 0.001
   epochs: 401
   batch_size: 32
@@ -13,8 +13,9 @@ wandb:
   scheduler_gamma: 0.5
 
 model:
-  model_type: "FFNO"      # Options: "FFNO", "FNO", etc.
-  input_dim: 6       # For CE=7 and NS=5
+  model_type: "scOT"      # Options: "FFNO", "FNO", etc.
+  model_name: "T"
+  input_dim: 6       # For CE=7 and NS=6
   modes: 12
   width: 32
   output_dim: 3           # For CE=4 and NS=3

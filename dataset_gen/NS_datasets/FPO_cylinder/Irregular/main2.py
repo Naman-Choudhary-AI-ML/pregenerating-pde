@@ -88,30 +88,6 @@ def generate_U_file(folder):
         print(f"Error: generate_setfields.py not found in {folder}. Expected path was: {u_generator_script}")
         logging.error(f"Error: generate_setfields.py not found in {folder}. Expected path was: {u_generator_script}")
 
-def run_rhoPimpleFoam(folder):
-    """Runs rhoPimpleFoam for the specified folder and returns True if it converged, False otherwise."""
-    command = ["rhoPimpleFoam"]
-    print(f"Running rhoPimpleFoam in folder: {folder}")
-    try:
-        process = subprocess.Popen(command, cwd=folder)
-        process.communicate()
-        # Check the return code
-        if process.returncode == 0:
-            print(f"rhoPimpleFoam simulation completed successfully in folder: {folder}")
-            logging.info(f"rhoPimpleFoam simulation completed successfully in folder: {folder}")
-            return True
-        else:
-            print(f"rhoPimpleFoam simulation failed or did not converge in folder: {folder}")
-            logging.warning(f"rhoPimpleFoam simulation failed or did not converge in folder: {folder}")
-            return False
-    except FileNotFoundError:
-        print("Error: rhoPimpleFoam command not found.")
-        logging.error("Error: rhoPimpleFoam command not found.")
-        return False
-    except Exception as e:
-        print(f"Error running rhoPimpleFoam: {e}")
-        logging.error(f"Error running rhoPimpleFoam: {e}")
-        return False
 
 def run_icoFoam(folder):
     """Runs icoFoam for the specified folder and returns True if it converged, False otherwise."""
@@ -347,33 +323,7 @@ def extract_results(folder, Nx=128, Ny=128, R=287):
 
     return data_array
 
-def update_Umax(file_path, new_value):
-    """
-    Reads the file at file_path, replaces the Umax value with new_value, and writes it back.
-    The line to be replaced is assumed to be of the form:
-        const scalar Umax = 10.0;
-    """
-    # Pattern to match the Umax definition
-    pattern = r"(const\s+scalar\s+Umax\s*=\s*)([\d\.Ee+-]+)(\s*;)"
-
-    with open(file_path, "r") as f:
-        content = f.read()
-
-    # Replace the old value with the new one
-    def replacement(match):
-        return f"{match.group(1)}{new_value}{match.group(3)}"
-
-    updated_content, count = re.subn(pattern, replacement, content)
-
-    if count == 0:
-        raise ValueError(f"Could not find the Umax definition in {file_path}")
-
-    with open(file_path, "w") as f:
-        f.write(updated_content)
-
-    logging.info(f"Updated {file_path}: Umax set to {new_value}")
-
-def compute_parabolic_inlet(Umax, H=64, num_points=128):
+def compute_parabolic_inlet(Umax, H=2, num_points=128):
     """
     Compute the parabolic velocity profile for the inlet.
     
@@ -410,18 +360,6 @@ def update_U_file(sim_folder, Umax):
     # Compute parabolic inlet velocities
     velocity_values = compute_parabolic_inlet(Umax)
 
-    # New boundaryField content
-    # boundaryField = f"""
-    # left
-    # {{
-    #     type            fixedValue;
-    #     value           nonuniform List<vector>
-    #     {len(velocity_values)}
-    #     (
-    #     {'\n'.join(velocity_values)}
-    #     );
-    # }}
-    # """
     boundaryField = (
     f"    left\n"
     f"    {{\n"
@@ -475,7 +413,7 @@ def generate_normal_re_values(num_samples, mean=5000, std_dev=2000, min_re=100, 
     re_values = np.clip(re_values, min_re, max_re)  # Ensure values are within range
     return re_values
 
-def update_Umax_in_simulation_folder(sim_folder, re_value, L=64, nu=1.53e-5):
+def update_Umax_in_simulation_folder(sim_folder, re_value, L=2, nu=1.53e-5):
     """
     Updates the Umax value in the simulation folder using a precomputed Reynolds number.
     
@@ -706,7 +644,7 @@ def parse_internal_field(file_path, field_type="vector", expected_n_points=16128
     else:
         raise ValueError("field_type must be either 'vector' or 'scalar'.")
 
-def parse_simulation(sim_folder, expected_n_points=16128, Umax_simulation=None, L=64, nu=1.53e-5):
+def parse_simulation(sim_folder, expected_n_points=16128, Umax_simulation=None, L=2, nu=1.53e-5):
     """
     Parses a single simulation folder containing time-step directories 
     (e.g. "0", "0.1", "0.2", ...). **Time step "0" is skipped.**
@@ -769,7 +707,7 @@ def parse_simulation(sim_folder, expected_n_points=16128, Umax_simulation=None, 
     return time_dirs, results_array
 
 
-def gather_all_simulations(sim_folders, expected_n_points=16128, L=64, nu=1.53e-5):
+def gather_all_simulations(sim_folders, expected_n_points=16128, L=2, nu=1.53e-5):
     """
     Given a list of simulation folders, parse them all and stack results into a single array.
     
@@ -806,7 +744,8 @@ def gather_all_simulations(sim_folders, expected_n_points=16128, L=64, nu=1.53e-
     return final_time_dirs, final_results
 
 def main():
-    save_dir = "/data/user_data/namancho/FPO_cylinder_irr"
+    save_dir = "/data/user_data/namancho/FPO_cylinder_irr_new"
+    # save_dir = "./"
     os.makedirs(save_dir, exist_ok=True)
     total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
     main_folder = "Design_Point_0"

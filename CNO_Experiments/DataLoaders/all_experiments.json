@@ -1,0 +1,11 @@
+{
+    "ns_custom": {
+      "include_zero": true,
+      "normalize": true,
+      "is_masked": null,
+      "in_dim": 7,
+      "out_dim": 3,
+      "step_max": 20
+    }
+  }
+  

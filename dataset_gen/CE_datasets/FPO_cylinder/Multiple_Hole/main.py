@@ -426,7 +426,7 @@ def parse_internal_field(file_path, field_type="vector", default_value=None):
         raise ValueError("field_type must be either 'vector' or 'scalar'.")
 
 
-def parse_simulation(sim_folder, Umax_simulation=None, L=64, nu=1.53e-5):
+def parse_simulation(sim_folder, Umax_simulation=None, L=2, nu=1.53e-5):
     """
     Parses a single simulation folder containing time-step directories 
     (e.g. 0, 0.1, 0.2, ...).
@@ -507,7 +507,7 @@ def parse_simulation(sim_folder, Umax_simulation=None, L=64, nu=1.53e-5):
     return valid_time_dirs, results_array
 
 
-def gather_all_simulations(sim_folders, grid_shape=(128, 128), c_file_name="0/C", L=64, nu=1.53e-5):
+def gather_all_simulations(sim_folders, grid_shape=(128, 128), c_file_name="0/C", L=2, nu=1.53e-5):
     """
     Given a list of simulation folders, parse them all (via parse_simulation),
     then reshape each simulation's data onto a fixed grid of shape (timesteps, n_rows, n_cols, 5).
@@ -647,10 +647,10 @@ def delete_blockMeshDict(folder_path):
             print(f"No blockMeshDict found in {folder_path}, skipping deletion.")
     except Exception as e:
         print(f"Error deleting blockMeshDict in {folder_path}: {e}")
-scaled_hole1 = (0.625 * 32, 0.9375 * 32, 0.125 * 32, 0.125 * 32)
-scaled_hole2 = (1.25 * 32, 0.9375 * 32, 0.125 * 32, 0.125 * 32)
+scaled_hole1 = (0.625 * 1, 0.9375 * 1, 0.125 * 1, 0.125 * 1)
+scaled_hole2 = (1.25 * 1, 0.9375 * 1, 0.125 * 1, 0.125 * 1)
 new_holes = [scaled_hole1, scaled_hole2]
-def generate_blockMeshDict(domain=(0, 64, 0, 64),
+def generate_blockMeshDict(domain=(0, 2, 0, 2),
                            resolution=(128, 128),
                            # holes given as list of tuples: (hole_x, hole_y, hole_width, hole_height)
                            holes=new_holes,
@@ -924,47 +924,156 @@ def generate_blockMeshDict(domain=(0, 64, 0, 64),
 # Example usage:
 import random
 
-def randomize_holes(n, hole_size=(4.0, 4.0), domain=(0, 64, 0, 64), grid_step=0.50):
+import random
+
+def randomize_holes(n, hole_size=(0.125, 0.125), domain=(0, 2, 0, 2),
+                    grid_step=0.015625, allow_overlap=False,
+                    overlap_fraction=0.3):
     """
     Generate n random holes within the given domain.
     
     Each hole is defined as a tuple (hole_x, hole_y, hole_width, hole_height),
     where (hole_x, hole_y) is the lower-left corner.
     
-    The lower-left coordinates are multiples of grid_step to ensure consistency
-    with the cell resolution (e.g., 128 cells over a 2×2 domain).
+    The lower-left coordinates are multiples of grid_step, and a margin is enforced
+    so that holes never touch the domain boundary.
+    
+    If allow_overlap=True, ALL holes share a common sub-region (they 'all overlap').
+    If allow_overlap=False, no holes overlap each other at all.
     
     Parameters:
         n (int): Number of holes to generate.
         hole_size (tuple): Fixed size for each hole (width, height).
         domain (tuple): (xmin, xmax, ymin, ymax) defining the overall domain.
-        grid_step (float): The resolution increment (default 0.015625).
+        grid_step (float): The resolution increment.
+        allow_overlap (bool): 
+            - If False, holes do not overlap (though they can touch boundaries).
+            - If True, all holes must overlap each other in at least a sub-region.
+        overlap_fraction (float):
+            - Fraction of the hole dimension used to define a "common box" inside each hole.
+              E.g., 0.3 => 30% of the hole size in each dimension is the guaranteed overlap box.
+              Only used if allow_overlap=True. 
+              The smaller this fraction, the less forced overlap; the larger it is, 
+              the more they coincide.
     
     Returns:
         list of tuples: Each tuple is (hole_x, hole_y, hole_width, hole_height).
     """
     xmin, xmax, ymin, ymax = domain
     hole_width, hole_height = hole_size
-
-    # To keep the hole fully inside the domain, the lower-left corner can vary from:
-    x_min_possible = xmin
-    x_max_possible = xmax - hole_width
-    y_min_possible = ymin
-    y_max_possible = ymax - hole_height
-
-    # Create lists of possible x and y coordinates (multiples of grid_step)
-    num_x = int((x_max_possible - xmin) / grid_step) + 1
-    num_y = int((y_max_possible - ymin) / grid_step) + 1
-    x_positions = [round(xmin + i * grid_step, 12) for i in range(num_x)]
-    y_positions = [round(ymin + j * grid_step, 12) for j in range(num_y)]
     
-    holes = []
-    for _ in range(n):
-        hole_x = random.choice(x_positions)
-        hole_y = random.choice(y_positions)
-        holes.append((hole_x, hole_y, hole_width, hole_height))
-    
-    return holes
+    # A small margin so holes never exactly touch the domain boundary.
+    margin = grid_step
+
+    # 1. If no overlap is allowed, use the standard "no overlap" approach.
+    if not allow_overlap:
+        x_min_possible = xmin + margin
+        x_max_possible = xmax - hole_width - margin
+        y_min_possible = ymin + margin
+        y_max_possible = ymax - hole_height - margin
+
+        # Build discrete lists of possible positions.
+        num_x = int((x_max_possible - x_min_possible) / grid_step) + 1
+        num_y = int((y_max_possible - y_min_possible) / grid_step) + 1
+        x_positions = [round(x_min_possible + i * grid_step, 12) for i in range(num_x)]
+        y_positions = [round(y_min_possible + j * grid_step, 12) for j in range(num_y)]
+        
+        if not x_positions or not y_positions:
+            raise ValueError("No valid positions for holes. Domain might be too small or parameters invalid.")
+
+        # Function to check if two rectangles overlap at all
+        def rectangles_overlap(r1, r2):
+            x1, y1, w1, h1 = r1
+            x2, y2, w2, h2 = r2
+            # They do NOT overlap if one is completely to the left/right or above/below the other
+            if x1 + w1 <= x2 or x2 + w2 <= x1:
+                return False
+            if y1 + h1 <= y2 or y2 + h2 <= y1:
+                return False
+            return True
+
+        holes = []
+        attempts = 0
+        max_attempts = 10000
+        while len(holes) < n and attempts < max_attempts:
+            hole_x = random.choice(x_positions)
+            hole_y = random.choice(y_positions)
+            candidate = (hole_x, hole_y, hole_width, hole_height)
+            
+            # Check for overlap with existing holes
+            overlap_found = any(rectangles_overlap(candidate, h) for h in holes)
+            if not overlap_found:
+                holes.append(candidate)
+            attempts += 1
+
+        if len(holes) < n:
+            raise ValueError("Could not place the requested number of non-overlapping holes. Try reducing n or hole size.")
+        
+        return holes
+
+    # 2. If overlap is allowed, we want *all* holes to share a sub-region.
+    else:
+        # Overlap box is some fraction of the hole size
+        overlap_box_w = overlap_fraction * hole_width
+        overlap_box_h = overlap_fraction * hole_height
+        
+        if overlap_box_w <= 0 or overlap_box_h <= 0:
+            raise ValueError("overlap_fraction must be > 0 to enforce a common sub-region.")
+
+        # We'll center this 'common sub-region' at the domain's center (cx, cy).
+        cx = (xmin + xmax) / 2
+        cy = (ymin + ymax) / 2
+        
+        # Coordinates of the forced overlap box (centered at cx,cy).
+        overlap_xmin = cx - overlap_box_w / 2
+        overlap_xmax = cx + overlap_box_w / 2
+        overlap_ymin = cy - overlap_box_h / 2
+        overlap_ymax = cy + overlap_box_h / 2
+        
+        # For a hole to contain this overlap box, we need:
+        # hole_x <= overlap_xmin AND hole_x + hole_width >= overlap_xmax
+        # hole_y <= overlap_ymin AND hole_y + hole_height >= overlap_ymax
+        #
+        # => hole_x ∈ [overlap_xmax - hole_width, overlap_xmin]
+        # => hole_y ∈ [overlap_ymax - hole_height, overlap_ymin]
+        #
+        # Also, the hole must remain inside the domain with margin, so:
+        # hole_x >= xmin + margin  and  hole_x <= xmax - hole_width - margin
+        # (and similarly for y).
+        
+        hole_x_min = max(xmin + margin, overlap_xmax - hole_width)
+        hole_x_max = min(xmax - hole_width - margin, overlap_xmin)
+        hole_y_min = max(ymin + margin, overlap_ymax - hole_height)
+        hole_y_max = min(ymax - hole_height - margin, overlap_ymin)
+        
+        if hole_x_min > hole_x_max or hole_y_min > hole_y_max:
+            raise ValueError(
+                "Cannot place holes so they all share a sub-region. "
+                "Try reducing overlap_fraction or adjusting domain/hole size."
+            )
+        
+        # Build discrete lists of possible positions that ensure the hole covers the overlap box.
+        num_x = int((hole_x_max - hole_x_min) / grid_step) + 1
+        num_y = int((hole_y_max - hole_y_min) / grid_step) + 1
+        x_positions = [round(hole_x_min + i * grid_step, 12) for i in range(num_x)]
+        y_positions = [round(hole_y_min + j * grid_step, 12) for j in range(num_y)]
+        
+        if not x_positions or not y_positions:
+            raise ValueError(
+                "No valid positions for overlapping holes. "
+                "Domain might be too small or overlap_fraction too large."
+            )
+        
+        # Now we can simply pick n random positions from these sets. 
+        # Because they all contain the same sub-region, they all overlap each other.
+        holes = []
+        for _ in range(n):
+            hole_x = random.choice(x_positions)
+            hole_y = random.choice(y_positions)
+            holes.append((hole_x, hole_y, hole_width, hole_height))
+        
+        return holes
+
 
 def update_field_file(field_file_path, hole_patch_names, default_patch_content):
     """
@@ -1057,9 +1166,10 @@ def main():
             folder_start_time = time.time()
 
             # Generate randomized holes for this folder
-            num_holes = random.randint(2, 15)
+            num_holes = random.randint(2, 10)
+            print(num_holes)
             logging.info(f"Processing folder {folder} with {num_holes} holes.")
-            random_holes = randomize_holes(num_holes)
+            random_holes = randomize_holes(num_holes, allow_overlap=False, overlap_fraction=0.05)
 
             # Generate blockMeshDict and update simulation fields
             delete_blockMeshDict(folder)

@@ -567,132 +567,44 @@ if __name__ == "__main__":
     print("Training loop completed.")
     trainer.save_model(train_config.output_dir)
     
-    if (RANK == 0 or RANK == -1) and params.push_to_hf_hub is not None:
-        model.push_to_hub(params.push_to_hf_hub)
+    print("Testing on NO HOLE dataset...")
+    # Load test datasets separately
 
-    do_test = (
-        True
-        if params.max_num_train_time_steps is None
-        and params.train_time_step_size is None
-        and not params.train_small_time_transition
-        and not ".time" in config["dataset"]
-        else False
+    test_no_hole_dataset = get_dataset(
+        dataset=config["dataset"],
+        which="test",
+        num_trajectories=400,
+        N_val=100,
+        N_test=80,
+        data_path=config["no_hole_data_path"],
+        **train_eval_set_kwargs
     )
-    if do_test:
-        print("Testing...")
-        test_set_kwargs = (
-            {"just_velocities": True}
-            if ("incompressible" in config["dataset"]) and params.just_velocities
-            else {}
-        )
-        out_test_set_kwargs = (
-            {"just_velocities": True}
-            if ("incompressible" in config["dataset"]) and params.just_velocities
-            else {}
-        )
-        if params.move_data is not None:
-            test_set_kwargs["move_to_local_scratch"] = params.move_data
-            out_test_set_kwargs["move_to_local_scratch"] = params.move_data
-        if time_involved:
-            test_set_kwargs = {
-                **test_set_kwargs,
-                "max_num_time_steps": 1,
-                "time_step_size": 14,
-                "allowed_time_transitions": [1],
-            }
-            out_test_set_kwargs = {
-                **out_test_set_kwargs,
-                "max_num_time_steps": 1,
-                "time_step_size": 20,
-                "allowed_time_transitions": [1],
-            }
-        if "RayleighTaylor" in config["dataset"]:
-            test_set_kwargs = {
-                **test_set_kwargs,
-                "max_num_time_steps": 1,
-                "time_step_size": 7,
-                "allowed_time_transitions": [1],
-            }
-            out_test_set_kwargs = {
-                **out_test_set_kwargs,
-                "max_num_time_steps": 1,
-                "time_step_size": 10,
-                "allowed_time_transitions": [1],
-            }
 
-        test_dataset = get_dataset(
-            dataset=config["dataset"],
-            which="test",
-            num_trajectories=config["num_trajectories"],
-            data_path=params.data_path,
-            **test_set_kwargs,
-        )
-        try:
-            out_dist_test_dataset = get_dataset(
-                dataset=config["dataset"] + ".out",
-                which="test",
-                num_trajectories=config["num_trajectories"],
-                data_path=params.data_path,
-                **out_test_set_kwargs,
-            )
-        except:
-            out_dist_test_dataset = None
-        predictions = trainer.predict(test_dataset, metric_key_prefix="")
-        if RANK == 0 or RANK == -1:
-            metrics = {}
-            for key, value in predictions.metrics.items():
-                metrics["test/" + key[1:]] = value
-            wandb.log(metrics)
-            create_predictions_plot(
-                predictions.predictions,
-                predictions.label_ids,
-                wandb_prefix="test",
-            )
+    predictions_no_hole = trainer.predict(test_no_hole_dataset, metric_key_prefix="test_no_hole")
+    wandb.log(predictions_no_hole.metrics)
+    torch.cuda.empty_cache()
+    # wandb.log({f"test_no_hole/mean_relative_l1_error": predictions_no_hole.metrics["mean_relative_l1_error"],
+    #         f"test_no_hole/mean_relative_l2_error": predictions_no_hole.metrics["mean_relative_l2_error"],
+    #         f"test_no_hole/mean_relative_linf_error": predictions_no_hole.metrics["mean_relative_linf_error"]})
 
-        # evaluate on out-of-distribution test set
-        if out_dist_test_dataset is not None:
-            predictions = trainer.predict(out_dist_test_dataset, metric_key_prefix="")
-            if RANK == 0 or RANK == -1:
-                metrics = {}
-                for key, value in predictions.metrics.items():
-                    metrics["test_out_dist/" + key[1:]] = value
-                wandb.log(metrics)
-                create_predictions_plot(
-                    predictions.predictions,
-                    predictions.label_ids,
-                    wandb_prefix="test_out_dist",
-                )
+    print("Testing on HOLE dataset...")
+    test_hole_dataset = get_dataset(
+        dataset=config["dataset"],
+        which="test",
+        num_trajectories=400,
+        N_val=100,
+        N_test=80,
+        data_path=config["hole_data_path"],
+        **train_eval_set_kwargs
 
-        if time_involved and (test_set_kwargs["time_step_size"] // 2 > 0):
-            trainer.set_ar_steps(test_set_kwargs["time_step_size"] // 2)
-            predictions = trainer.predict(test_dataset, metric_key_prefix="")
-            if RANK == 0 or RANK == -1:
-                metrics = {}
-                for key, value in predictions.metrics.items():
-                    metrics["test/ar/" + key[1:]] = value
-                wandb.log(metrics)
-                create_predictions_plot(
-                    predictions.predictions,
-                    predictions.label_ids,
-                    wandb_prefix="test/ar",
-                )
+    )
+    predictions_hole = trainer.predict(test_hole_dataset, metric_key_prefix="test_hole")
+    wandb.log(predictions_hole.metrics)
+    # wandb.log({f"test_hole/mean_relative_l1_error": predictions_hole.metrics["mean_relative_l1_error"],
+    #         f"test_hole/mean_relative_l2_error": predictions_hole.metrics["mean_relative_l2_error"],
+    #         f"test_hole/mean_relative_linf_error": predictions_hole.metrics["mean_relative_linf_error"]})
 
-            # evaluate on out-of-distribution test set
-            if out_dist_test_dataset is not None:
-                trainer.set_ar_steps(out_test_set_kwargs["time_step_size"] // 2)
-                predictions = trainer.predict(
-                    out_dist_test_dataset, metric_key_prefix=""
-                )
-                if RANK == 0 or RANK == -1:
-                    metrics = {}
-                    for key, value in predictions.metrics.items():
-                        metrics["test_out_dist/ar/" + key[1:]] = value
-                    wandb.log(metrics)
-                    create_predictions_plot(
-                        predictions.predictions,
-                        predictions.label_ids,
-                        wandb_prefix="test_out_dist/ar",
-                    )
+    print("Testing completed. All results logged to WandB under separate test categories.")
 
 
 

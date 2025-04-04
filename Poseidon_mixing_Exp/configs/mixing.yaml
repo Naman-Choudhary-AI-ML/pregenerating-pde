@@ -29,8 +29,8 @@ max_num_train_time_steps:
 train_time_step_size:
   value: 1 
 hole_data_path:
-  value: "/home/vhsingh/Geo-UPSplus/Poseidon_mixing_Exp/Dataset/LDC_holelocation.npy"
+  value: "/home/vhsingh/test/scaled_hole_location.npy"
 no_hole_data_path:
-  value: "/home/vhsingh/Geo-UPSplus/Poseidon_mixing_Exp/Dataset/NS_LDC_Regular.npy"
+  value: "/home/vhsingh/test/scaled_NS_Regular.npy"
 alpha:
-  value: 0.15
+  value: 0.00

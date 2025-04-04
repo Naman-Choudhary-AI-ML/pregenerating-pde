@@ -12,7 +12,7 @@ class GaussianNumpyDataset(BaseTimeDataset):
         self,
         *args,
         file_path,
-        max_num_time_steps=20,
+        max_num_time_steps=19,
         time_step_size=1,
         fix_input_to_time_step=None,
         allowed_time_transitions=None,
@@ -75,18 +75,18 @@ class GaussianNumpyDataset(BaseTimeDataset):
 
         # Set normalization constants (for velocity channels only)
         self.constants = {
-            "mean": self.data[..., :2].mean(axis=(0, 1, 2, 3)),  # Mean of u, v
-            "std": self.data[..., :2].std(axis=(0, 1, 2, 3)),    # Std of u, v
-            "time": 20.0
+            "mean": self.data[..., :3].mean(axis=(0, 1, 2, 3)),  # Mean of u, v
+            "std": self.data[..., :3].std(axis=(0, 1, 2, 3)),    # Std of u, v
+            "time": 19.0
         }
 
         # Define input and output dimensions
-        self.input_dim = 2   # Includes mask channel if `just_velocities` is False, 3 with mask, 2 without mask
-        self.output_dim = 2
+        self.input_dim = self.data.shape[-1]   # Includes mask channel if `just_velocities` is False, 3 with mask, 2 without mask
+        self.output_dim = 3
         # self.label_description = "[u,v],[mask]" if not just_velocities else "[u,v]"
-        self.label_description = "[u,v]"
-        self.channel_slice_list = [0, 1]  # For two channels, adjust as needed [0, 1, 2] for with mask
-        self.printable_channel_description = ["u", "v"]  # Describe the channels
+        self.label_description = "[u,v,p]"
+        self.channel_slice_list = [0, 1, 2]  # For two channels, adjust as needed [0, 1, 2] for with mask
+        self.printable_channel_description = ["u", "v", "p"]  # Describe the channels
 
         # Channel-wise mask (e.g., velocities are valid, mask is optional)
         self.pixel_mask = torch.tensor([False, False])
@@ -99,28 +99,24 @@ class GaussianNumpyDataset(BaseTimeDataset):
         Get an item from the dataset.
         """
         i, t, t1, t2 = self._idx_map(idx)
-        time = t / self.constants["time"]  # Normalize time
-        
-
+        time = t / self.constants["time"]
         # Extract inputs (at t1) and labels (at t2)
-        inputs = torch.tensor(self.data[i, t1, ..., :2], dtype=torch.float32)  # u, v
-        labels = torch.tensor(self.data[i, t2, ..., :2], dtype=torch.float32)  # u, v (next timestep)
-        hole_info = torch.tensor(self.data[i, t1, ..., 2], dtype=torch.float32)  # Hole info
-
-        # Add hole info channel to inputs
-        inputs = torch.cat([inputs, hole_info.unsqueeze(-1)], dim=-1)
-
+        inputs = torch.tensor(self.data[i, t1, ..., :3], dtype=torch.float32)  # u, v, p
+        labels = torch.tensor(self.data[i, t2, ..., :3], dtype=torch.float32)  # u, v, p (next timestep)
+        if self.input_dim > 2:
+            hole_info = torch.tensor(self.data[i, t1, ..., 3:], dtype=torch.float32)  # Hole info
+            # Add hole info channel to inputs
+            inputs = torch.cat([inputs, hole_info], dim=-1)
+            # inputs = torch.cat([inputs, hole_info.unsqueeze(-1)], dim=-1)
         # # Add mask channel to inputs if `just_velocities` is False
         # if not self.just_velocities:
         #     mask = torch.tensor(self.data[i, t1, ..., 2], dtype=torch.float32)  # Mask
         #     # print(f"Shape of inputs: {inputs.shape}")
         #     # print(f"Shape of mask before reshaping: {mask.shape}")
-
         #     # print(f"Shape of mask after reshaping: {mask.shape}")
         #     inputs = torch.cat([inputs, mask.unsqueeze(-1)], dim=-1)
-
         # Normalize velocity channels
-        inputs[..., :2] = (inputs[..., :2] - self.constants["mean"]) / self.constants["std"]
+        inputs[..., :3] = (inputs[..., :3] - self.constants["mean"]) / self.constants["std"]
         labels = (labels - self.constants["mean"]) / self.constants["std"]
         # print(f"Shape of inputs in dataset finally: {inputs.shape}")
         # Permute to match (channels, height, width)

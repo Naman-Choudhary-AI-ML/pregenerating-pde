@@ -69,6 +69,9 @@ class FNO(nn.Module):
         elif self.in_channels == 7:
             self.in_channels_physical = 6
             self.in_channels_coords = 2
+        elif self.in_channels == 4:    # In case of no SDF, RE for NS dataset
+            self.in_channels_physical = 3
+            self.in_channels_coords = 2
         else:
             raise ValueError(f"Unsupported in_channels: {self.in_channels}. Expected 5 or 7.")
 

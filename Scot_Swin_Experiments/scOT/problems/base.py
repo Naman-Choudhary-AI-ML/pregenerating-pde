@@ -52,7 +52,7 @@ def get_dataset(dataset, **kwargs):
         from .fluids.incompressible import GaussianNumpyDataset  # Your class
         return GaussianNumpyDataset(
             file_path=kwargs.pop("data_path"),  # Path to `.npy` file
-            max_num_time_steps=kwargs.pop("max_num_time_steps", 20),
+            max_num_time_steps=kwargs.pop("max_num_time_steps", 19),
             time_step_size=kwargs.pop("time_step_size", 1),
             fix_input_to_time_step=kwargs.pop("fix_input_to_time_step", None),
             allowed_time_transitions=kwargs.pop("allowed_time_transitions", None),

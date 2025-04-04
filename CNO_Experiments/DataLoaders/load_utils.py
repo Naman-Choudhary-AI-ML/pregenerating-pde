@@ -1,5 +1,5 @@
 from DataLoaders.CNO_TimeLoaders import BrownianBridgeTimeDataset, VortexSheetTimeDataset, SinesTimeDataset, PiecewiseConstantsTimeDataset, GaussiansTimeDataset, ComplicatedShearLayerTimeDataset, KelvinHelmholtzTimeDataset, RiemannTimeDataset, RiemannCurvedTimeDataset, EulerGaussTimeDataset, RiemannKHTimeDataset, RichtmyerMeshkov, RayleighTaylor, PoissonGaussians,  Helmholtz, AllenCahn, WaveSeismic, WaveGaussians,PiecewiseConstantsTraceTimeDataset, KolmogorovFlow, Airfoil
-from DataLoaders.CNO_TimeLoaders import NSFlowTimeDataset
+from DataLoaders.CNO_TimeLoaders import NSFlowTimeDataset, NSFlowTimeDataset_CNO
 
 def _load_dataset(dic, 
                   which, 
@@ -19,8 +19,7 @@ def _load_dataset(dic,
     else:
         num_samples = dic["num_samples"]
 
-    
-    print("WHICH: ", which, " NUM_SAMPLES: ", num_samples)
+    print(f"[LOAD DATASET] WHICH: {which}, NUM_SAMPLES: {num_samples}")
 
     if which == "ns_custom":
         train_dataset = NSFlowTimeDataset(
@@ -31,11 +30,29 @@ def _load_dataset(dic,
             resolution = 128,
             in_dist = True,
             num_trajectories = num_samples,
-            data_path = "/data/user_data/namancho/FPO_external_reg_new/final_dataset_norm.npy",
+            data_path = "/data/user_data/vhsingh/dataset/scaled_hole_location.npy",
             time_input = dic["time_input"],
             masked_input = masked_input,
             allowed_transitions = dic["allowed_tran"]
         )
+        print(f"[LOAD DATASET] Created train_dataset with length: {len(train_dataset)}")
+        return train_dataset
+    elif which == "ns_custom_CNO":
+        train_dataset = NSFlowTimeDataset_CNO(
+            max_num_time_steps = dic["time_steps"],
+            time_step_size = dic["dt"],
+            fix_input_to_time_step = fix_input_to_time_step,
+            which = which_loader,
+            resolution = 128,
+            in_dist = True,
+            num_trajectories = num_samples,
+            data_path = "/data/user_data/vhsingh/dataset/scaled_hole_location.npy",
+            time_input = dic["time_input"],
+            masked_input = masked_input,
+            allowed_transitions = dic["allowed_tran"]
+        )
+        print(f"[LOAD DATASET] Created train_dataset with length: {len(train_dataset)}")
+        return train_dataset
     elif which == "ns_brownian":
             
         train_dataset =   BrownianBridgeTimeDataset(max_num_time_steps = dic["time_steps"], 

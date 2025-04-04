@@ -247,22 +247,37 @@ def evaluate_scOT(model, data_loader, device, compute_metrics, update_input_for_
     
     return metrics_dict
 
-def evaluate_fno_ffno(model, loader, device, compute_metrics, update_input_for_next_timestep):
+import torch
+import torch.nn.functional as F
+import numpy as np
+from types import SimpleNamespace
+
+def evaluate_fno_ffno(
+    model, 
+    loader, 
+    device, 
+    compute_metrics, 
+    update_input_for_next_timestep, 
+    teacher_forcing=False
+):
     """
     Evaluation function specialized for FNO or FFNO.
 
-    1. Collects predictions in channel-last format (B, T, H, W, C).
-    2. Permutes to (B, T, C, H, W).
-    3. Flattens (B*T) into one dimension => (N, C, H, W).
-    4. Converts to NumPy and calls compute_metrics.
+    Returns a tuple:
+    1) metrics_fno (dict) -> includes multi-step metric (from compute_metrics)
+       AND single-step loss average across the dataset.
+    2) first_pred_np -> (T, H, W, C) for the first sample in the dataset
+    3) first_target_np -> (T, H, W, C) for that same first sample
+    4) N (total number of sequences in the dataset)
+    5) T (number of timesteps in each sequence)
     """
     model.eval()
-    import numpy as np
-    import torch
-    from types import SimpleNamespace
 
     all_preds = []
     all_targets = []
+    
+    # (A) Single-step approach #1: Relative L1 style (summing in a loop)
+    stepwise_losses_l1 = []
     
     with torch.no_grad():
         for batch in loader:
@@ -271,58 +286,130 @@ def evaluate_fno_ffno(model, loader, device, compute_metrics, update_input_for_n
             initial_inputs = batch["pixel_values"].to(device).float()
             target_sequences = batch["labels"].to(device).float()
 
+            B, T, H, W, C = target_sequences.shape
             sequence_preds = []
             current_input = initial_inputs
-            T = target_sequences.shape[1]
 
             for t in range(T):
-                # Forward pass => returns (B, H, W, C) in channel-last form
-                pred_t = model(current_input)
+                pred_t = model(current_input)  # shape (B, H, W, C)
                 sequence_preds.append(pred_t)
-                
-                # In eval, no teacher forcing
-                current_input = update_input_for_next_timestep(current_input, pred_t)
 
-            # Now shape => (B, T, H, W, C)
+                # (A) Single-step "relative L1" for time t
+                numerator = F.l1_loss(pred_t, target_sequences[:, t], reduction='mean')
+                denominator = F.l1_loss(
+                    target_sequences[:, t],
+                    torch.zeros_like(target_sequences[:, t]),
+                    reduction='mean'
+                ) + 1e-8
+                stepwise_loss_t = (numerator / denominator).item()
+                stepwise_losses_l1.append(stepwise_loss_t)
+
+                # Teacher-forcing or rollout
+                if teacher_forcing:
+                    next_data = target_sequences[:, t]
+                else:
+                    next_data = pred_t
+
+                current_input = update_input_for_next_timestep(current_input, next_data)
+
+            # shape => (B, T, H, W, C)
             sequence_preds = torch.stack(sequence_preds, dim=1)
-            
-            # Collect predictions & targets across batches
             all_preds.append(sequence_preds.cpu())
             all_targets.append(target_sequences.cpu())
     
-    # 1) Concatenate across all batches => (N, T, H, W, C)
+    # Convert single-step losses to an overall average
+    single_step_loss_mean = (
+        float(np.mean(stepwise_losses_l1)) if len(stepwise_losses_l1) > 0 else 0.0
+    )
+
+    # 1) Concatenate across all batches => shape (N, T, H, W, C)
     all_preds = torch.cat(all_preds, dim=0)      # channel-last
     all_targets = torch.cat(all_targets, dim=0)  # channel-last
 
-    # 2) Permute so the channel dimension is second => (N, T, C, H, W)
-    #    This step reorders from channel-last to channel-first.
+    # 2) Permute so the channel dimension is second => shape (N, T, C, H, W)
     all_preds = all_preds.permute(0, 1, 4, 2, 3).contiguous()
     all_targets = all_targets.permute(0, 1, 4, 2, 3).contiguous()
 
+    all_preds_unflattened = all_preds.clone()     # shape => (N, T, C, H, W)
+    all_targets_unflattened = all_targets.clone() # shape => (N, T, C, H, W)
+
+    N, T, C, H, W = all_preds_unflattened.shape
+
     # 3) Flatten N*T => shape (N*T, C, H, W)
-    N, T, C, H, W = all_preds.shape
-    all_preds = all_preds.view(N * T, C, H, W)
-    all_targets = all_targets.view(N * T, C, H, W)
+    all_preds_for_metrics = all_preds_unflattened.view(N * T, C, H, W)
+    all_targets_for_metrics = all_targets_unflattened.view(N * T, C, H, W)
 
-    # 4) Convert to NumPy so that your compute_metrics & lp_error (which use np.sum) won't fail
-    all_preds_np = all_preds.numpy()
-    all_targets_np = all_targets.numpy()
+    # 4) Convert to NumPy for your *multi-step* metrics
+    all_preds_np = all_preds_for_metrics.numpy()
+    all_targets_np = all_targets_for_metrics.numpy()
 
-    # Create eval_preds object
     eval_preds_fno = SimpleNamespace(
-        predictions=all_preds_np,    # shape => (N*T, C, H, W)
+        predictions=all_preds_np,  # (N*T, C, H, W)
         label_ids=all_targets_np
     )
 
-    # Now compute your metrics 
-    metrics_fno = compute_metrics(
-    eval_preds_fno,
-    model_type="FNO",
-    output_dim=3,
-    channel_slice_list=[0,3]
-)
-    return metrics_fno
+    # (B) Single-step approach #2 (optional): 
+    # call `compute_metrics` *per* timestep and average them.
+    # This is slower, but shows how you might get a "compute_metrics" view 
+    # for each step. We'll store them in a list so you can see how it works.
 
+    stepwise_metrics_list = []
+    all_preds_np_5d = all_preds_unflattened.numpy()   # shape (N, T, C, H, W)
+    all_targets_np_5d = all_targets_unflattened.numpy()
+    for t_i in range(T):
+        # shape => (N, C, H, W)
+        step_preds = all_preds_np_5d[:, t_i]
+        step_targets = all_targets_np_5d[:, t_i]
+        eval_step = SimpleNamespace(
+            predictions=step_preds,
+            label_ids=step_targets
+        )
+        step_metrics = compute_metrics(eval_step, model_type="FNO", output_dim=3, channel_slice_list=[0, 3])
+        stepwise_metrics_list.append(step_metrics)
+
+    # Now let's do the usual multi-step approach 
+    # (the entire flattened set for T steps).
+    metrics_fno = compute_metrics(
+        eval_preds_fno,
+        model_type="FNO",
+        output_dim=3,
+        channel_slice_list=[0, 3]
+    )
+
+    # We expect metrics_fno is a dictionary.
+    # We can add our aggregated single-step stats:
+    if isinstance(metrics_fno, dict):
+        # (A) from the direct L1 accumulation in the loop
+        metrics_fno["single_step_loss_mean"] = single_step_loss_mean
+
+        # (B) (Optional) from repeated calls to compute_metrics for each t
+        # We might, for instance, average a certain key if `compute_metrics` returns a dict
+        # that has 'MSE' or something. Example:
+        if len(stepwise_metrics_list) > 0 and isinstance(stepwise_metrics_list[0], dict):
+            # We'll do a naive averaging of each key across timesteps
+            # (You might do something more custom, or store them all.)
+            step_metrics_agg = {}
+            # collect keys
+            example_keys = stepwise_metrics_list[0].keys()  
+            for k in example_keys:
+                # gather all values
+                vals = [m[k] for m in stepwise_metrics_list if k in m]
+                # average
+                step_metrics_agg[k] = float(np.mean(vals))
+            # Now you have an average of compute_metrics across single steps
+            # Let's store them under "single_step_<key>"
+            for k, v in step_metrics_agg.items():
+                metrics_fno[f"single_step_{k}_avg"] = v
+
+    # 5) Extract a single sequence for plotting
+    first_pred_torch = all_preds_unflattened[0]    # shape => (T, C, H, W)
+    first_target_torch = all_targets_unflattened[0]
+
+    # Permute => (T, H, W, C)
+    first_pred_np = first_pred_torch.permute(0, 2, 3, 1).numpy()
+    first_target_np = first_target_torch.permute(0, 2, 3, 1).numpy()
+
+    return metrics_fno, first_pred_np, first_target_np, N, T
 
 def plot_autoregressive_sequence(
     prediction,
@@ -333,7 +420,7 @@ def plot_autoregressive_sequence(
     save_dir="plots",
     output_dim=None,
     channel_names=None,
-    tol=1e-5
+    tol=1e-9
 ):
     """
     Plots all timesteps for prediction and ground-truth arrays, displaying
@@ -443,7 +530,7 @@ def plot_autoregressive_sequence_channel_first(
     save_dir="plots",
     output_dim=None,
     channel_names=None,
-    tol=1e-5
+    tol=1e-9
 ):
     """
     Plots all timesteps for prediction and ground-truth arrays (channel-first),

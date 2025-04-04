@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader, Subset
+from torch.utils.data import Dataset, DataLoader, Subset, random_split
 import os
 from utils.poseidon_dataloader import CEDataset
 
@@ -32,6 +32,10 @@ def get_channel_layout(num_channels):
         physical_channels = [0, 1, 2, 3]
         coord_channels = [6, 7]
         mask_channel = 8
+    elif num_channels == 6:
+        physical_channels = [0, 1, 2]
+        coord_channels = [3, 4]
+        mask_channel = [5]
     else:
         # fallback, e.g., 7-channel layout
         physical_channels = [0, 1, 2, 3]
@@ -255,13 +259,13 @@ def get_data_loaders(config):
         raise e
 
     # Handle single simulation (4D) vs. multiple simulations (5D)
-    if simulation_data.ndim == 4:
-        # Expand to (1, T, H, W, 6)
-        simulation_data = np.expand_dims(simulation_data, axis=0)
+    # if simulation_data.ndim == 4:
+    #     # Expand to (1, T, H, W, 6)
+    #     simulation_data = np.expand_dims(simulation_data, axis=0)
     
     # Now we expect (num_sims, T, H, W, 6)
-    if simulation_data.ndim != 5 or simulation_data.shape[-1] != 6:
-        raise ValueError("Expected data shape (num_sims, T, H, W, 6)")
+    # if simulation_data.ndim != 4 or simulation_data.shape[-1] != 6:
+    #     raise ValueError("Expected data shape (num_sims, T, H, W, 6)")
 
     num_sims, T, H, W, _ = simulation_data.shape
 
@@ -279,6 +283,8 @@ def get_data_loaders(config):
     if input_dim == 6:
         simulation_data = simulation_data[..., [0, 1, 2, 4, 5, 3]]
         logger.info("Reordered channels to [Ux, Uy, P, Re, SDF, Mask].")
+    elif input_dim == 4:
+        simulation_data = simulation_data
     else:
         simulation_data = simulation_data[..., [0, 1, 2, 3, 4, 6, 5]]
         logger.info("Reordered channels to [Ux, Uy, P, Re, SDF, Mask].")
@@ -310,18 +316,27 @@ def get_data_loaders(config):
             y_channel,                 # channel 6
             simulation_data[..., 5:6]  # channel 7 = Mask
         ], axis=-1)
+    elif input_dim == 4:
+        simulation_data = np.concatenate([
+            simulation_data[..., :3],  # [Ux, Uy, P]
+            x_channel,                 # channel 4
+            y_channel,                 # channel 5
+            simulation_data[..., 3:4]  # channel 6 = Mask
+        ], axis=-1)
     elif input_dim == 7:
         simulation_data = np.concatenate([
-            simulation_data[..., :6],  # [Ux, Uy, P, Re, SDF]
-            x_channel,                 # channel 5
-            y_channel,                 # channel 6
-            simulation_data[..., 6:7]  # channel 7 = Mask
+            simulation_data[..., :6],  # [Ux, Uy, P, rho, Re, SDF]
+            x_channel,                 # channel 6
+            y_channel,                 # channel 7
+            simulation_data[..., 6:7]  # channel 8 = Mask
         ], axis=-1)
     else:
         raise ValueError(f"Input dimensions not specified correctly")
     logger.info(f"Final data shape: {simulation_data.shape}")
-    
-    simulation_data[..., 7] = 1 - simulation_data[..., 7]
+    if input_dim == 6:
+        simulation_data[..., 7] = 1 - simulation_data[..., 7]
+    elif input_dim == 4:
+        simulation_data[..., 5] = 1 - simulation_data[..., 5]
 
     # Convert to torch tensor
     tensor_data = torch.tensor(simulation_data)
@@ -361,20 +376,37 @@ def get_data_loaders(config):
             fix_input_to_time_step=config["data"].get("fix_input_to_time_step", None),
             allowed_time_transitions=config["data"].get("allowed_time_transitions", [1]),
             resolution=config["data"].get("resolution", 128),
-            num_trajectories=config["data"].get("num_trajectories", 400),
+            num_trajectories=config["data"].get("num_trajectories", 600),
             N_val=config["data"].get("N_val", 100),
             N_test=config["data"].get("N_test", 80),
             which="train",
             use_all_channels=config["data"].get("use_all_channels", False)
         )
 
-    train_dataset = Subset(full_dataset, train_indices)
-    test_dataset = Subset(full_dataset, test_indices)
+    # Define the desired split sizes
+    num_train = config["data"].get("num_trajectories", 400)
+    num_val   = config["data"].get("N_val", 100)
+    num_test  = config["data"].get("N_test", 80)
+    total_required = num_train + num_val + num_test
 
+    # Option 1: If your full_dataset has exactly or more than total_required samples,
+    # you can either select a subset or ensure it is exactly the size you need.
+    if len(full_dataset) >= total_required:
+        # Optionally, limit the full_dataset to the required size:
+        indices = list(range(total_required))
+        full_dataset = torch.utils.data.Subset(full_dataset, indices)
+    else:
+        raise ValueError("The full dataset has fewer samples than required for the split.")
+
+    # Randomly split the dataset into train, validation, and test sets
+    train_dataset, val_dataset, test_dataset = random_split(full_dataset, [num_train, num_val, num_test])
+
+    # Create DataLoaders for each subset
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    val_loader   = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    test_loader  = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-    return train_loader, test_loader
+    return train_loader, val_loader, test_loader
 
 
 

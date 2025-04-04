@@ -371,7 +371,7 @@ if __name__ == "__main__":
     # "airfoil", "poisson_gauss", "helmholtz"
     
     # WHAT IS THE EXPERIMENT?
-    which_example = "kolmogorov"
+    which_example = "ns_custom"
     
     # IS THE MODEL FINETUNED?
     fine_tuned = False
@@ -380,7 +380,7 @@ if __name__ == "__main__":
     if not fine_tuned:
         
         # PROVIDE THE FOLDER WITH ALL THE MODELS FOR SCALING LAW::
-        folders = "---- PROVIDE THE FOLDER PATH ----"
+        folders = "/data/user_data/vhsingh/baseline_experiments/LDC_Cylinder/Regular/one/model0"
         training_folder = None # Keep it None
     
     else:

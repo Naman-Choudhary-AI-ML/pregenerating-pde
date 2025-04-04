@@ -24,7 +24,7 @@ from einops import rearrange
 from einops.layers.torch import Rearrange
 import torch.nn as nn
 import copy
-from DataLoaders.CNO_TimeLoaders import NSFlowTimeDataset
+from DataLoaders.CNO_TimeLoaders import NSFlowTimeDataset, NSFlowTimeDataset_CNO
 
 
 #--------------------------------------
@@ -1025,7 +1025,7 @@ class CNO_time(pl.LightningModule):
             datasets = []
 
             if num_hole > 0:
-                hole_dataset = NSFlowTimeDataset(
+                hole_dataset = NSFlowTimeDataset_CNO(
                     max_num_time_steps = self.loader_dictionary["time_steps"],
                     time_step_size     = self.loader_dictionary["dt"],
                     fix_input_to_time_step = None,
@@ -1041,7 +1041,7 @@ class CNO_time(pl.LightningModule):
                 datasets.append(hole_dataset)
 
             if num_nohole > 0:
-                nohole_dataset = NSFlowTimeDataset(
+                nohole_dataset = NSFlowTimeDataset_CNO(
                     max_num_time_steps = self.loader_dictionary["time_steps"],
                     time_step_size     = self.loader_dictionary["dt"],
                     fix_input_to_time_step = None,
@@ -1245,7 +1245,7 @@ class CNO_time(pl.LightningModule):
 
             datasets = []
 
-            hole_dataset = NSFlowTimeDataset(
+            hole_dataset = NSFlowTimeDataset_CNO(
                 max_num_time_steps = self.loader_dictionary["time_steps"],
                 time_step_size     = self.loader_dictionary["dt"],
                 fix_input_to_time_step = None,
@@ -1261,7 +1261,7 @@ class CNO_time(pl.LightningModule):
             )
             datasets.append(hole_dataset)
 
-            nohole_dataset = NSFlowTimeDataset(
+            nohole_dataset = NSFlowTimeDataset_CNO(
                 max_num_time_steps = self.loader_dictionary["time_steps"],
                 time_step_size     = self.loader_dictionary["dt"],
                 fix_input_to_time_step = None,
@@ -1453,24 +1453,24 @@ class CNO_time(pl.LightningModule):
     
     def test_dataloader(self):
         if self.loader_dictionary.get("mixing", False):
-            test_hole = NSFlowTimeDataset(
+            test_hole = NSFlowTimeDataset_CNO(
                 max_num_time_steps=self.loader_dictionary["time_steps"],
                 time_step_size=self.loader_dictionary["dt"],
                 which="test",
                 resolution=128,
                 in_dist=True,
-                num_trajectories=80,
+                num_trajectories=100,
                 data_path=self.loader_dictionary["hole_path"],
                 time_input=self.loader_dictionary["time_input"],
                 allowed_transitions=self.loader_dictionary["allowed_tran"]
             )
-            test_nohole = NSFlowTimeDataset(
+            test_nohole = NSFlowTimeDataset_CNO(
                 max_num_time_steps=self.loader_dictionary["time_steps"],
                 time_step_size=self.loader_dictionary["dt"],
                 which="test",
                 resolution=128,
                 in_dist=True,
-                num_trajectories=80,
+                num_trajectories=100,
                 data_path=self.loader_dictionary["nohole_path"],
                 time_input=self.loader_dictionary["time_input"],
                 allowed_transitions=self.loader_dictionary["allowed_tran"]

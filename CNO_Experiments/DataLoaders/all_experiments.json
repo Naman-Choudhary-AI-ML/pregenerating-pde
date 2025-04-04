@@ -6,6 +6,14 @@
       "in_dim": 7,
       "out_dim": 3,
       "step_max": 20
+    },
+    "ns_custom_CNO": {
+      "include_zero": true,
+      "normalize": true,
+      "is_masked": null,
+      "in_dim": 7,
+      "out_dim": 3,
+      "step_max": 20
     }
   }
   

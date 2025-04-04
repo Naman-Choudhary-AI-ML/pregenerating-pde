@@ -16,6 +16,8 @@
 # --- Environment Variables ---
 export WANDB_API_KEY=3ff6a13421fb5921502235dde3f9a4700f33b5b8
 
+export PYTHONPATH="/home/vhsingh/Geo-UPSplus/Poseidon_mixing_Exp:$PYTHONPATH"
+
 # --- Set the parent directory where checkpoints are saved ---
 CHECKPOINT_DIR="/data/user_data/vhsingh/checkpoints/Research"
 
@@ -46,7 +48,7 @@ echo "Memory usage before running the script:"
 #   --checkpoint       -> directory to LOAD from if resuming
 accelerate launch /home/vhsingh/Geo-UPSplus/Poseidon_mixing_Exp/scOT/mixingexp.py \
     --config /home/vhsingh/Geo-UPSplus/Poseidon_mixing_Exp/configs/mixing.yaml \
-    --wandb_run_name "alpha015_RegvsHoleLoc" \
+    --wandb_run_name "alpha0.00_RegvsHoleLoc" \
     --wandb_project_name "Research" \
     --checkpoint_path "$CHECKPOINT_DIR" \
     --data_path /home/vhsingh/Geo-UPSplus/Poseidon_mixing_Exp/Dataset/NS_LDC_reg-001.npy \

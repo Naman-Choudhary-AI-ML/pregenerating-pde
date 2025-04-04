@@ -29,8 +29,8 @@ max_num_train_time_steps:
 train_time_step_size:
   value: 1 
 hole_data_path:
-  value: "/home/namancho/datasets/LDC-Irr-Openfoam/Final_irr.npy"
+  value: "/home/vhsingh/test/scaled_hole_location.npy"
 no_hole_data_path:
-  value: "/home/namancho/datasets/LDC-Openfoam/Final_irr.npy"
+  value: "/home/vhsingh/test/scaled_NS_Regular.npy"
 alpha:
-  value: 1.0
+  value: 0.00

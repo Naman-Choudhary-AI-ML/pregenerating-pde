@@ -6,14 +6,16 @@
 #SBATCH --gpus=1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=128G
-#SBATCH --output=/home/namancho/slurm_logs/ml_training-%j.log
-#SBATCH --error=/home/namancho/slurm_logs/ml_training-%j.err
+#SBATCH --output=/home/vhsingh/logs/ml_training-%j.log
+#SBATCH --error=/home/vhsingh/logs/ml_training-%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=vhsingh@andrew.cmu.edu
 #SBATCH --signal=B:USR1@60
 #SBATCH --requeue
 
 PYTHON_SCRIPT="scripts.train"  # <--- We'll use -m scripts.train below
-PROJECT_ROOT="/home/namancho/Geo-UPSplus/Autoregressive_Baseline_Scripts"
-CHECKPOINT_FILE="/home/namancho/slurm_logs/checkpoint-${SLURM_JOB_ID}.txt"
+PROJECT_ROOT="/home/vhsingh/Geo-UPSplus/Autoregressive_Baseline_Scripts"
+CHECKPOINT_FILE="/home/vhsingh/Geo-UPSplus/logs/checkpoint-${SLURM_JOB_ID}.txt"
 export WANDB_API_KEY=3ff6a13421fb5921502235dde3f9a4700f33b5b8
 
 if [[ -f $CHECKPOINT_FILE ]]; then

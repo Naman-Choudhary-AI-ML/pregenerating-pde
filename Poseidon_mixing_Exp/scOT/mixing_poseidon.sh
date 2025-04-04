@@ -13,10 +13,10 @@
 #data path here is not used anywhere in the script, but the argument is still needed so put something
 accelerate launch ./scOT/mixingexp.py \
     --config ./configs/mixing.yaml \
-    --wandb_run_name "FT_1.0_alpha_LDCmixingexp_nohole_vs_centre_hole_air_PosT_400_100_80" \
+    --wandb_run_name "alpha015_RegvsHoleLoc" \
     --wandb_project_name "GeoFNO1" \
-    --checkpoint_path /data/user_data/namancho/checkpoints_poseidon \
-    --data_path /home/namancho/datasets/FPO_ext_NS_irreg/final_dataset.npy \
+    --checkpoint_path /data/user_data/vhsingh/checkpoints_poseidon \
+    --data_path /home/vhsingh/datasets/FPO_ext_NS_irreg/final_dataset.npy \
     --finetune_from camlab-ethz/Poseidon-T \
     --replace_embedding_recovery
 

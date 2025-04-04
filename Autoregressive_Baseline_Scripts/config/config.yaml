@@ -1,24 +1,25 @@
 data:
-  data_path: "/data/user_data/namancho/FPO_cylinder_hole_location/final_reshaped_data.npy"
-  batch_size: 16
+  data_path: "/home/vhsingh/test/scaled_NS_Regular.npy"
+  batch_size: 8
   train_split: 0.8
   debug: false
 wandb:
-  project: "GeoFNO1"
-  entity: "namancho"
+  project: "llama3-sentiment-finetune"
+  entity: "ved100-carnegie-mellon-university"
   learning_rate: 0.001
-  epochs: 401
+  epochs: 400
   batch_size: 32
   scheduler_step_size: 100
   scheduler_gamma: 0.5
 
 model:
-  model_type: "FFNO"      # Options: "FFNO", "FNO", etc.
-  input_dim: 6       # For CE=7 and NS=5
-  modes: 12
-  width: 32
-  output_dim: 5           # For CE=6 and NS=5
-  n_layers: 4
+  model_type: "FNO"      # Options: "FFNO", "FNO", etc.
+  model_name: "T"
+  input_dim: 6       # For CE=7 and NS=6
+  modes: 16
+  width: 64
+  output_dim: 3           # For CE=4 and NS=3
+  n_layers: 5
   factor: 4
   retrain_fno: 42
   n_ff_layers: 2
@@ -28,10 +29,10 @@ model:
 
 optimizer:
   type: "Adam"
-  lr: 0.001
+  lr: 0.00005
   weight_decay: 1e-4  
 
 scheduler:
-  type: "StepLR"
+  type: "cosineannealing"    # StepLR or cosineannealing
   step_size: 100
   gamma: 0.5

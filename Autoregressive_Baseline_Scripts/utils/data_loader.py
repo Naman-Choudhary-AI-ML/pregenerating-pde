@@ -1,8 +1,9 @@
 import logging
 import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader, Subset
+from torch.utils.data import Dataset, DataLoader, Subset, random_split
 import os
+from utils.poseidon_dataloader import CEDataset
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -24,13 +25,17 @@ def get_channel_layout(num_channels):
     #   - fallback (7-channel)   => [0..3] = physical, [4..5] = coords, 6 = mask
 
     if num_channels == 8:
-        physical_channels = [0, 1, 2, 3, 4]
+        physical_channels = [0, 1, 2]
         coord_channels = [5, 6]
         mask_channel = 7
     elif num_channels == 9:
-        physical_channels = [0, 1, 2, 3, 4, 5]
+        physical_channels = [0, 1, 2, 3]
         coord_channels = [6, 7]
         mask_channel = 8
+    elif num_channels == 6:
+        physical_channels = [0, 1, 2]
+        coord_channels = [3, 4]
+        mask_channel = [5]
     else:
         # fallback, e.g., 7-channel layout
         physical_channels = [0, 1, 2, 3]
@@ -175,7 +180,10 @@ class SimulationDataset(Dataset):
                         logger.info(
                             f"[DEBUG] Timestep {t+1} target channel {ch}: min={ch_data.min().item()}, max={ch_data.max().item()}, mean={ch_data.mean().item()}"
                         )
-        return seed_input, target_sequence
+        return {
+            "pixel_values": seed_input,
+            "labels": target_sequence
+        }
 
 def compute_normalization_stats(tensor_data):
     """
@@ -238,6 +246,7 @@ def get_data_loaders(config):
     train_split = config["data"]["train_split"]
     debug_flag = config["data"].get("debug", False)
     domain_range = config["data"].get("domain_range", (0, 2))  # default (0..2)
+    input_dim = config["model"]["input_dim"]
 
     # Load raw simulation data
     try:
@@ -250,13 +259,13 @@ def get_data_loaders(config):
         raise e
 
     # Handle single simulation (4D) vs. multiple simulations (5D)
-    if simulation_data.ndim == 4:
-        # Expand to (1, T, H, W, 6)
-        simulation_data = np.expand_dims(simulation_data, axis=0)
+    # if simulation_data.ndim == 4:
+    #     # Expand to (1, T, H, W, 6)
+    #     simulation_data = np.expand_dims(simulation_data, axis=0)
     
     # Now we expect (num_sims, T, H, W, 6)
-    if simulation_data.ndim != 5 or simulation_data.shape[-1] != 6:
-        raise ValueError("Expected data shape (num_sims, T, H, W, 6)")
+    # if simulation_data.ndim != 4 or simulation_data.shape[-1] != 6:
+    #     raise ValueError("Expected data shape (num_sims, T, H, W, 6)")
 
     num_sims, T, H, W, _ = simulation_data.shape
 
@@ -271,8 +280,14 @@ def get_data_loaders(config):
     #   4->Re
     #   5->SDF
     #   3->Mask
-    simulation_data = simulation_data[..., [0, 1, 2, 3, 5, 4]]
-    logger.info("Reordered channels to [Ux, Uy, P, Re, SDF, Mask].")
+    if input_dim == 6:
+        simulation_data = simulation_data[..., [0, 1, 2, 4, 5, 3]]
+        logger.info("Reordered channels to [Ux, Uy, P, Re, SDF, Mask].")
+    elif input_dim == 4:
+        simulation_data = simulation_data
+    else:
+        simulation_data = simulation_data[..., [0, 1, 2, 3, 4, 6, 5]]
+        logger.info("Reordered channels to [Ux, Uy, P, Re, SDF, Mask].")
 
     # ----------------------------------------------------------------
     # 2) Create x and y coordinate channels
@@ -294,14 +309,34 @@ def get_data_loaders(config):
     # We want final => (num_sims, T, H, W, 8)
     #   indices:
     #       0->Ux, 1->Uy, 2->P, 3->Re, 4->SDF, 5->x, 6->y, 7->Mask
-    simulation_data = np.concatenate([
-        simulation_data[..., :5],  # [Ux, Uy, P, Re, SDF]
-        x_channel,                 # channel 5
-        y_channel,                 # channel 6
-        simulation_data[..., 5:6]  # channel 7 = Mask
-    ], axis=-1)
-    logger.info(f"Final data shape: {simulation_data.shape} (channels: Ux,Uy,P,Re,SDF,x,y,Mask)")
-    simulation_data[..., 7] = 1 - simulation_data[..., 7]
+    if input_dim == 6:
+        simulation_data = np.concatenate([
+            simulation_data[..., :5],  # [Ux, Uy, P, Re, SDF]
+            x_channel,                 # channel 5
+            y_channel,                 # channel 6
+            simulation_data[..., 5:6]  # channel 7 = Mask
+        ], axis=-1)
+    elif input_dim == 4:
+        simulation_data = np.concatenate([
+            simulation_data[..., :3],  # [Ux, Uy, P]
+            x_channel,                 # channel 4
+            y_channel,                 # channel 5
+            simulation_data[..., 3:4]  # channel 6 = Mask
+        ], axis=-1)
+    elif input_dim == 7:
+        simulation_data = np.concatenate([
+            simulation_data[..., :6],  # [Ux, Uy, P, rho, Re, SDF]
+            x_channel,                 # channel 6
+            y_channel,                 # channel 7
+            simulation_data[..., 6:7]  # channel 8 = Mask
+        ], axis=-1)
+    else:
+        raise ValueError(f"Input dimensions not specified correctly")
+    logger.info(f"Final data shape: {simulation_data.shape}")
+    if input_dim == 6:
+        simulation_data[..., 7] = 1 - simulation_data[..., 7]
+    elif input_dim == 4:
+        simulation_data[..., 5] = 1 - simulation_data[..., 5]
 
     # Convert to torch tensor
     tensor_data = torch.tensor(simulation_data)
@@ -325,21 +360,53 @@ def get_data_loaders(config):
     # ----------------------------------------------------------------
     # We pass 'simulation_data' (the np.array) directly, so SimulationDataset
     # must accept a pre-loaded array.
-    full_dataset = SimulationDataset(
-        npy_file=simulation_data,
-        phys_stats=phys_stats,
-        coord_stats=coord_stats,
-        teacher_channels=None,  # auto-detect # of physical channels
-        debug=debug_flag
-    )
+    if config["model"]["model_type"] == "FNO" or config["model"]["model_type"] == "FFNO":
+        full_dataset = SimulationDataset(
+            npy_file=simulation_data,
+            phys_stats=phys_stats,
+            coord_stats=coord_stats,
+            teacher_channels=None,  # auto-detect # of physical channels
+            debug=debug_flag
+        )
+    else:
+        full_dataset = CEDataset(
+            file_path=config["data"]["data_path"],
+            max_num_time_steps=config["data"].get("max_num_time_steps", 20),
+            time_step_size=config["data"].get("time_step_size", 1),
+            fix_input_to_time_step=config["data"].get("fix_input_to_time_step", None),
+            allowed_time_transitions=config["data"].get("allowed_time_transitions", [1]),
+            resolution=config["data"].get("resolution", 128),
+            num_trajectories=config["data"].get("num_trajectories", 600),
+            N_val=config["data"].get("N_val", 100),
+            N_test=config["data"].get("N_test", 80),
+            which="train",
+            use_all_channels=config["data"].get("use_all_channels", False)
+        )
 
-    train_dataset = Subset(full_dataset, train_indices)
-    test_dataset = Subset(full_dataset, test_indices)
+    # Define the desired split sizes
+    num_train = config["data"].get("num_trajectories", 400)
+    num_val   = config["data"].get("N_val", 100)
+    num_test  = config["data"].get("N_test", 80)
+    total_required = num_train + num_val + num_test
 
+    # Option 1: If your full_dataset has exactly or more than total_required samples,
+    # you can either select a subset or ensure it is exactly the size you need.
+    if len(full_dataset) >= total_required:
+        # Optionally, limit the full_dataset to the required size:
+        indices = list(range(total_required))
+        full_dataset = torch.utils.data.Subset(full_dataset, indices)
+    else:
+        raise ValueError("The full dataset has fewer samples than required for the split.")
+
+    # Randomly split the dataset into train, validation, and test sets
+    train_dataset, val_dataset, test_dataset = random_split(full_dataset, [num_train, num_val, num_test])
+
+    # Create DataLoaders for each subset
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    val_loader   = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    test_loader  = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-    return train_loader, test_loader
+    return train_loader, val_loader, test_loader
 
 
 

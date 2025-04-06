@@ -249,7 +249,7 @@ class NSFlowTimeDataset(BaseTimeDataset):
                  data_path, 
                  domain_range=(0.0, 2.0), 
                  N_val=100, 
-                 N_test=80,
+                 N_test=100,
                  *args, 
                  **kwargs):
         """

@@ -28,9 +28,9 @@ if len(sys.argv) <= 2:
         "batch_size": 16,         
         "time_steps": 19,          # How many time steps to select?
         "dt": 1,                  # What is the time step? (1 means include entire traj, 2 means taking every other step, etc.
-        "training_samples": 400,   # How many training samples?
-        "mixing": True,  # Set True to enable mixing experiment
-        "alpha": 1.0,   # Percentage of hole data (e.g., 0.15 = 15%)
+        "training_samples": 424,   # How many training samples?
+        "mixing": False,  # Set True to enable mixing experiment
+        "alpha": 0.25,   # Percentage of hole data (e.g., 0.15 = 15%)
         "hole_data_path": "/data/user_data/vhsingh/dataset/scaled_hole_location.npy",
         "nohole_data_path": "/data/user_data/vhsingh/dataset/scaled_NS_Regular.npy",
         "time_input": 1,          # Should we include time in the input channels?
@@ -64,7 +64,7 @@ if len(sys.argv) <= 2:
     # WHAT IS THE EXPERIMENT?
     which_example = "ns_custom"
     
-    folder = f"/data/user_data/vhsingh/baseline_experiments/LDC_Cylinder/Mixing/FNO/{training_properties['allowed']}/{training_properties['alpha']}"
+    folder = f"/data/user_data/vhsingh/CNO_experiments/LDC_{training_properties['training_samples']}/Regular/{training_properties['allowed']}/{training_properties['alpha']}"
     os.makedirs(folder, exist_ok=True)
 
 
@@ -169,7 +169,7 @@ lr_monitor = LearningRateMonitor(logging_interval='epoch')  # or 'step' if you p
 # logger = TensorBoardLogger(save_dir=folder, version=ver, name="logs")
 logger = WandbLogger(
     project="GeoFNO1",
-    name=f"FNO_{training_properties['alpha']}_alpha_AR_NS_FPO_Cyl_Mixing_400_100_80_{ver}_Cosine",
+    name=f"CNO_{training_properties['alpha']}_alpha_AR_NS_LDC_Regular_{training_properties['training_samples']}_100_100_{ver}_Cosine",
     save_dir=folder,
     config={**training_properties, **model_architecture_}  # logs hyperparams too
 )

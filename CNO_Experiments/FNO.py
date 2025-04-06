@@ -282,46 +282,64 @@ class FNO_time(pl.LightningModule):
             num_hole = int(alpha * total_samples)
             num_nohole = total_samples - num_hole
 
+            # Debug: Print initial configuration
+            print("Debug: Mixing enabled =", mixing)
+            print("Debug: Alpha =", alpha)
+            print("Debug: Total samples =", total_samples)
+            print("Debug: Calculated num_hole =", num_hole)
+            print("Debug: Calculated num_nohole =", num_nohole)
+
             datasets = []
 
             if num_hole > 0:
+                print(f"Debug: Creating hole dataset with {num_hole} trajectories")
                 hole_dataset = NSFlowTimeDataset(
-                    max_num_time_steps = self.loader_dictionary["time_steps"],
-                    time_step_size     = self.loader_dictionary["dt"],
-                    fix_input_to_time_step = None,
-                    which = "train",
-                    resolution = 128,
-                    in_dist = True,
-                    num_trajectories = num_hole,
-                    data_path = hole_path,
-                    time_input = self.loader_dictionary["time_input"],
-                    masked_input = None,
-                    allowed_transitions = self.loader_dictionary["allowed_tran"]
+                    max_num_time_steps=self.loader_dictionary["time_steps"],
+                    time_step_size=self.loader_dictionary["dt"],
+                    fix_input_to_time_step=None,
+                    which="train",
+                    resolution=128,
+                    in_dist=True,
+                    num_trajectories=num_hole,
+                    data_path=hole_path,
+                    time_input=self.loader_dictionary["time_input"],
+                    masked_input=None,
+                    allowed_transitions=self.loader_dictionary["allowed_tran"]
                 )
                 datasets.append(hole_dataset)
+            else:
+                print("Debug: No hole dataset created because num_hole <= 0")
 
             if num_nohole > 0:
+                print(f"Debug: Creating no-hole dataset with {num_nohole} trajectories")
                 nohole_dataset = NSFlowTimeDataset(
-                    max_num_time_steps = self.loader_dictionary["time_steps"],
-                    time_step_size     = self.loader_dictionary["dt"],
-                    fix_input_to_time_step = None,
-                    which = "train",
-                    resolution = 128,
-                    in_dist = True,
-                    num_trajectories = num_nohole,
-                    data_path = nohole_path,
-                    time_input = self.loader_dictionary["time_input"],
-                    masked_input = None,
-                    allowed_transitions = self.loader_dictionary["allowed_tran"]
+                    max_num_time_steps=self.loader_dictionary["time_steps"],
+                    time_step_size=self.loader_dictionary["dt"],
+                    fix_input_to_time_step=None,
+                    which="train",
+                    resolution=128,
+                    in_dist=True,
+                    num_trajectories=num_nohole,
+                    data_path=nohole_path,
+                    time_input=self.loader_dictionary["time_input"],
+                    masked_input=None,
+                    allowed_transitions=self.loader_dictionary["allowed_tran"]
                 )
                 datasets.append(nohole_dataset)
+            else:
+                print("Debug: No no-hole dataset created because num_nohole <= 0")
 
             assert len(datasets) > 0, "Both hole and no-hole sample counts are zero!"
 
-            # Combine and return
+            # Combine and report total counts
             train_dataset = torch.utils.data.ConcatDataset(datasets)
+            total_dataset_samples = len(train_dataset)
+            print("Debug: Total samples in train dataset =", total_dataset_samples)
+            print("Debug: Final counts -> Hole:", num_hole, ", No-Hole:", num_nohole)
+
             train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=6)
             return train_loader
+
     
         else:
             if which == "eul_ns_mix1":

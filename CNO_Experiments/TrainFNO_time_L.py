@@ -28,9 +28,15 @@ if len(sys.argv) <= 2:
         "batch_size": 16,         
         "time_steps": 19,          # How many time steps to select?
         "dt": 1,                  # What is the time step? (1 means include entire traj, 2 means taking every other step, etc.
+<<<<<<< HEAD
         "training_samples": 424,   # How many training samples?
         "mixing": False,  # Set True to enable mixing experiment
         "alpha": 0.25,   # Percentage of hole data (e.g., 0.15 = 15%)
+=======
+        "training_samples": 400,   # How many training samples?
+        "mixing": False,  # Set True to enable mixing experiment
+        "alpha": 1.0,   # Percentage of hole data (e.g., 0.15 = 15%)
+>>>>>>> b1ba37d4af0134255897c1abc60639fd34297251
         "hole_data_path": "/data/user_data/vhsingh/dataset/scaled_hole_location.npy",
         "nohole_data_path": "/data/user_data/vhsingh/dataset/scaled_NS_Regular.npy",
         "time_input": 1,          # Should we include time in the input channels?
@@ -64,7 +70,11 @@ if len(sys.argv) <= 2:
     # WHAT IS THE EXPERIMENT?
     which_example = "ns_custom"
     
+<<<<<<< HEAD
     folder = f"/data/user_data/vhsingh/CNO_experiments/LDC_{training_properties['training_samples']}/Regular/{training_properties['allowed']}/{training_properties['alpha']}"
+=======
+    folder = f"/data/user_data/namancho/CNO_experiments/FPO_External/Hole_Location/FNO/{training_properties['allowed']}/{training_properties['alpha']}"
+>>>>>>> b1ba37d4af0134255897c1abc60639fd34297251
     os.makedirs(folder, exist_ok=True)
 
 
@@ -169,7 +179,11 @@ lr_monitor = LearningRateMonitor(logging_interval='epoch')  # or 'step' if you p
 # logger = TensorBoardLogger(save_dir=folder, version=ver, name="logs")
 logger = WandbLogger(
     project="GeoFNO1",
+<<<<<<< HEAD
     name=f"CNO_{training_properties['alpha']}_alpha_AR_NS_LDC_Regular_{training_properties['training_samples']}_100_100_{ver}_Cosine",
+=======
+    name=f"FNO_alpha_AR_NS_FPO_Ext_Hole_Location_400_100_80_{ver}_Cosine",
+>>>>>>> b1ba37d4af0134255897c1abc60639fd34297251
     save_dir=folder,
     config={**training_properties, **model_architecture_}  # logs hyperparams too
 )

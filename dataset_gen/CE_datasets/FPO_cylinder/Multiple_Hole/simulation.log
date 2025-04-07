@@ -1,0 +1,19 @@
+2025-04-04 23:13:44,114 - INFO - Created folder: Design_Point_0_copy_1
+2025-04-04 23:13:45,114 - INFO - Processing folder Design_Point_0_copy_1 with 4 holes.
+2025-04-04 23:13:45,383 - INFO - Updated Design_Point_0_copy_1/0/U: Umax set to 0.08648710001185936
+2025-04-04 23:13:45,383 - INFO - Updated Design_Point_0_copy_1/0/U: Umax set to 0.08648710001185936
+2025-04-04 23:13:45,383 - INFO - Saved Umax value 0.08648710001185936 in Design_Point_0_copy_1/Umax.txt
+2025-04-04 23:13:45,383 - INFO - Running postProcess to generate cell centers in folder: Design_Point_0_copy_1
+2025-04-04 23:13:45,628 - INFO - Cell center coordinates generated successfully in folder: Design_Point_0_copy_1
+2025-04-04 23:16:16,627 - INFO - rhoPimpleFoam simulation completed successfully in folder: Design_Point_0_copy_1
+2025-04-04 23:16:16,627 - INFO - Simulation for Design_Point_0_copy_1 completed in 151.51 seconds
+2025-04-04 23:16:16,634 - INFO - Sim data saved to sim_data_batch_0.json
+2025-04-04 23:16:16,634 - INFO - Umax for simulation Design_Point_0_copy_1 is 0.08648710001185936
+2025-04-04 23:16:16,635 - INFO - Skipping timestep 0 in Design_Point_0_copy_1 due to uniform field.
+2025-04-04 23:16:17,705 - INFO - Folder Design_Point_0_copy_1 => sim_array shape: (20, 16128, 5) (timesteps, num_cells, 4)
+2025-04-04 23:16:17,705 - INFO - Time directories: ['24.9593', '49.9593', '74.9593', '99.9593', '124.9593', '149.9593', '174.9593', '199.9593', '224.9593', '249.9593', '274.9593', '299.9593', '324.9593', '349.9593', '374.9593', '399.9593', '424.9593', '449.9593', '474.9593', '499.9593']
+2025-04-04 23:16:17,725 - INFO - Folder Design_Point_0_copy_1 => 16128 cell centers parsed.
+2025-04-04 23:16:18,297 - INFO - Folder Design_Point_0_copy_1 reshaped to: (20, 128, 128, 9)
+2025-04-04 23:16:18,311 - INFO - Batch 0 dataset shape: (1, 20, 128, 128, 9) saved as all_sims_data_batch_0.npy
+2025-04-04 23:16:18,320 - INFO - Deleted folder Design_Point_0_copy_1
+2025-04-04 23:16:18,320 - INFO - Total execution time: 154.21 seconds

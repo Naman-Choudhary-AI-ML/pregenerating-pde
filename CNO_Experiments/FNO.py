@@ -8,8 +8,8 @@ from torch_utils.debug_tools import format_tensor_size
 from torch.utils.data import DataLoader
 # from netCDF4 import Dataset
 import yaml
-with open("/home/vhsingh/Geo-UPSplus/Autoregressive_Baseline_Scripts/config/config.yaml", "r") as f:
-    config = yaml.safe_load(f)
+# with open("/home/vhsingh/Geo-UPSplus/Autoregressive_Baseline_Scripts/config/config.yaml", "r") as f:
+#     config = yaml.safe_load(f)
 
 class SpectralConv2d(nn.Module):
     def __init__(self, in_channels, out_channels, modes1, modes2):

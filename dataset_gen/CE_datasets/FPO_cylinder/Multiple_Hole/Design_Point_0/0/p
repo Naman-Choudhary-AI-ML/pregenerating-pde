@@ -1,13 +1,13 @@
 FoamFile
 {
-    version 2.0;
-    format ascii;
-    class volScalarField;
-    object p;
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      p;
 }
 
-dimensions      [1 -1 -2 0 0 0 0];
-internalField   uniform 101325;
+dimensions      [0 2 -2 0 0 0 0];
+internalField   uniform 0;
 
 boundaryField
 {
@@ -18,13 +18,17 @@ boundaryField
     right
     {
         type            fixedValue;
-        value           uniform 101325;
+        value           uniform 0;
     }
     bottom
     {
         type            zeroGradient;
     }
     top
+    {
+        type            zeroGradient;
+    }
+    hole
     {
         type            zeroGradient;
     }

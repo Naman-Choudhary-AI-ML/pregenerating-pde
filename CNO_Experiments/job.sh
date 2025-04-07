@@ -13,7 +13,7 @@
 #SBATCH --signal=B:USR1@60
 #SBATCH --requeue
 
-PYTHON_SCRIPT="/home/vhsingh/Geo-UPSplus/CNO_Experiments/TrainFNO_time_L.py"  # <--- We'll use -m scripts.train below
+PYTHON_SCRIPT="/home/vhsingh/Geo-UPSplus/CNO_Experiments/TrainCNO_time_L.py"  # <--- We'll use -m scripts.train below
 # PROJECT_ROOT="/home/vhsingh/Geo-UPSplus/Autoregressive_Baseline_Scripts"
 CHECKPOINT_FILE="/home/vhsingh/Geo-UPSplus/logs/checkpoint-${SLURM_JOB_ID}.txt"
 export WANDB_API_KEY=3ff6a13421fb5921502235dde3f9a4700f33b5b8

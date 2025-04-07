@@ -30,7 +30,11 @@ def _load_dataset(dic,
             resolution = 128,
             in_dist = True,
             num_trajectories = num_samples,
+<<<<<<< HEAD
             data_path = "/data/group_data/sage_lab_complex_geometry/LDC_hole_location_final_reshaped_data_norm.npy",
+=======
+            data_path = "/data/user_data/namancho/FPO_external_hole_location/final_reshaped_data_norm.npy",
+>>>>>>> b1ba37d4af0134255897c1abc60639fd34297251
             time_input = dic["time_input"],
             masked_input = masked_input,
             allowed_transitions = dic["allowed_tran"]

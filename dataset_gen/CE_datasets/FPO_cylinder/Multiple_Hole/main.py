@@ -70,29 +70,28 @@ def generate_U_file(folder):
         print(f"Error: generate_setfields.py not found in {folder}. Expected path was: {u_generator_script}")
         logging.error(f"Error: generate_setfields.py not found in {folder}. Expected path was: {u_generator_script}")
 
-def run_rhoPimpleFoam(folder):
-    """Runs rhoPimpleFoam for the specified folder and returns True if it converged, False otherwise."""
-    command = ["rhoPimpleFoam"]
-    print(f"Running rhoPimpleFoam in folder: {folder}")
+def run_icoFoam(folder):
+    """Runs icoFoam for the specified folder and returns True if it converged, False otherwise."""
+    command = ["icoFoam"]
+    print(f"Running icoFoam in folder: {folder}")
     try:
         process = subprocess.Popen(command, cwd=folder)
         process.communicate()
-        # Check the return code
         if process.returncode == 0:
-            print(f"rhoPimpleFoam simulation completed successfully in folder: {folder}")
-            logging.info(f"rhoPimpleFoam simulation completed successfully in folder: {folder}")
+            print(f"icoFoam simulation completed successfully in folder: {folder}")
+            logging.info(f"icoFoam simulation completed successfully in folder: {folder}")
             return True
         else:
-            print(f"rhoPimpleFoam simulation failed or did not converge in folder: {folder}")
-            logging.warning(f"rhoPimpleFoam simulation failed or did not converge in folder: {folder}")
+            print(f"icoFoam simulation failed or did not converge in folder: {folder}")
+            logging.warning(f"icoFoam simulation failed or did not converge in folder: {folder}")
             return False
     except FileNotFoundError:
-        print("Error: rhoPimpleFoam command not found.")
-        logging.error("Error: rhoPimpleFoam command not found.")
+        print("Error: icoFoam command not found.")
+        logging.error("Error: icoFoam command not found.")
         return False
     except Exception as e:
-        print(f"Error running rhoPimpleFoam: {e}")
-        logging.error(f"Error running rhoPimpleFoam: {e}")
+        print(f"Error running icoFoam: {e}")
+        logging.error(f"Error running icoFoam: {e}")
         return False
 
 def run_setfields(folder):
@@ -202,8 +201,6 @@ def reshape_trajectory_data(sim_data, cell_centers, grid_shape):
        4: Reynolds number
        5: Binary mask (0 if cell exists; 1 if hole)
        6: SDF (signed distance: positive in fluid, negative in hole)
-       7: x-coordinate
-       8: y-coordinate
 
     Mapping:
        For each cell center (x,y), compute:
@@ -212,21 +209,19 @@ def reshape_trajectory_data(sim_data, cell_centers, grid_shape):
     """
     n_rows, n_cols = grid_shape
     T = sim_data.shape[0]
+
+    Re_min = 100
+    Re_max = 10000
+    # Extract and normalize Re ONCE for the entire trajectory
+    Re_raw = sim_data[0, 0, 3]
+    Re_norm = np.clip((Re_raw - Re_min) / (Re_max - Re_min), 0.0, 1.0)
     
     # Domain boundaries from cell centers.
     x_min, x_max = np.min(cell_centers[:, 0]), np.max(cell_centers[:, 0])
     y_min, y_max = np.min(cell_centers[:, 1]), np.max(cell_centers[:, 1])
     
     # Allocate output array: (T, n_rows, n_cols, 9)
-    reshaped = np.zeros((T, n_rows, n_cols, 9), dtype=np.float32)
-    
-    # Fill x and y coordinate channels (channels 7 and 8).
-    x_grid = np.linspace(x_min, x_max, n_cols)
-    y_grid = np.linspace(y_min, y_max, n_rows)
-    for row in range(n_rows):
-        for col in range(n_cols):
-            reshaped[:, row, col, 7] = x_grid[col]
-            reshaped[:, row, col, 8] = y_grid[row]
+    reshaped = np.zeros((T, n_rows, n_cols, 6), dtype=np.float32)
     
     # Build binary mask: default 1 (hole) everywhere.
     mask = np.ones((n_rows, n_cols), dtype=np.float32)
@@ -238,12 +233,16 @@ def reshape_trajectory_data(sim_data, cell_centers, grid_shape):
         mask[row, col] = 0  # cell exists (fluid)
     
     # Compute the SDF:
-    # Our mask: 0 for fluid, 1 for hole. Create fluid mask = 1 - mask.
-    fluid_mask = 1 - mask
-    dist_fluid = distance_transform_edt(fluid_mask)
-    dist_hole  = distance_transform_edt(1 - fluid_mask)
-    sdf = dist_fluid - dist_hole  # positive in fluid, negative in hole
+
+    outside_dist = distance_transform_edt(mask == 0)
+    inside_dist = distance_transform_edt(mask == 1)
+    sdf = outside_dist - inside_dist
+    max_abs_sdf = np.max(np.abs(sdf))
+    if max_abs_sdf > 0:
+        sdf = sdf / max_abs_sdf
     
+    # Assign Re to all time steps and all cells
+    reshaped[:, :, :, 3] = Re_norm
     # Fill simulation data onto the grid via mapping.
     n_cells_sim = sim_data.shape[1]
     n_cells_mapping = len(mapping)
@@ -258,10 +257,10 @@ def reshape_trajectory_data(sim_data, cell_centers, grid_shape):
         for i, (row, col) in enumerate(mapping):
             if i >= n_cells:
                 break
-            reshaped[t, row, col, 0:5] = sim_data[t, i, :]
+            reshaped[t, row, col, 0:3] = sim_data[t, i, 0:3]
         # Set binary mask (channel 5) and SDF (channel 6) for every time step.
-        reshaped[t, :, :, 5] = mask
-        reshaped[t, :, :, 6] = sdf
+        reshaped[t, :, :, 4] = mask
+        reshaped[t, :, :, 5] = sdf
     
     return reshaped
 
@@ -426,7 +425,7 @@ def parse_internal_field(file_path, field_type="vector", default_value=None):
         raise ValueError("field_type must be either 'vector' or 'scalar'.")
 
 
-def parse_simulation(sim_folder, Umax_simulation=None, L=64, nu=1.53e-5):
+def parse_simulation(sim_folder, Umax_simulation=None, L=2, nu=1.53e-5):
     """
     Parses a single simulation folder containing time-step directories 
     (e.g. 0, 0.1, 0.2, ...).
@@ -469,29 +468,20 @@ def parse_simulation(sim_folder, Umax_simulation=None, L=64, nu=1.53e-5):
     for tdir in time_dirs:
         tdir_path = os.path.join(sim_folder, tdir)
         # Prepare file paths for each field.
-        T_file = os.path.join(tdir_path, "T")
         U_file = os.path.join(tdir_path, "U")
         p_file = os.path.join(tdir_path, "p")
 
         # Parse each field.
-        T_data = parse_internal_field(T_file, field_type="scalar")
         U_data = parse_internal_field(U_file, field_type="vector")
         p_data = parse_internal_field(p_file, field_type="scalar")
 
         # Skip this timestep if any field returns None.
-        if T_data is None or U_data is None or p_data is None:
+        if U_data is None or p_data is None:
             logging.info(f"Skipping timestep {tdir} in {sim_folder} due to uniform field.")
             continue
 
-        try:
-            # Compute density: rho = p / (T * 287). (Adjust constant if needed.)
-            rho_data = p_data / (T_data * 287)
-        except ZeroDivisionError:
-            logging.error(f"Division by zero at timestep {tdir} in {sim_folder}. Skipping timestep.")
-            continue
-
         # Combine data for each point: [rho, Ux, Uy, p]
-        combined_data = np.column_stack([rho_data, U_data[:, 0], U_data[:, 1], p_data])
+        combined_data = np.column_stack([U_data[:, 0], U_data[:, 1], p_data])
         # Create a Reynolds channel (same value for all cells in this time step)
         Re_channel = np.full((combined_data.shape[0], 1), Re_sim)
         # Append Reynolds channel -> final shape (n_points, 5)
@@ -507,7 +497,7 @@ def parse_simulation(sim_folder, Umax_simulation=None, L=64, nu=1.53e-5):
     return valid_time_dirs, results_array
 
 
-def gather_all_simulations(sim_folders, grid_shape=(128, 128), c_file_name="0/C", L=64, nu=1.53e-5):
+def gather_all_simulations(sim_folders, grid_shape=(128, 128), c_file_name="0/C", L=2, nu=1.53e-5):
     """
     Given a list of simulation folders, parse them all (via parse_simulation),
     then reshape each simulation's data onto a fixed grid of shape (timesteps, n_rows, n_cols, 5).
@@ -562,60 +552,124 @@ def gather_all_simulations(sim_folders, grid_shape=(128, 128), c_file_name="0/C"
     combined_dataset = np.stack(all_reshaped, axis=0)  # (num_sims, timesteps, 128, 128, 5)
     return common_time_dirs, combined_dataset
 
-def update_Umax(file_path, new_value):
+def compute_parabolic_inlet(Umax, H=2, num_points=128):
     """
-    Reads the file at file_path, replaces the Umax value with new_value, and writes it back.
-    The line to be replaced is assumed to be of the form:
-        const scalar Umax = 10.0;
+    Compute the parabolic velocity profile for the inlet.
+    
+    Parameters:
+    - Umax: Maximum velocity at the centerline.
+    - H: Channel height (64m).
+    - num_points: Number of discrete points in the y-direction.
+
+    Returns:
+    - List of velocity vectors as strings.
     """
-    # Pattern to match the Umax definition
-    pattern = r"(const\s+scalar\s+Umax\s*=\s*)([\d\.Ee+-]+)(\s*;)"
+    y_values = np.linspace(0, H, num_points)  # Discretize y positions
+    velocities = []
 
-    with open(file_path, "r") as f:
-        content = f.read()
+    for y in y_values:
+        u = 4.0 * Umax * y * (H - y) / (H * H)  # Parabolic profile
+        velocities.append(f"({u} 0 0)")  # Format as OpenFOAM vector
 
-    # Replace the old value with the new one
-    def replacement(match):
-        return f"{match.group(1)}{new_value}{match.group(3)}"
+    return velocities
 
-    updated_content, count = re.subn(pattern, replacement, content)
-
-    if count == 0:
-        raise ValueError(f"Could not find the Umax definition in {file_path}")
-
-    with open(file_path, "w") as f:
-        f.write(updated_content)
-
-    logging.info(f"Updated {file_path}: Umax set to {new_value}")
-
-def update_Umax_in_simulation_folder(sim_folder, min_value=1.0, max_value=10.0):
+def update_U_file(sim_folder, Umax):
     """
-    Updates the Umax value in the U file (located in the '0' subfolder) of the given simulation folder.
-    A random Umax value is chosen between min_value and max_value.
-    Also writes the new Umax value to a Umax.txt file in the simulation folder.
-    """
-    import os
-    import random
-    import logging
+    Updates the U file to use a nonuniform fixedValue inlet condition.
 
+    Parameters:
+    - sim_folder: Path to the simulation folder.
+    - Umax: Computed Umax based on the given Reynolds number.
+    """
+    u_file_path = os.path.join(sim_folder, "0", "U")
+
+    if not os.path.exists(u_file_path):
+        raise FileNotFoundError(f"U file not found in {u_file_path}")
+
+    # Compute parabolic inlet velocities
+    velocity_values = compute_parabolic_inlet(Umax)
+
+    boundaryField = (
+    f"    left\n"
+    f"    {{\n"
+    f"        type            fixedValue;\n"
+    f"        value           nonuniform List<vector>\n"
+    f"        {len(velocity_values)}\n"
+    f"        (\n"
+    + '\n'.join(velocity_values) + "\n"
+    f"        );\n"
+    f"    }}"
+    )
+
+
+    # Read the existing file and replace only the left boundary definition
+    with open(u_file_path, "r") as f:
+        lines = f.readlines()
+
+    new_lines = []
+    inside_left_boundary = False
+
+    for line in lines:
+        if "left" in line:
+            inside_left_boundary = True
+            new_lines.append(boundaryField)  # Replace with new boundary definition
+        elif inside_left_boundary and "}" in line:
+            inside_left_boundary = False  # Stop skipping
+        elif not inside_left_boundary:
+            new_lines.append(line)
+
+    # Write the updated file
+    with open(u_file_path, "w") as f:
+        f.writelines(new_lines)
+
+    logging.info(f"Updated {u_file_path} with nonuniform parabolic inlet velocities.")
+
+
+def generate_normal_re_values(num_samples, mean=5000, std_dev=2000, min_re=100, max_re=10000):
+    """
+    Generates a normally distributed set of Reynolds numbers.
+
+    Parameters:
+    - num_samples: Total number of trajectories (Reynolds numbers) to generate.
+    - mean: Mean of the normal distribution.
+    - std_dev: Standard deviation.
+    - min_re, max_re: Limits to ensure Re values remain within physical bounds.
+
+    Returns:
+    - np.array of normally distributed Reynolds numbers.
+    """
+    re_values = np.random.normal(loc=mean, scale=std_dev, size=num_samples)
+    re_values = np.clip(re_values, min_re, max_re)  # Ensure values are within range
+    return re_values
+
+def update_Umax_in_simulation_folder(sim_folder, re_value, L=2, nu=1.53e-5):
+    """
+    Updates the Umax value in the simulation folder using a precomputed Reynolds number.
+    
+    Parameters:
+    - sim_folder: Path to the simulation folder.
+    - re_value: Precomputed Reynolds number for this simulation.
+    - L: Characteristic length.
+    - nu: Kinematic viscosity.
+    """
     u_file_path = os.path.join(sim_folder, "0", "U")
     if not os.path.exists(u_file_path):
         raise FileNotFoundError(f"U file not found at {u_file_path}")
-    
-    # Choose a new random Umax value in the specified range
-    new_value = random.uniform(min_value, max_value)
-    
+
+    # Compute Umax from the provided Reynolds number
+    Umax_simulation = (re_value * nu) / L
+
     # Update the U file with the new Umax value
-    update_Umax(u_file_path, new_value)
+    update_U_file(sim_folder, Umax_simulation)
+
     
-    # Write the Umax value to a separate file in the simulation folder for later reference.
+    # Save Umax to a file
     Umax_txt_path = os.path.join(sim_folder, "Umax.txt")
     with open(Umax_txt_path, "w") as f:
-        f.write(str(new_value))
+        f.write(str(Umax_simulation))
     
-    logging.info(f"Updated {u_file_path}: Umax set to {new_value}")
-    logging.info(f"Saved Umax value {new_value} in {Umax_txt_path}")
-
+    logging.info(f"Updated {u_file_path}: Umax set to {Umax_simulation} (Re: {re_value})")
+    logging.info(f"Saved Umax value {Umax_simulation} in {Umax_txt_path}")
 
 def get_Umax_from_sim_folder(sim_folder):
     """
@@ -647,10 +701,10 @@ def delete_blockMeshDict(folder_path):
             print(f"No blockMeshDict found in {folder_path}, skipping deletion.")
     except Exception as e:
         print(f"Error deleting blockMeshDict in {folder_path}: {e}")
-scaled_hole1 = (0.625 * 32, 0.9375 * 32, 0.125 * 32, 0.125 * 32)
-scaled_hole2 = (1.25 * 32, 0.9375 * 32, 0.125 * 32, 0.125 * 32)
+scaled_hole1 = (0.625 * 1, 0.9375 * 1, 0.125 * 1, 0.125 * 1)
+scaled_hole2 = (1.25 * 1, 0.9375 * 1, 0.125 * 1, 0.125 * 1)
 new_holes = [scaled_hole1, scaled_hole2]
-def generate_blockMeshDict(domain=(0, 64, 0, 64),
+def generate_blockMeshDict(domain=(0, 2, 0, 2),
                            resolution=(128, 128),
                            # holes given as list of tuples: (hole_x, hole_y, hole_width, hole_height)
                            holes=new_holes,
@@ -924,47 +978,156 @@ def generate_blockMeshDict(domain=(0, 64, 0, 64),
 # Example usage:
 import random
 
-def randomize_holes(n, hole_size=(4.0, 4.0), domain=(0, 64, 0, 64), grid_step=0.50):
+import random
+
+def randomize_holes(n, hole_size=(0.125, 0.125), domain=(0, 2, 0, 2),
+                    grid_step=0.015625, allow_overlap=False,
+                    overlap_fraction=0.3):
     """
     Generate n random holes within the given domain.
     
     Each hole is defined as a tuple (hole_x, hole_y, hole_width, hole_height),
     where (hole_x, hole_y) is the lower-left corner.
     
-    The lower-left coordinates are multiples of grid_step to ensure consistency
-    with the cell resolution (e.g., 128 cells over a 2×2 domain).
+    The lower-left coordinates are multiples of grid_step, and a margin is enforced
+    so that holes never touch the domain boundary.
+    
+    If allow_overlap=True, ALL holes share a common sub-region (they 'all overlap').
+    If allow_overlap=False, no holes overlap each other at all.
     
     Parameters:
         n (int): Number of holes to generate.
         hole_size (tuple): Fixed size for each hole (width, height).
         domain (tuple): (xmin, xmax, ymin, ymax) defining the overall domain.
-        grid_step (float): The resolution increment (default 0.015625).
+        grid_step (float): The resolution increment.
+        allow_overlap (bool): 
+            - If False, holes do not overlap (though they can touch boundaries).
+            - If True, all holes must overlap each other in at least a sub-region.
+        overlap_fraction (float):
+            - Fraction of the hole dimension used to define a "common box" inside each hole.
+              E.g., 0.3 => 30% of the hole size in each dimension is the guaranteed overlap box.
+              Only used if allow_overlap=True. 
+              The smaller this fraction, the less forced overlap; the larger it is, 
+              the more they coincide.
     
     Returns:
         list of tuples: Each tuple is (hole_x, hole_y, hole_width, hole_height).
     """
     xmin, xmax, ymin, ymax = domain
     hole_width, hole_height = hole_size
-
-    # To keep the hole fully inside the domain, the lower-left corner can vary from:
-    x_min_possible = xmin
-    x_max_possible = xmax - hole_width
-    y_min_possible = ymin
-    y_max_possible = ymax - hole_height
-
-    # Create lists of possible x and y coordinates (multiples of grid_step)
-    num_x = int((x_max_possible - xmin) / grid_step) + 1
-    num_y = int((y_max_possible - ymin) / grid_step) + 1
-    x_positions = [round(xmin + i * grid_step, 12) for i in range(num_x)]
-    y_positions = [round(ymin + j * grid_step, 12) for j in range(num_y)]
     
-    holes = []
-    for _ in range(n):
-        hole_x = random.choice(x_positions)
-        hole_y = random.choice(y_positions)
-        holes.append((hole_x, hole_y, hole_width, hole_height))
-    
-    return holes
+    # A small margin so holes never exactly touch the domain boundary.
+    margin = grid_step
+
+    # 1. If no overlap is allowed, use the standard "no overlap" approach.
+    if not allow_overlap:
+        x_min_possible = xmin + margin
+        x_max_possible = xmax - hole_width - margin
+        y_min_possible = ymin + margin
+        y_max_possible = ymax - hole_height - margin
+
+        # Build discrete lists of possible positions.
+        num_x = int((x_max_possible - x_min_possible) / grid_step) + 1
+        num_y = int((y_max_possible - y_min_possible) / grid_step) + 1
+        x_positions = [round(x_min_possible + i * grid_step, 12) for i in range(num_x)]
+        y_positions = [round(y_min_possible + j * grid_step, 12) for j in range(num_y)]
+        
+        if not x_positions or not y_positions:
+            raise ValueError("No valid positions for holes. Domain might be too small or parameters invalid.")
+
+        # Function to check if two rectangles overlap at all
+        def rectangles_overlap(r1, r2):
+            x1, y1, w1, h1 = r1
+            x2, y2, w2, h2 = r2
+            # They do NOT overlap if one is completely to the left/right or above/below the other
+            if x1 + w1 <= x2 or x2 + w2 <= x1:
+                return False
+            if y1 + h1 <= y2 or y2 + h2 <= y1:
+                return False
+            return True
+
+        holes = []
+        attempts = 0
+        max_attempts = 10000
+        while len(holes) < n and attempts < max_attempts:
+            hole_x = random.choice(x_positions)
+            hole_y = random.choice(y_positions)
+            candidate = (hole_x, hole_y, hole_width, hole_height)
+            
+            # Check for overlap with existing holes
+            overlap_found = any(rectangles_overlap(candidate, h) for h in holes)
+            if not overlap_found:
+                holes.append(candidate)
+            attempts += 1
+
+        if len(holes) < n:
+            raise ValueError("Could not place the requested number of non-overlapping holes. Try reducing n or hole size.")
+        
+        return holes
+
+    # 2. If overlap is allowed, we want *all* holes to share a sub-region.
+    else:
+        # Overlap box is some fraction of the hole size
+        overlap_box_w = overlap_fraction * hole_width
+        overlap_box_h = overlap_fraction * hole_height
+        
+        if overlap_box_w <= 0 or overlap_box_h <= 0:
+            raise ValueError("overlap_fraction must be > 0 to enforce a common sub-region.")
+
+        # We'll center this 'common sub-region' at the domain's center (cx, cy).
+        cx = (xmin + xmax) / 2
+        cy = (ymin + ymax) / 2
+        
+        # Coordinates of the forced overlap box (centered at cx,cy).
+        overlap_xmin = cx - overlap_box_w / 2
+        overlap_xmax = cx + overlap_box_w / 2
+        overlap_ymin = cy - overlap_box_h / 2
+        overlap_ymax = cy + overlap_box_h / 2
+        
+        # For a hole to contain this overlap box, we need:
+        # hole_x <= overlap_xmin AND hole_x + hole_width >= overlap_xmax
+        # hole_y <= overlap_ymin AND hole_y + hole_height >= overlap_ymax
+        #
+        # => hole_x ∈ [overlap_xmax - hole_width, overlap_xmin]
+        # => hole_y ∈ [overlap_ymax - hole_height, overlap_ymin]
+        #
+        # Also, the hole must remain inside the domain with margin, so:
+        # hole_x >= xmin + margin  and  hole_x <= xmax - hole_width - margin
+        # (and similarly for y).
+        
+        hole_x_min = max(xmin + margin, overlap_xmax - hole_width)
+        hole_x_max = min(xmax - hole_width - margin, overlap_xmin)
+        hole_y_min = max(ymin + margin, overlap_ymax - hole_height)
+        hole_y_max = min(ymax - hole_height - margin, overlap_ymin)
+        
+        if hole_x_min > hole_x_max or hole_y_min > hole_y_max:
+            raise ValueError(
+                "Cannot place holes so they all share a sub-region. "
+                "Try reducing overlap_fraction or adjusting domain/hole size."
+            )
+        
+        # Build discrete lists of possible positions that ensure the hole covers the overlap box.
+        num_x = int((hole_x_max - hole_x_min) / grid_step) + 1
+        num_y = int((hole_y_max - hole_y_min) / grid_step) + 1
+        x_positions = [round(hole_x_min + i * grid_step, 12) for i in range(num_x)]
+        y_positions = [round(hole_y_min + j * grid_step, 12) for j in range(num_y)]
+        
+        if not x_positions or not y_positions:
+            raise ValueError(
+                "No valid positions for overlapping holes. "
+                "Domain might be too small or overlap_fraction too large."
+            )
+        
+        # Now we can simply pick n random positions from these sets. 
+        # Because they all contain the same sub-region, they all overlap each other.
+        holes = []
+        for _ in range(n):
+            hole_x = random.choice(x_positions)
+            hole_y = random.choice(y_positions)
+            holes.append((hole_x, hole_y, hole_width, hole_height))
+        
+        return holes
+
 
 def update_field_file(field_file_path, hole_patch_names, default_patch_content):
     """
@@ -1034,12 +1197,19 @@ def update_all_field_files(folder, hole_patch_names):
         update_field_file(field_file_path, hole_patch_names, default_patch)
 
 def main():
+    save_dir = "/data/user_data/namancho/FPO_Cylinder_Multiple_Holes"
+    os.makedirs(save_dir, exist_ok=True)
     total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
     main_folder = "Design_Point_0"
     start_time = time.time()
     batch_size = 128  # Number of simulations per batch
     batch_id = 0
     processed_batches = []
+
+    # Generate all Re values upfront
+    re_values = generate_normal_re_values(total_trajectories, mean=5000, std_dev=2000)
+
+    trajectory_idx = 0
 
     trajectories_done = 0  # Track how many have been processed
 
@@ -1057,9 +1227,10 @@ def main():
             folder_start_time = time.time()
 
             # Generate randomized holes for this folder
-            num_holes = random.randint(2, 15)
+            num_holes = random.randint(2, 10)
+            print(num_holes)
             logging.info(f"Processing folder {folder} with {num_holes} holes.")
-            random_holes = randomize_holes(num_holes)
+            random_holes = randomize_holes(num_holes, allow_overlap=False, overlap_fraction=0.05)
 
             # Generate blockMeshDict and update simulation fields
             delete_blockMeshDict(folder)
@@ -1069,7 +1240,9 @@ def main():
                 run_blockMesh=True
             )
             update_all_field_files(folder, hole_patch_names)
-            update_Umax_in_simulation_folder(folder, min_value=1.125e-3, max_value=1.125e-1)
+            # Run solver
+            update_Umax_in_simulation_folder(folder, re_values[trajectory_idx])
+            trajectory_idx += 1
 
             # Generate and validate cell centers
             c_file = generate_cell_centers(folder)
@@ -1078,7 +1251,7 @@ def main():
                 continue
 
             # Run OpenFOAM simulation
-            if not run_rhoPimpleFoam(folder):
+            if not run_icoFoam(folder):
                 logging.warning(f"Solver failed for folder {folder}. Skipping.")
                 continue
 
@@ -1094,7 +1267,7 @@ def main():
 
         # Step 3: Save simulation metadata
         if sim_data:
-            sim_data_path = f"sim_data_batch_{batch_id}.json"
+            sim_data_path = os.path.join(save_dir, f"sim_data_batch_{batch_id}.json")
             with open(sim_data_path, "w") as jf:
                 json.dump(sim_data, jf)
             logging.info(f"Sim data saved to {sim_data_path}")
@@ -1106,7 +1279,7 @@ def main():
             try:
                 final_time_dirs, final_data = gather_all_simulations(converged_folders)
                 if final_data is not None:
-                    batch_file = f"all_sims_data_batch_{batch_id}.npy"
+                    batch_file = os.path.join(save_dir, f"results_batch_{batch_id}.npy")
                     np.save(batch_file, final_data)
                     logging.info(f"Batch {batch_id} dataset shape: {final_data.shape} saved as {batch_file}")
 

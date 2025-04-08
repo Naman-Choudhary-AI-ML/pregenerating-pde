@@ -33,6 +33,16 @@ def _load_dict(files,
             l = line.strip().split(",")
             if l[0] in ["epochs", "batch_size", "exp", "training_samples", "time_steps", "dt"]:
                 value = int(float(l[1]))
+            elif l[0] in ["mixing"]:
+                value = True
+            elif l[0] in ["alpha"]:
+                value = value
+            elif l[0] in ["hole_data_path", "nohole_data_path"]:
+                value = l[1]
+                if l[0] in ["hole_data_path"]:
+                    d["hole_path"] = l[1]
+                if l[0] in ["nohole_data_path"]:
+                    d["nohole_path"] = l[1]
             elif l[0] == "nl_dim":
                 s = ""
                 for a in l[1:]:
@@ -62,6 +72,8 @@ def _load_dict(files,
             elif "e-" in l[1]:
                 value = float(l[1])
             elif "allowed" in l[0]:
+                value = l[1]
+            elif "cosine" in l[1]:
                 value = l[1]
             else:
                 value = int(l[1])
@@ -109,6 +121,7 @@ def _load_dict(files,
         d["is_masked"] = None 
     
     d["time_steps"] = steps
+
     
     #------------------
     
@@ -119,6 +132,14 @@ def _load_dict(files,
         d["step_max"] = 1
         d["time_input"] = False
         d["dt"] = 0
+    
+    elif "ns_custom_CNO" in which_example:
+        d["in_dim"] = 7
+        d["out_dim"] = 3
+        d["nmax"] = 1024
+        d["step_max"] = 20
+        d["time_input"] = True
+        d["dt"] = 1
     
     elif which_example == "helmholtz":
         
@@ -260,7 +281,7 @@ def _initialize_model(loader_dict,
                         activation = loader_dict["activation"],
                         time_steps = loader_dict["time_steps"],
                         is_time = loader_dict["is_time"],
-                        p_loss = loader_dict["exp"],           
+                        # p_loss = loader_dict["exp"],           
                         lr = loader_dict["learning_rate"],
                         batch_size = loader_dict["batch_size"],
                         weight_decay = loader_dict["weight_decay"],

@@ -1505,11 +1505,10 @@ class CNO_time(pl.LightningModule):
         # Initialize the dictionary if it doesn't exist
         if not hasattr(self, "test_errs"):
             self.test_errs = {}
-        # If key doesn't exist, create it
         if key not in self.test_errs:
-            self.test_errs[key] = loss.unsqueeze(0)
+            self.test_errs[key] = loss
         else:
-            self.test_errs[key] = torch.cat((self.test_errs[key], loss.unsqueeze(0)))
+            self.test_errs[key] = torch.cat((self.test_errs[key], loss))
         
         return loss
 

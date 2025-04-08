@@ -29,7 +29,7 @@ if len(sys.argv) <= 2:
         "dt": 1,                  # What is the time step? (1 means include entire traj, 2 means taking every other step, etc.
         "training_samples": 824,   # How many training samples?
         "mixing": True,  # Set True to enable mixing experiment
-        "alpha": 0.0,   # Percentage of hole data (e.g., 0.15 = 15%)
+        "alpha": 0.15,   # Percentage of hole data (e.g., 0.15 = 15%)
         "hole_data_path": "/data/user_data/vhsingh/final_combined_LDC_Multiple_hole.npy",
         "nohole_data_path": "/data/group_data/sage_lab_complex_geometry/LDC_Centre_Hole_1024_Normalized.npy",
         "time_input": 1,          # Should we include time in the input channels?
@@ -73,7 +73,7 @@ if len(sys.argv) <= 2:
     # WHAT IS THE EXPERIMENT?
     which_example = "ns_custom_CNO"
     
-    folder = f"/data/user_data/vhsingh/CNO_experiments/LDC_{training_properties['training_samples']}/Intermediate-Complex/{training_properties['allowed']}/{training_properties['alpha']}"
+    folder = f"/data/user_data/vhsingh/CNO_experiments_new/LDC_{training_properties['training_samples']}/CentreHole-MultiHole/{training_properties['alpha']}"
     os.makedirs(folder, exist_ok=True)
 
 
@@ -195,7 +195,7 @@ lr_monitor = LearningRateMonitor(logging_interval='epoch')  # or 'step' if you p
 # logger = TensorBoardLogger(save_dir=folder, version=ver, name="logs")
 logger = WandbLogger(
     project="GeoFNO1",
-    name=f"CNO_{training_properties['alpha']}_alpha_AR_NS_LDC_Intermediate-complex_{training_properties['training_samples']}_100_100_{ver}_Cosine",
+    name=f"CNO_{training_properties['alpha']}_LDC_CentreHole-MultiHole",
     save_dir=folder,
     config={**training_properties, **model_architecture_}  # logs hyperparams too
 )

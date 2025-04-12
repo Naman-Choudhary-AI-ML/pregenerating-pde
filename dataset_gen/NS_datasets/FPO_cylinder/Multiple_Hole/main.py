@@ -10,6 +10,7 @@ import random
 from tqdm import tqdm
 import gc
 import json
+import sys
 
 # Configure logging
 logging.basicConfig(
@@ -26,11 +27,19 @@ def log_periodic_success():
         logging.info("All operations successful so far.")
         last_log_time = datetime.now()
 
-def copy_main_folder(main_folder, num_copies):
-    """Copies the main folder content into num_copies of folders."""
+def copy_main_folder(main_folder, num_copies, batch_name):
+    """
+    Copies the main folder content into num_copies of folders.
+    Each new folder is namespaced by batch_name to avoid collisions.
+    """
     new_folders = []
     for i in range(1, num_copies + 1):
-        new_folder = f"{main_folder}_copy_{i}"
+        # Generate a unique folder name by prepending the batch name
+        new_folder = f"{batch_name}_{main_folder}_copy_{i}"
+        # If the folder exists from a previous run, delete it.
+        if os.path.exists(new_folder):
+            logging.info(f"Folder {new_folder} already exists. Removing it for a fresh copy.")
+            shutil.rmtree(new_folder)
         try:
             shutil.copytree(main_folder, new_folder)
             new_folders.append(new_folder)
@@ -908,7 +917,7 @@ def generate_blockMeshDict(domain=(0, 2, 0, 2),
     out_lines.append("    class       dictionary;")
     out_lines.append("    object      blockMeshDict;")
     out_lines.append("}")
-    out_lines.append("convertToMeters 1;\n")
+    out_lines.append("scale 1;\n")
 
     # Vertices
     out_lines.append("vertices")
@@ -1194,10 +1203,10 @@ def update_all_field_files(folder, hole_patch_names):
         field_file_path = os.path.join(field_dir, field)
         update_field_file(field_file_path, hole_patch_names, default_patch)
 
-def main():
-    save_dir = "/data/user_data/namancho/FPO_Cylinder_Multiple_Holes"
+def main(batch_name: str, total_trajectories: int):
+    save_dir = f"/data/user_data/vhsingh/FPO_Cylinder_Multiple_Holes/{batch_name}"
     os.makedirs(save_dir, exist_ok=True)
-    total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
+    # total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
     main_folder = "Design_Point_0"
     start_time = time.time()
     batch_size = 128  # Number of simulations per batch
@@ -1216,7 +1225,7 @@ def main():
         current_batch_size = min(batch_size, total_trajectories - trajectories_done)
 
         # Step 1: Create a batch of folders
-        batch_folders = copy_main_folder(main_folder, current_batch_size)
+        batch_folders = copy_main_folder(main_folder, current_batch_size, batch_name)
         sim_data = []
         converged_folders = []
 
@@ -1310,4 +1319,10 @@ def main():
     print(f"\nTotal execution time: {total_time_elapsed:.2f} seconds")
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) < 3:
+        print("Usage: python script.py <batch_name> <total_trajectories>")
+        sys.exit(1)
+    print(f"🧪 [TEST] Running with args: {sys.argv}")
+    batch_name = sys.argv[1]
+    total_trajectories = int(sys.argv[2])
+    main(batch_name, total_trajectories)

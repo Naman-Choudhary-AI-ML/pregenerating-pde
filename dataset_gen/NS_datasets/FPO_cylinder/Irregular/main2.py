@@ -7,6 +7,7 @@ import logging
 from datetime import datetime, timedelta
 import random
 import re
+import sys
 
 # Configure logging
 logging.basicConfig(
@@ -23,11 +24,19 @@ def log_periodic_success():
         logging.info("All operations successful so far.")
         last_log_time = datetime.now()
 
-def copy_main_folder(main_folder, num_copies):
-    """Copies the main folder content into num_copies of folders."""
+def copy_main_folder(main_folder, num_copies, batch_name):
+    """
+    Copies the main folder content into num_copies of folders.
+    Each new folder is namespaced by batch_name to avoid collisions.
+    """
     new_folders = []
     for i in range(1, num_copies + 1):
-        new_folder = f"{main_folder}_copy_{i}"
+        # Generate a unique folder name by prepending the batch name
+        new_folder = f"{batch_name}_{main_folder}_copy_{i}"
+        # If the folder exists from a previous run, delete it.
+        if os.path.exists(new_folder):
+            logging.info(f"Folder {new_folder} already exists. Removing it for a fresh copy.")
+            shutil.rmtree(new_folder)
         try:
             shutil.copytree(main_folder, new_folder)
             new_folders.append(new_folder)
@@ -743,11 +752,11 @@ def gather_all_simulations(sim_folders, expected_n_points=16128, L=2, nu=1.53e-5
     
     return final_time_dirs, final_results
 
-def main():
-    save_dir = "/data/user_data/namancho/FPO_cylinder_irr_new"
+def main(batch_name: str, total_trajectories: int):
+    save_dir = f"/data/user_data/namancho/FPO_cylinder_irr_new/{batch_name}"
     # save_dir = "./"
     os.makedirs(save_dir, exist_ok=True)
-    total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
+    # total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
     main_folder = "Design_Point_0"
     start_time = time.time()
     batch_size = 128  # Number of simulations per batch
@@ -764,7 +773,7 @@ def main():
         current_batch_size = min(batch_size, total_trajectories - trajectories_done)
 
         # Step 1: Create a batch of folders
-        batch_folders = copy_main_folder(main_folder, current_batch_size)
+        batch_folders = copy_main_folder(main_folder, current_batch_size, batch_name)
         converged_folders = []
 
         # Step 2: Run simulations for this batch
@@ -818,4 +827,10 @@ def main():
     print(f"\nTotal execution time: {total_time_elapsed:.2f} seconds")
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) < 3:
+        print("Usage: python script.py <batch_name> <total_trajectories>")
+        sys.exit(1)
+    print(f"🧪 [TEST] Running with args: {sys.argv}")
+    batch_name = sys.argv[1]
+    total_trajectories = int(sys.argv[2])
+    main(batch_name, total_trajectories)

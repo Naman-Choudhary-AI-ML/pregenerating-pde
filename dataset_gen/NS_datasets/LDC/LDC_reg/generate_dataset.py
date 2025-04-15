@@ -7,21 +7,23 @@ from scipy.spatial import cKDTree
 from scipy.ndimage import distance_transform_edt
 
 # ================= Configuration =================
-num_trajectories = 600     # Number of trajectories to simulate
+num_trajectories = 1024     # Number of trajectories to simulate
 timesteps = 21              # Total timesteps (including t=0)
 # The simulation extracts 3 channels: Ux, Uy, p.
 # We add a fourth channel for hole info (0: cell exists, 1: hole).
 final_channels = 4
 
 # Directories (change as needed)
-output_dir = "LDC_dataset"                  # Where individual trajectory .npy files are saved
-final_output_dir = "/home/namancho/datasets/LDC-Openfoam"  # Where the combined dataset is saved
+output_dir = "/data/user_data/namancho/LDC_reg"                  # Where individual trajectory .npy files are saved
+final_output_dir = "/data/user_data/namancho/LDC_Regular_2048"  # Where the combined dataset is saved
 dataset_dir = output_dir                    # For combining, use the same directory
 base_case_dir = "./"                        # Base OpenFOAM case directory
 
 # Physical and simulation parameters
 Re_min = 100
 Re_max = 10000
+mean_re = 5000
+std_re = 2000
 nu = 1.5e-5    # Kinematic viscosity (m^2/s)
 L = 2.0        # Characteristic length (m)
 
@@ -35,7 +37,12 @@ os.makedirs(final_output_dir, exist_ok=True)
 
 # Predefine Reynolds numbers and compute corresponding U (lid velocity)
 np.random.seed(42)  # reproducibility
-Re_values = np.random.uniform(Re_min, Re_max, num_trajectories)
+# Generate Reynolds numbers using np.random.normal
+Re_values = np.random.normal(mean_re, std_re, num_trajectories)
+
+# Clip the values to be within [Re_min, Re_max]
+Re_values = np.clip(Re_values, Re_min, Re_max)
+
 U_values = (Re_values * nu) / L
 
 # ================= Mesh and Simulation Utilities =================
@@ -214,20 +221,27 @@ def reshape_trajectory_data(sim_data, cell_centers, grid_shape, Re_value):
         mask[row, col] = 0  # mark that a cell exists here
 
     #Compute SDF
-    outside_dist = distance_transform_edt(mask == 0)
-    inside_dist = distance_transform_edt(mask == 1)
-    sdf_field = outside_dist - inside_dist
+    # outside_dist = distance_transform_edt(mask == 0)
+    # inside_dist = distance_transform_edt(mask == 1)
+    # sdf_field = outside_dist - inside_dist
+    sdf_field = np.ones_like(mask, dtype=np.float32)  # Entire domain = fluid
+
+    Re_min = 100
+    Re_max = 10000
+    Re_value_final = np.clip((Re_value - Re_min) / (Re_max - Re_min), 0.0, 1.0)
+
+    # Assign Reynolds number to all cells in the grid
+    reshaped[:, :, :, 3] = Re_value_final  # Ensure ALL cells, including holes, get Re value
 
 
     # For each timestep, fill in the data according to the mapping
     for t in range(T):
         for i, (row, col) in enumerate(mapping):
             # Place the simulation values (Ux, Uy, p)
-            reshaped[t, row, col, 0:3] = sim_data[t, i, :]
+            reshaped[t, row, col, :3] = sim_data[t, i, :3]  # Ux, Uy, p
             # For an existing cell, we set hole indicator to 0.
-            reshaped[t, row, col, 4] = Re_value
         # For positions that were not filled (hole positions), set channel 3 to 1.
-        reshaped[t, :, :, 3] = mask
+        reshaped[t, :, :, 4] = mask
         reshaped[t, :, :, 5] = sdf_field
 
     return reshaped

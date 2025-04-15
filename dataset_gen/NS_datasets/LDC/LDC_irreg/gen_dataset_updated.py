@@ -22,6 +22,8 @@ base_case_dir = "./"                        # Base OpenFOAM case directory
 # Physical and simulation parameters
 Re_min = 100
 Re_max = 10000
+mean_re = 5000
+std_re = 2000
 nu = 1.5e-5    # Kinematic viscosity (m^2/s)
 L = 2.0        # Characteristic length (m)
 
@@ -35,7 +37,12 @@ os.makedirs(final_output_dir, exist_ok=True)
 
 # Predefine Reynolds numbers and compute corresponding U (lid velocity)
 np.random.seed(42)  # reproducibility
-Re_values = np.random.uniform(Re_min, Re_max, num_trajectories)
+
+Re_values = np.random.normal(mean_re, std_re, num_trajectories)
+
+# Clip the values to be within [Re_min, Re_max]
+Re_values = np.clip(Re_values, Re_min, Re_max)
+
 U_values = (Re_values * nu) / L
 
 # ================= Mesh and Simulation Utilities =================

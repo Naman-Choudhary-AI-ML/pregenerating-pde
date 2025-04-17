@@ -15,7 +15,7 @@ class GaussianNumpyDataset(BaseTimeDataset):
         max_num_time_steps=19,
         time_step_size=1,
         fix_input_to_time_step=None,
-        allowed_time_transitions=None,
+        allowed_time_transitions=[1],
         just_velocities=False,
         resolution=128,
         num_trajectories = 100,
@@ -101,6 +101,7 @@ class GaussianNumpyDataset(BaseTimeDataset):
         """
         
         i, t, t1, t2 = self._idx_map(idx)
+        print(f"[DEBUG] Dataset index {idx}: trajectory={i}, t={t}, t1={t1}, t2={t2}, (t2 - t1)={t2 - t1}")
         time = t / self.constants["time"]  # Normalize timeli
         
 
@@ -130,7 +131,7 @@ class GaussianNumpyDataset(BaseTimeDataset):
         # Permute to match (channels, height, width)
         inputs = inputs.permute(2, 0, 1)  # From (height, width, channels) to (channels, height, width)
         labels = labels.permute(2, 0, 1)
-
+        print(f"[DEBUG] Final shapes: inputs={inputs.shape}, labels={labels.shape}")
         return {
             "pixel_values": inputs,
             "labels": labels,

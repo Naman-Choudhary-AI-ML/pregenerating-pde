@@ -55,7 +55,7 @@ def get_dataset(dataset, **kwargs):
             max_num_time_steps=kwargs.pop("max_num_train_time_steps", 19),
             time_step_size=kwargs.pop("time_step_size", 1),
             fix_input_to_time_step=kwargs.pop("fix_input_to_time_step", None),
-            allowed_time_transitions=kwargs.pop("allowed_time_transitions", None),
+            allowed_time_transitions=kwargs.pop("allowed_time_transitions", [1]),
             num_trajectories=kwargs.pop("num_trajectories"),
             N_val=kwargs.pop("N_val", 100),
             N_test=kwargs.pop("N_test", 80),

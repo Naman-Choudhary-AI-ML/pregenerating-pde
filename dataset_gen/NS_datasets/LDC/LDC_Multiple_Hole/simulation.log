@@ -1,0 +1,45 @@
+2025-04-21 17:31:24,414 - INFO - Created folder: naman_Design_Point_0_copy_1
+2025-04-21 17:31:25,416 - INFO - Processing folder naman_Design_Point_0_copy_1 with 5 holes.
+2025-04-21 17:31:25,416 - INFO - >>> randomize_holes_debug() called <<<
+2025-04-21 17:31:25,416 - INFO - Domain:          (xmin=0, xmax=2, ymin=0, ymax=2)
+2025-04-21 17:31:25,416 - INFO - Hole size:       (width=0.125, height=0.125)
+2025-04-21 17:31:25,416 - INFO - Grid step:       0.015625
+2025-04-21 17:31:25,417 - INFO - Allow overlap?   True
+2025-04-21 17:31:25,417 - INFO - Overlap fraction: 0.5
+2025-04-21 17:31:25,417 - INFO - --------------------------------------------------
+2025-04-21 17:31:25,417 - INFO - Overlap mode: All holes must contain this sub-region:
+2025-04-21 17:31:25,417 - INFO -   Overlap box coords = ([0.96875, 1.03125], [0.96875, 1.03125])
+2025-04-21 17:31:25,417 - INFO - Feasible hole lower-left coords must also ensure the hole remains in the domain:
+2025-04-21 17:31:25,417 - INFO -   hole_x ∈ [0.90625, 0.96875]
+2025-04-21 17:31:25,417 - INFO -   hole_y ∈ [0.90625, 0.96875]
+2025-04-21 17:31:25,417 - INFO - Number of feasible X positions that cover overlap: 5
+2025-04-21 17:31:25,417 - INFO - Number of feasible Y positions that cover overlap: 5
+2025-04-21 17:31:25,418 - INFO - 
+Final chosen hole positions:
+2025-04-21 17:31:25,418 - INFO -   Hole #1: (x=0.9375, y=0.90625, w=0.125, h=0.125)
+2025-04-21 17:31:25,418 - INFO -     Contains overlap box? True  (X covers? True, Y covers? True)
+2025-04-21 17:31:25,418 - INFO -   Hole #2: (x=0.953125, y=0.921875, w=0.125, h=0.125)
+2025-04-21 17:31:25,418 - INFO -     Contains overlap box? True  (X covers? True, Y covers? True)
+2025-04-21 17:31:25,418 - INFO -   Hole #3: (x=0.90625, y=0.9375, w=0.125, h=0.125)
+2025-04-21 17:31:25,418 - INFO -     Contains overlap box? True  (X covers? True, Y covers? True)
+2025-04-21 17:31:25,418 - INFO -   Hole #4: (x=0.921875, y=0.96875, w=0.125, h=0.125)
+2025-04-21 17:31:25,418 - INFO -     Contains overlap box? True  (X covers? True, Y covers? True)
+2025-04-21 17:31:25,418 - INFO -   Hole #5: (x=0.9375, y=0.90625, w=0.125, h=0.125)
+2025-04-21 17:31:25,418 - INFO -     Contains overlap box? True  (X covers? True, Y covers? True)
+2025-04-21 17:31:25,872 - INFO - Updated naman_Design_Point_0_copy_1/0/U: Umax set to 0.01586060901533724
+2025-04-21 17:31:25,872 - INFO - Updated naman_Design_Point_0_copy_1/0/U: Umax set to 0.01586060901533724 (Re: 2073.2822242270904)
+2025-04-21 17:31:25,872 - INFO - Saved Umax value 0.01586060901533724 in naman_Design_Point_0_copy_1/Umax.txt
+2025-04-21 17:31:25,872 - INFO - Running postProcess to generate cell centers in folder: naman_Design_Point_0_copy_1
+2025-04-21 17:31:26,364 - INFO - Cell center coordinates generated successfully in folder: naman_Design_Point_0_copy_1
+2025-04-21 17:45:24,398 - INFO - icoFoam simulation completed successfully in folder: naman_Design_Point_0_copy_1
+2025-04-21 17:45:24,398 - INFO - Simulation for naman_Design_Point_0_copy_1 completed in 838.98 seconds
+2025-04-21 17:45:24,469 - INFO - Sim data saved to /data/user_data/namancho/LDC_Multiple_Holes/naman/sim_data_batch_0.json
+2025-04-21 17:45:24,470 - INFO - Umax for simulation naman_Design_Point_0_copy_1 is 0.01586060901533724
+2025-04-21 17:45:24,471 - INFO - Skipping timestep 0 in naman_Design_Point_0_copy_1 due to uniform field.
+2025-04-21 17:45:25,143 - INFO - Folder naman_Design_Point_0_copy_1 => sim_array shape: (20, 16265, 4) (timesteps, num_cells, 4)
+2025-04-21 17:45:25,143 - INFO - Time directories: ['65', '130', '195', '260', '325', '390', '455', '520', '585', '650', '715', '780', '845', '910', '975', '1040', '1105', '1170', '1235', '1300']
+2025-04-21 17:45:25,160 - INFO - Folder naman_Design_Point_0_copy_1 => 16265 cell centers parsed.
+2025-04-21 17:45:25,388 - INFO - Folder naman_Design_Point_0_copy_1 reshaped to: (20, 128, 128, 6)
+2025-04-21 17:45:25,399 - INFO - Batch 0 dataset shape: (1, 20, 128, 128, 6) saved as /data/user_data/namancho/LDC_Multiple_Holes/naman/results_batch_0.npy
+2025-04-21 17:45:25,428 - INFO - Deleted folder naman_Design_Point_0_copy_1
+2025-04-21 17:45:25,428 - INFO - Total execution time: 841.02 seconds

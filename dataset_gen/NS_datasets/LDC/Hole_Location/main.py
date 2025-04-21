@@ -456,7 +456,7 @@ def reshape_trajectory_data(sim_data, cell_centers, grid_shape):
     n_rows, n_cols = grid_shape
     T = sim_data.shape[0]
 
-    Re_min = 100
+    Re_min = 10
     Re_max = 10000
     # Extract and normalize Re ONCE for the entire trajectory
     Re_raw = sim_data[0, 0, 3]
@@ -1052,7 +1052,7 @@ def update_U_file(sim_folder, Umax):
     logging.info(f"Updated {u_file_path}: Umax set to {Umax}")
 
 
-def generate_normal_re_values(num_samples, mean=5000, std_dev=2000, min_re=100, max_re=10000):
+def generate_normal_re_values(num_samples, mean=5000, std_dev=2000, min_re=10, max_re=10000):
     """
     Generates a normally distributed set of Reynolds numbers.
 
@@ -1192,7 +1192,7 @@ def update_controlDict(sim_folder, endTime, num_outputs=20):
         f.writelines(new_lines)
 
 def main(batch_name: str, total_trajectories: int):
-    save_dir = f"/data/user_data/vhsingh/LDC_hole_location/{batch_name}"
+    save_dir = f"/data/user_data/namancho/LDC_hole_location/{batch_name}"
     os.makedirs(save_dir, exist_ok=True)
     # total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
     batch_size = 128  # Adjust based on memory availability

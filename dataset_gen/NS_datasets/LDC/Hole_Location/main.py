@@ -9,6 +9,10 @@ import re
 import json
 import random
 import sys
+from tqdm import tqdm
+import gc
+from scipy.ndimage import distance_transform_edt
+import math
 # Configure logging
 logging.basicConfig(
     filename="simulation.log",
@@ -397,42 +401,190 @@ def parse_simulation(sim_folder, expected_n_points=16128, Umax_simulation=None, 
     results_array = np.stack(results_per_time, axis=0)  # shape: (num_time_steps, n_points, 4)
     return time_dirs, results_array
 
-
-def gather_all_simulations(sim_folders, expected_n_points=16128, L=2, nu=1.53e-5):
+def parse_c_file(file_path):
     """
-    Given a list of simulation folders, parse them all and stack results into a single array.
+    Parse the OpenFOAM cell centers file (named "C") to extract (x,y) coordinates.
+    Expects the file to contain an 'internalField' entry.
+    """
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    start_idx = None
+    num_centres = None
+    for i, line in enumerate(lines):
+        if "internalField" in line:
+            num_centres = int(lines[i+1].strip())
+            start_idx = i + 3
+            break
+
+    if start_idx is None or num_centres is None:
+        raise ValueError("Could not find 'internalField' or the number of cell centres in the file")
+
+    coordinates = []
+    for line in lines[start_idx:start_idx+num_centres]:
+        if "(" in line and ")" in line:
+            x, y, _ = map(float, line.strip("()\n").split())
+            coordinates.append([x, y])
+    return np.array(coordinates)
+
+def reshape_trajectory_data(sim_data, cell_centers, grid_shape):
+    """
+    Reshape simulation data (timesteps, num_cells, 5) to a fixed grid of shape 
+         (timesteps, n_rows, n_cols, 9).
+
+    Input channels (from sim_data):
+       0: ρ
+       1: Ux
+       2: Uy
+       3: p
+       4: Reynolds number
+
+    Output grid channels:
+       0: ρ
+       1: Ux
+       2: Uy
+       3: p
+       4: Reynolds number
+       5: Binary mask (0 if cell exists; 1 if hole)
+       6: SDF (signed distance: positive in fluid, negative in hole)
+
+    Mapping:
+       For each cell center (x,y), compute:
+         col = round((x - x_min) / (x_max - x_min) * (n_cols - 1))
+         row = round((y - y_min) / (y_max - y_min) * (n_rows - 1))
+    """
+    n_rows, n_cols = grid_shape
+    T = sim_data.shape[0]
+
+    Re_min = 100
+    Re_max = 10000
+    # Extract and normalize Re ONCE for the entire trajectory
+    Re_raw = sim_data[0, 0, 3]
+    Re_norm = np.clip((Re_raw - Re_min) / (Re_max - Re_min), 0.0, 1.0)
+    
+    # Domain boundaries from cell centers.
+    x_min, x_max = np.min(cell_centers[:, 0]), np.max(cell_centers[:, 0])
+    y_min, y_max = np.min(cell_centers[:, 1]), np.max(cell_centers[:, 1])
+    
+    # Allocate output array: (T, n_rows, n_cols, 9)
+    reshaped = np.zeros((T, n_rows, n_cols, 6), dtype=np.float32)
+    
+    # Build binary mask: default 1 (hole) everywhere.
+    mask = np.ones((n_rows, n_cols), dtype=np.float32)
+    mapping = []
+    for (x, y) in cell_centers:
+        col = int(round((x - x_min) / (x_max - x_min) * (n_cols - 1)))
+        row = int(round((y - y_min) / (y_max - y_min) * (n_rows - 1)))
+        mapping.append((row, col))
+        mask[row, col] = 0  # cell exists (fluid)
+    
+    # Compute the SDF:
+
+    outside_dist = distance_transform_edt(mask == 0)
+    inside_dist = distance_transform_edt(mask == 1)
+    sdf = outside_dist - inside_dist
+    max_abs_sdf = np.max(np.abs(sdf))
+    if max_abs_sdf > 0:
+        sdf = sdf / max_abs_sdf
+    
+    # Assign Re to all time steps and all cells
+    reshaped[:, :, :, 3] = Re_norm
+    # Fill simulation data onto the grid via mapping.
+    n_cells_sim = sim_data.shape[1]
+    n_cells_mapping = len(mapping)
+    if n_cells_mapping != n_cells_sim:
+        logging.warning(f"Number of cell centers ({n_cells_mapping}) does not match simulation cells ({n_cells_sim}). Using minimum count.")
+        n_cells = min(n_cells_mapping, n_cells_sim)
+        mapping = mapping[:n_cells]
+    else:
+        n_cells = n_cells_sim
+    
+    for t in range(T):
+        for i, (row, col) in enumerate(mapping):
+            if i >= n_cells:
+                break
+            reshaped[t, row, col, 0:3] = sim_data[t, i, 0:3]
+        # Set binary mask (channel 5) and SDF (channel 6) for every time step.
+        reshaped[t, :, :, 4] = mask
+        reshaped[t, :, :, 5] = sdf
+    
+    return reshaped
+
+def combine_and_reshape_trajectories(dataset, cell_centers, grid_shape):
+    """
+    Combine all trajectory data (from a single results.npy file with shape
+         (num_trajectories, timesteps, num_cells, 4))
+    and reshape them into a fixed grid of shape
+         (num_trajectories, timesteps, n_rows, n_cols, 5)
+    using the provided cell centers and grid shape.
+    """
+    # num_trajectories = dataset.shape[0]
+    combined_list = []
+    
+    for sim_data in tqdm(dataset, desc="Reshaping Trajectories"):
+        # Extract the simulation data for trajectory i (all timesteps, all cells, all 4 channels)
+        # sim_data = dataset[i, :, :, :]  # shape: (timesteps, 16320, 4)
+        reshaped_data = reshape_trajectory_data(sim_data, cell_centers, grid_shape)  # shape: (timesteps, 128, 128, 5)
+        combined_list.append(reshaped_data)
+        gc.collect()  # free memory if needed
+        
+    combined = np.array(combined_list)
+    return combined
+
+def gather_all_simulations(sim_folders, grid_shape=(128, 128), c_file_name="0/C", L=2, nu=1.53e-5):
+    """
+    Given a list of simulation folders, parse them all (via parse_simulation),
+    then reshape each simulation's data onto a fixed grid of shape (timesteps, n_rows, n_cols, 5).
+    
+    Each simulation uses its own cell centers (parsed from its own "C" file) to compute the mapping.
+    This avoids mismatches when simulations have different numbers of cells.
     
     Returns:
-        final_time_dirs (list of str): The time steps used (assuming all sims have the same times).
-        final_results (np.ndarray): shape (num_sims, num_time_steps, n_points, 4).
+        common_time_dirs (list of str): The time step labels from the first successful simulation.
+        combined_dataset (np.ndarray): Array of shape (num_sims, timesteps, n_rows, n_cols, 5).
     """
-    all_sim_results = []
-    final_time_dirs = None
-    
-    for i, folder in enumerate(sim_folders):
-        logging.info(f"Parsing simulation folder {folder}")
-        # Read Umax for the simulation from the file.
+    all_reshaped = []  # List to store reshaped simulation arrays (each: (timesteps, 128, 128, 5))
+    common_time_dirs = None
+
+    for folder in sim_folders:
+        # Parse simulation data (raw data: (timesteps, num_cells, 4))
         Umax_simulation = get_Umax_from_sim_folder(folder)
         logging.info(f"Umax for simulation {folder} is {Umax_simulation}")
-        tdirs, results_array = parse_simulation(folder, expected_n_points, Umax_simulation, L, nu)
-        if i == 0:
-            # Keep track of the "canonical" time steps
-            final_time_dirs = tdirs
+        sim_result = parse_simulation(folder, Umax_simulation, L, nu)
+        if sim_result is None:
+            logging.error(f"No valid timesteps found in simulation folder {folder}. Skipping folder.")
+            continue
+        time_dirs, sim_array = sim_result
+        logging.info(f"Folder {folder} => sim_array shape: {sim_array.shape} (timesteps, num_cells, 4)")
+        logging.info(f"Time directories: {time_dirs}")
+
+        # For the first successful simulation, record the time directories as reference.
+        if common_time_dirs is None:
+            common_time_dirs = time_dirs
         else:
-            # (Optional) check that tdirs == final_time_dirs if you assume they must match
-            if tdirs != final_time_dirs:
-                logging.warning(
-                    f"Simulation {folder} has different time steps than the first simulation. "
-                    f"This code assumes consistent time steps across simulations."
-                )
-        all_sim_results.append(results_array)
-    
-    # Stack them: from list of [ (num_time_steps, n_points, 4), ... ] 
-    # into (num_sims, num_time_steps, n_points, 4)
-    final_results = np.stack(all_sim_results, axis=0)
-    # => shape (num_sims, num_time_steps, n_points, 5)
-    
-    return final_time_dirs, final_results
+            if len(time_dirs) != len(common_time_dirs):
+                logging.warning(f"Folder {folder} has a different number of timesteps. Stacking by index.")
+
+        # Parse cell centers for THIS simulation individually.
+        c_file_path = os.path.join(folder, c_file_name)
+        if not os.path.isfile(c_file_path):
+            logging.error(f"Cell centers file not found for folder {folder}. Skipping folder.")
+            continue
+        cell_centers = parse_c_file(c_file_path)
+        logging.info(f"Folder {folder} => {len(cell_centers)} cell centers parsed.")
+
+        # Reshape the simulation's raw data onto the fixed grid using its own cell centers.
+        reshaped = reshape_trajectory_data(sim_array, cell_centers, grid_shape)
+        logging.info(f"Folder {folder} reshaped to: {reshaped.shape}")
+        all_reshaped.append(reshaped)
+
+    if len(all_reshaped) == 0:
+        logging.warning("No simulations were successfully processed.")
+        return None, None
+
+    # Stack the reshaped simulations along a new axis.
+    combined_dataset = np.stack(all_reshaped, axis=0)  # (num_sims, timesteps, 128, 128, 5)
+    return common_time_dirs, combined_dataset
 
 def generate_blockMeshDict(i_c, j_c, output_path="blockMeshDict", run_blockMesh=False):
     """
@@ -959,6 +1111,86 @@ def get_Umax_from_sim_folder(sim_folder):
         Umax_simulation = float(f.read().strip())
     return Umax_simulation
 
+RE_TIME_SCHEDULE = [
+    (5000, 10000, 40,   None),
+    (4000,  5000, 30,   None),
+    (2500,  4000, 20,   None),
+    (1000,  2500, 10,   None),
+    ( 500,  1000,  5,   None),
+    ( 400,   500,  4,   None),
+    ( 300,   400,  3,   None),
+    ( 200,   300,  2,   None),
+    ( 100,   200,  1,   None),
+    (  10,   100, None, 2700),
+]
+L  = 2.0        # characteristic length [m]
+nu = 1.5e-5     # kinematic viscosity [m²/s]
+def compute_endTime_from_Re(re_value):
+    """
+    Map a Reynolds number to an endTime (s), rounded UP to nearest 100,
+    and returned as a float with 7 decimal places.
+    """
+    for re_min, re_max, mult, const in RE_TIME_SCHEDULE:
+        if re_min <= re_value < re_max:
+            if mult is not None:
+                t_nd = (L**2) / (re_value * nu)
+                raw = mult * t_nd
+            else:
+                raw = const
+            # round up to nearest 100
+            endT = math.ceil(raw / 100.0) * 100.0
+            # enforce 7 decimal places
+            return float(f"{endT:.7f}")
+    raise ValueError(f"Re={re_value} outside of defined ranges")
+
+
+def update_controlDict(sim_folder, endTime, num_outputs=20):
+    """
+    Edits system/controlDict so that:
+      - endTime        → `endTime` (7-decimal float)
+      - writeInterval  → chosen so you get `num_outputs` writes,
+                         also 7‑decimal if runTime-based.
+    """
+    cd_path = os.path.join(sim_folder, "system", "controlDict")
+    with open(cd_path, "r") as f:
+        lines = f.readlines()
+
+    # 1) find deltaT & writeControl
+    deltaT = None
+    writeControl = "timeStep"
+    for L in lines:
+        s = L.strip()
+        if s.startswith("deltaT"):
+            deltaT = float(s.split()[1].rstrip(";"))
+        elif s.startswith("writeControl"):
+            writeControl = s.split()[1].rstrip(";")
+
+    # 2) compute writeInterval
+    if writeControl == "timeStep":
+        if deltaT is None:
+            raise ValueError("deltaT not found in controlDict")
+        total_steps = int(math.ceil(endTime / deltaT))
+        interval = max(1, total_steps // num_outputs)
+    else:
+        interval = endTime / num_outputs
+
+    # 3) rewrite with 7-decimal formatting
+    new_lines = []
+    for L in lines:
+        s = L.strip()
+        if s.startswith("endTime"):
+            new_lines.append(f"endTime         {endTime:.7f};\n")
+        elif s.startswith("writeInterval"):
+            if writeControl == "timeStep":
+                new_lines.append(f"writeInterval   {interval};\n")
+            else:
+                new_lines.append(f"writeInterval   {interval:.7f};\n")
+        else:
+            new_lines.append(L)
+
+    with open(cd_path, "w") as f:
+        f.writelines(new_lines)
+
 def main(batch_name: str, total_trajectories: int):
     save_dir = f"/data/user_data/vhsingh/LDC_hole_location/{batch_name}"
     os.makedirs(save_dir, exist_ok=True)
@@ -1004,7 +1236,13 @@ def main(batch_name: str, total_trajectories: int):
             except subprocess.CalledProcessError as e:
                 logging.error(f"BlockMesh failed for {folder}: {e}")
                 continue  # Skip this folder
+            re_val = re_values[trajectory_idx]
 
+            # 1) pick your endTime by piecewise schedule
+            endT = compute_endTime_from_Re(re_val)
+
+            # 2) patch controlDict so you get exactly 20 writes
+            update_controlDict(folder, endTime=endT, num_outputs=20)
             # Run solver
             update_Umax_in_simulation_folder(folder, re_values[trajectory_idx])
             trajectory_idx += 1

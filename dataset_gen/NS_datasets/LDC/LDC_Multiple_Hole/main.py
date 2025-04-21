@@ -1291,7 +1291,7 @@ def main(batch_name: str, total_trajectories: int):
             num_holes = random.randint(2, 10)
             print(num_holes)
             logging.info(f"Processing folder {folder} with {num_holes} holes.")
-            random_holes = randomize_holes(num_holes, allow_overlap=True, overlap_fraction=0.5)
+            random_holes = randomize_holes(num_holes, allow_overlap=False, overlap_fraction=0.5)
 
             # Generate blockMeshDict and update simulation fields
             delete_blockMeshDict(folder)

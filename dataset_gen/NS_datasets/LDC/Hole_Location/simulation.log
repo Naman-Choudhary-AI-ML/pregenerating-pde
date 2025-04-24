@@ -1,0 +1,11 @@
+2025-04-21 17:53:55,274 - INFO - The center of the hole is:1.71875
+2025-04-21 17:53:55,274 - INFO - The center of the hole is:1.78125
+2025-04-21 17:53:55,274 - INFO - The initial calculated x_min is:1.59375
+2025-04-21 17:53:55,274 - INFO - The initial calculated x_max is:1.84375
+2025-04-21 17:53:55,274 - INFO - The initial calculated y_min is:1.65625
+2025-04-21 17:53:55,274 - INFO - The initial calculated y_max is:1.90625
+2025-04-21 17:53:55,309 - INFO - Created folder: naman_Design_Point_0_copy_1
+2025-04-21 17:53:56,310 - INFO - Processing folder naman_Design_Point_0_copy_1 with hole center (110.0000, 114.0000)
+2025-04-21 17:53:56,536 - INFO - Updated naman_Design_Point_0_copy_1/0/U: Umax set to 0.053136541346690845
+2025-04-21 17:53:56,536 - INFO - Updated naman_Design_Point_0_copy_1/0/U: Umax set to 0.053136541346690845 (Re: 6945.95311721449)
+2025-04-21 17:53:56,536 - INFO - Saved Umax value 0.053136541346690845 in naman_Design_Point_0_copy_1/Umax.txt

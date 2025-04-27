@@ -1223,7 +1223,7 @@ def main(batch_name: str, total_trajectories: int):
     batch_index = 1
 
     # Generate all Re values upfront
-    re_values = generate_normal_re_values(total_trajectories, mean=10000, std_dev=0)
+    re_values = generate_normal_re_values(total_trajectories, mean=5000, std_dev=2000)
 
     trajectory_idx = 0
 

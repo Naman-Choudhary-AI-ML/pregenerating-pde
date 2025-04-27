@@ -1153,7 +1153,7 @@ def compute_endTime_from_Re(re_value):
     and returned as a float with 7 decimal places.
     """
     for re_min, re_max, mult, const in RE_TIME_SCHEDULE:
-        if re_min <= re_value < re_max:
+        if re_min <= re_value <= re_max:
             if mult is not None:
                 t_nd = (L**2) / (re_value * nu)
                 raw = mult * t_nd
@@ -1163,7 +1163,7 @@ def compute_endTime_from_Re(re_value):
             endT = math.ceil(raw / 100.0) * 100.0
             # enforce 7 decimal places
             return float(f"{endT:.7f}")
-    raise ValueError(f"Re={re_value} outside of defined ranges")
+    # raise ValueError(f"Re={re_value} outside of defined ranges")
 
 
 def update_controlDict(sim_folder, endTime, num_outputs=20):
@@ -1223,7 +1223,7 @@ def main(batch_name: str, total_trajectories: int):
     batch_index = 1
 
     # Generate all Re values upfront
-    re_values = generate_normal_re_values(total_trajectories, mean=5000, std_dev=2000)
+    re_values = generate_normal_re_values(total_trajectories, mean=10000, std_dev=0)
 
     trajectory_idx = 0
 

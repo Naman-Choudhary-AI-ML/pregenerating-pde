@@ -966,7 +966,85 @@ def gather_all_simulations(sim_folders, grid_shape=(128, 128), c_file_name="0/C"
     # Stack the reshaped simulations along a new axis.
     combined_dataset = np.stack(all_reshaped, axis=0)  # (num_sims, timesteps, 128, 128, 5)
     return common_time_dirs, combined_dataset
+RE_TIME_SCHEDULE = [
+    (5000, 10000, 40,   None),
+    (4000,  5000, 30,   None),
+    (2500,  4000, 20,   None),
+    (1000,  2500, 10,   None),
+    ( 500,  1000,  5,   None),
+    ( 400,   500,  4,   None),
+    ( 300,   400,  3,   None),
+    ( 200,   300,  2,   None),
+    ( 100,   200,  1,   None),
+    (  10,   100, None, 2700),
+]
+L  = 2.0        # characteristic length [m]
+nu = 1.5e-5     # kinematic viscosity [m²/s]
+def compute_endTime_from_Re(re_value):
+    """
+    Map a Reynolds number to an endTime (s), rounded UP to nearest 100,
+    and returned as a float with 7 decimal places.
+    """
+    for re_min, re_max, mult, const in RE_TIME_SCHEDULE:
+        if re_min <= re_value <= re_max:
+            if mult is not None:
+                t_nd = (L**2) / (re_value * nu)
+                raw = mult * t_nd
+            else:
+                raw = const
+            # round up to nearest 100
+            endT = math.ceil(raw / 100.0) * 100.0
+            # enforce 7 decimal places
+            return float(f"{endT:.7f}")
+    # raise ValueError(f"Re={re_value} outside of defined ranges")
 
+
+def update_controlDict(sim_folder, endTime, num_outputs=20):
+    """
+    Edits system/controlDict so that:
+      - endTime        → `endTime` (7-decimal float)
+      - writeInterval  → chosen so you get `num_outputs` writes,
+                         also 7‑decimal if runTime-based.
+    """
+    cd_path = os.path.join(sim_folder, "system", "controlDict")
+    with open(cd_path, "r") as f:
+        lines = f.readlines()
+
+    # 1) find deltaT & writeControl
+    deltaT = None
+    writeControl = "timeStep"
+    for L in lines:
+        s = L.strip()
+        if s.startswith("deltaT"):
+            deltaT = float(s.split()[1].rstrip(";"))
+        elif s.startswith("writeControl"):
+            writeControl = s.split()[1].rstrip(";")
+
+    # 2) compute writeInterval
+    if writeControl == "timeStep":
+        if deltaT is None:
+            raise ValueError("deltaT not found in controlDict")
+        total_steps = int(math.ceil(endTime / deltaT))
+        interval = max(1, total_steps // num_outputs)
+    else:
+        interval = endTime / num_outputs
+
+    # 3) rewrite with 7-decimal formatting
+    new_lines = []
+    for L in lines:
+        s = L.strip()
+        if s.startswith("endTime"):
+            new_lines.append(f"endTime         {endTime:.7f};\n")
+        elif s.startswith("writeInterval"):
+            if writeControl == "timeStep":
+                new_lines.append(f"writeInterval   {interval};\n")
+            else:
+                new_lines.append(f"writeInterval   {interval:.7f};\n")
+        else:
+            new_lines.append(L)
+
+    with open(cd_path, "w") as f:
+        f.writelines(new_lines)
 def main(batch_name: str, total_trajectories: int):
     save_dir = f"/data/user_data/vhsingh/FPO_cylinder_reg_new/{batch_name}"
     os.makedirs(save_dir, exist_ok=True)
@@ -993,6 +1071,11 @@ def main(batch_name: str, total_trajectories: int):
         # Step 2: Run simulations for this batch
         for folder in batch_folders:
             folder_start_time = time.time()
+            re_val = re_values[trajectory_idx]
+            endT = compute_endTime_from_Re(re_val)
+
+            # 2) patch controlDict so you get exactly 20 writes
+            update_controlDict(folder, endTime=endT, num_outputs=20)
             update_Umax_in_simulation_folder(folder, re_values[trajectory_idx])
             trajectory_idx += 1
             generate_cell_centers(folder)

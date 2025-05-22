@@ -550,7 +550,7 @@ def gather_all_simulations(sim_folders, grid_shape=(128, 128), c_file_name="0/C"
         # Parse simulation data (raw data: (timesteps, num_cells, 4))
         Umax_simulation = get_Umax_from_sim_folder(folder)
         logging.info(f"Umax for simulation {folder} is {Umax_simulation}")
-        sim_result = parse_simulation(folder, Umax_simulation, L, nu)
+        sim_result = parse_simulation(folder, expected_n_points=16128, Umax_simulation=Umax_simulation, L=L, nu=nu)
         if sim_result is None:
             logging.error(f"No valid timesteps found in simulation folder {folder}. Skipping folder.")
             continue

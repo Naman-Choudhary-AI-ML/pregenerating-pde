@@ -5,7 +5,6 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import LearningRateMonitor
-from FNO import FNO_time
 
 
 import copy
@@ -15,6 +14,9 @@ import sys
 
 import pandas as pd
 import torch
+import os, torch
+
+
 
 if len(sys.argv) <= 2:
     
@@ -24,37 +26,41 @@ if len(sys.argv) <= 2:
         "lr_scheduler": "cosine", # or "step"
         "scheduler_step": None,               #1,
         "scheduler_gamma": None, #0.9,
-        "epochs": 400,
+        "epochs": 100,
         "batch_size": 16,         
         "time_steps": 19,          # How many time steps to select?
         "dt": 1,                  # What is the time step? (1 means include entire traj, 2 means taking every other step, etc.
-<<<<<<< HEAD
-        "training_samples": 424,   # How many training samples?
-        "mixing": False,  # Set True to enable mixing experiment
-        "alpha": 0.25,   # Percentage of hole data (e.g., 0.15 = 15%)
-=======
-        "training_samples": 400,   # How many training samples?
-        "mixing": False,  # Set True to enable mixing experiment
-        "alpha": 1.0,   # Percentage of hole data (e.g., 0.15 = 15%)
->>>>>>> b1ba37d4af0134255897c1abc60639fd34297251
-        "hole_data_path": "/data/user_data/vhsingh/dataset/scaled_hole_location.npy",
-        "nohole_data_path": "/data/user_data/vhsingh/dataset/scaled_NS_Regular.npy",
+        "training_samples": 200,   # How many training samples?
+        "mixing": True,  # Set True to enable mixing experiment
+        "alpha": 0.5,   # Percentage of hole data (e.g., 0.15 = 15%)
+        "hole_data_path": "/data/group_data/sage_lab_complex_geometry/Filtered_Data_Re_8000_10000.npy",
+        "nohole_data_path": "/data/group_data/sage_lab_complex_geometry/Filtered_Data_Re_2000_4000.npy",
         "time_input": 1,          # Should we include time in the input channels?
         "allowed": 'one',         # All2ALL (train) - all , or One2All (train) - one2all, AR training - one
         "cluster": True,          # Something internal (don't bother)
     }
     
     model_architecture_ = {
-        "modes_x": 16,
-        "modes_y": 16,
-        "width": 64,
-        "factor": 4,
-        "n_ff_layers": 2,
-        "share_weight": True,
-        "ff_weight_norm": True,
-        "layer_norm": False,
-        "retrain_fno": 42,
-        "N_layers": 4,
+        "N_layers": 4,            # Number of (D) & (U) blocks 
+        "channel_multiplier": 32, # Parameter d_e (how the number of channels changes)
+        "N_res": 8,               # Number of (R) blocks in the middle networs.
+        "N_res_neck" : 8,         # Number of (R) blocks in the BN
+        
+        "batch_norm": 1,          # Should we use simple BN -- 1: use it? If is_time == 1, we turn it off
+        "is_time": 1,             # Should we conditional BN/LN/IN?
+        "nl_dim": "23",           # If yes, which norm? '23'-IN, '023'-BN, '123'-LN
+        
+        "in_size": 128,           # Resolution of the computational grid
+        "activation": 'cno_lrelu',# cno_lrelu, cno_lrelu_torch or lrelu
+        
+        "is_att": False,          # Should we use attention in the bottleneck? You could add it!
+        "patch_size" : 1,         # ViT parameters, if is_att == True
+        "dim_multiplier" : 1,
+        "depth" : 2,
+        "heads" : 2,
+        "dim_head_multiplier" : 0.5,
+        "mlp_dim_multiplier" : 1.0,
+        "emb_dropout" : 0.
         }
     
     # AVAILABLE EXPERIMENTS:
@@ -70,11 +76,7 @@ if len(sys.argv) <= 2:
     # WHAT IS THE EXPERIMENT?
     which_example = "ns_custom"
     
-<<<<<<< HEAD
-    folder = f"/data/user_data/vhsingh/CNO_experiments/LDC_{training_properties['training_samples']}/Regular/{training_properties['allowed']}/{training_properties['alpha']}"
-=======
-    folder = f"/data/user_data/namancho/CNO_experiments/FPO_External/Hole_Location/FNO/{training_properties['allowed']}/{training_properties['alpha']}"
->>>>>>> b1ba37d4af0134255897c1abc60639fd34297251
+    folder = f"/data/user_data/namancho/CNO_experiments/LDC_ InterCompl_{training_properties['training_samples']}/Mixing/{training_properties['allowed']}_{training_properties['training_samples']}/{training_properties['alpha']}"
     os.makedirs(folder, exist_ok=True)
 
 
@@ -87,17 +89,17 @@ else:
 #---------------------------------------------------------    
 cluster = True  # We always tun on cluster
 
-# model_architecture_["batch_norm"] = True if model_architecture_["batch_norm"] in [1, True] else False
-# training_properties["time_input"] = True if training_properties["time_input"] in [1, True] else False
-# model_architecture_["is_att"]     = True if model_architecture_["is_att"]     in [1, True] else False
-# training_properties["cluster"]    = True if training_properties["cluster"]    in [1, True] else False
+model_architecture_["batch_norm"] = True if model_architecture_["batch_norm"] in [1, True] else False
+training_properties["time_input"] = True if training_properties["time_input"] in [1, True] else False
+model_architecture_["is_att"]     = True if model_architecture_["is_att"]     in [1, True] else False
+training_properties["cluster"]    = True if training_properties["cluster"]    in [1, True] else False
 
-# if model_architecture_["nl_dim"] in ["023"]:
-#     model_architecture_["nl_dim"] = [0,2,3]
-# elif model_architecture_["nl_dim"] in ["123"]:
-#     model_architecture_["nl_dim"] = [1,2,3]
-# elif model_architecture_["nl_dim"] in ["23"]:
-#     model_architecture_["nl_dim"] = [2,3]
+if model_architecture_["nl_dim"] in ["023"]:
+    model_architecture_["nl_dim"] = [0,2,3]
+elif model_architecture_["nl_dim"] in ["123"]:
+    model_architecture_["nl_dim"] = [1,2,3]
+elif model_architecture_["nl_dim"] in ["23"]:
+    model_architecture_["nl_dim"] = [2,3]
 
 #---------------------------------------------------------
 if not cluster: # Set the defaulf folder
@@ -154,20 +156,40 @@ loader_dict["allowed_tran"] = _allowed
 
 #---------------------------------------------------------
 # Initialize CNO
-model   = FNO_time(in_dim =  loader_dict["in_dim"],
+model   = CNO_time(in_dim =  loader_dict["in_dim"],               
+                    in_size  = 128,                  
+                    N_layers = model_architecture_["N_layers"],                
+                    N_res =  model_architecture_["N_res"], 
+                    N_res_neck = model_architecture_["N_res_neck"],           
+                    channel_multiplier = model_architecture_["channel_multiplier"],  
+                    batch_norm = model_architecture_["batch_norm"],    
                     out_dim = loader_dict["out_dim"],               
-                    modes1= model_architecture_["modes_x"],
-                    modes2=model_architecture_["modes_y"],
-                    width = model_architecture_["width"],
-                    n_layers = model_architecture_["N_layers"],
-                    retrain_fno = model_architecture_["retrain_fno"],                                                   
+                    activation = model_architecture_["activation"], 
+                    time_steps = loader_dict["time_steps"],
+                    is_time = model_architecture_["is_time"],
+                    nl_dim= model_architecture_["nl_dim"],
 
                     lr = training_properties["learning_rate"],
+                    batch_size = training_properties["batch_size"],
                     weight_decay = training_properties["weight_decay"],
+                    scheduler_step = training_properties["scheduler_step"],
+                    scheduler_gamma = training_properties["scheduler_gamma"],
 
-                    loader_dictionary = loader_dict,)
+                    loader_dictionary = loader_dict,
+
+                    is_att = model_architecture_["is_att"],
+                    patch_size = model_architecture_["patch_size"],
+                    dim_multiplier = model_architecture_["dim_multiplier"],
+                    depth = model_architecture_["depth"],
+                    heads = model_architecture_["heads"],
+                    dim_head_multiplier = model_architecture_["dim_head_multiplier"],
+                    mlp_dim_multiplier = model_architecture_["mlp_dim_multiplier"],
+                    emb_dropout = model_architecture_["emb_dropout"])
 
 #---------------------------------------------------------
+print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
+print("Number of CUDA GPUs:", torch.cuda.device_count())
+
 
 ver = 0 # Just a random string to be added to the model name
 
@@ -179,18 +201,15 @@ lr_monitor = LearningRateMonitor(logging_interval='epoch')  # or 'step' if you p
 # logger = TensorBoardLogger(save_dir=folder, version=ver, name="logs")
 logger = WandbLogger(
     project="GeoFNO1",
-<<<<<<< HEAD
-    name=f"CNO_{training_properties['alpha']}_alpha_AR_NS_LDC_Regular_{training_properties['training_samples']}_100_100_{ver}_Cosine",
-=======
-    name=f"FNO_alpha_AR_NS_FPO_Ext_Hole_Location_400_100_80_{ver}_Cosine",
->>>>>>> b1ba37d4af0134255897c1abc60639fd34297251
+    name=f"CNO_{training_properties['alpha']}_REMix_AR_NS_LDC_200_Alpha_Mixing_{training_properties['alpha']}Complex_w_Inter{training_properties['training_samples']}_100_100_{ver}_Cosine",
     save_dir=folder,
     config={**training_properties, **model_architecture_}  # logs hyperparams too
 )
 
-trainer = Trainer(devices = 1,
+trainer = Trainer(devices = -1,
                 max_epochs = training_properties["epochs"],
                 callbacks = [checkpoint_callback,early_stop_callback, lr_monitor],
+                strategy="ddp_find_unused_parameters_true", #IMPORTANT!!!
                 logger=logger)
 trainer.fit(model)
 trainer.validate(model)

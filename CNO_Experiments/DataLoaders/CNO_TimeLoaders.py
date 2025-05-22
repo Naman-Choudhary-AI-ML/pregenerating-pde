@@ -180,18 +180,12 @@ class BaseTimeDataset(BaseDataset, ABC):
 #--------------------------------------------------------
 # Navier-Stokes Time for FPO and LDC Datasets:
 #--------------------------------------------------------
-import numpy as np
-import torch
-from torch.utils.data import Dataset
-
-import numpy as np
-import torch
-from torch.utils.data import Dataset
-
-class NSFlowTimeDataset_CNO(BaseTimeDataset):
+class NSFlowTimeDataset(BaseTimeDataset):
     def __init__(self, *args, **kwargs):
         self.N_val = kwargs.pop("N_val", 100)
         self.N_test = kwargs.pop("N_test", 100)
+        mean_override = kwargs.pop("mean", None)
+        std_override = kwargs.pop("std", None)
         super().__init__(*args, **kwargs)
 
         # Load .npy data
@@ -208,9 +202,18 @@ class NSFlowTimeDataset_CNO(BaseTimeDataset):
         self.out_dim = 3
 
         # Z-score mean/std for ux, uy, p (first 3 channels)
-        self.mean = torch.tensor(self.data[..., :3].mean(axis=(0, 1, 2, 3)), dtype=torch.float32).view(3, 1, 1)
-        self.std  = torch.tensor(self.data[..., :3].std(axis=(0, 1, 2, 3)), dtype=torch.float32).view(3, 1, 1)
-
+        # self.mean = torch.tensor(self.data[..., :3].mean(axis=(0, 1, 2, 3)), dtype=torch.float32).view(3, 1, 1)
+        # self.std  = torch.tensor(self.data[..., :3].std(axis=(0, 1, 2, 3)), dtype=torch.float32).view(3, 1, 1)
+        if (mean_override is not None) and (std_override is not None):
+            # use the shared, precomputed stats
+            self.mean = mean_override
+            self.std  = std_override
+        else:
+            # fallback: compute per-file stats
+            m = self.data[..., :3].mean(axis=(0,1,2,3))
+            s = self.data[..., :3].std(axis=(0,1,2,3))
+            self.mean = torch.tensor(m, dtype=torch.float32).view(3,1,1)
+            self.std  = torch.tensor(s, dtype=torch.float32).view(3,1,1)
         self.post_init()
 
     def __getitem__(self, idx):
@@ -244,155 +247,7 @@ class NSFlowTimeDataset_CNO(BaseTimeDataset):
 
         return time, input_raw, label_raw
 
-class NSFlowTimeDataset(BaseTimeDataset):
-    def __init__(self, 
-                 data_path, 
-                 domain_range=(0.0, 2.0), 
-                 N_val=100, 
-                 N_test=100,
-                 *args, 
-                 **kwargs):
-        """
-        data_path: path to .npy file of shape (N, T, H, W, C)
-        domain_range: (min, max) used to create linspace for x, y
-        N_val, N_test: override for validation/test splits if desired
-        """
-        self.N_val = N_val
-        self.N_test = N_test
-        super().__init__(*args, **kwargs)
 
-        # -- Load data from .npy --
-        self.data_path = data_path
-        self.data = np.load(self.data_path)  # shape: (N, T, H, W, C)
-        self.N_max = self.data.shape[0]
-
-        # We assume shape = (N, T, H, W, C)
-        _, self.T_total, self.H, self.W, self.C = self.data.shape
-        self.resolution = self.H  # or self.W if square
-
-        # -------------------------------------------------------
-        #  Create x,y coordinate grids for domain
-        # -------------------------------------------------------
-        x_min, x_max = domain_range
-        y_min, y_max = domain_range  # adjust if your domain is not square
-
-        x_vals = np.linspace(x_min, x_max, self.W)  # shape (W,)
-        y_vals = np.linspace(y_min, y_max, self.H)  # shape (H,)
-
-        # meshgrid => shape (H, W)
-        x_grid, y_grid = np.meshgrid(x_vals, y_vals)
-        # Convert to torch => shape (H,W)
-        self.x_grid = torch.FloatTensor(x_grid)
-        self.y_grid = torch.FloatTensor(y_grid)
-
-        # -------------------------------------------------------
-        #  Decide how many channels go into the network
-        #   - We have 5 physical channels [Ux, Uy, P, Re, SDF]
-        #   - +1 for time (optional)
-        #   - +2 for x, y
-        #   - +1 for mask
-        #
-        #   We'll handle final in_dim automatically in __getitem__
-        # -------------------------------------------------------
-        # We'll compute in_dim on the fly in __getitem__ or keep as a reference
-        # If you want a static in_dim, you can do something like:
-        base_in_dim = 5 + 2 + 1  # 5 physical + 2 coords + 1 mask = 8
-        if kwargs.get("time_input", True):
-            base_in_dim += 1  # time
-        self.add_xy = True  # We are including x,y
-        self.out_dim = 3    # e.g., (ux, uy, p)
-
-        # -------------------------------------------------------
-        #  Compute mean/std for normalizing the first 3 channels
-        #   (Ux, Uy, P) across entire dataset
-        # -------------------------------------------------------
-        mean_vals = self.data[..., :3].mean(axis=(0, 1, 2, 3))  # shape (3,)
-        std_vals  = self.data[..., :3].std(axis=(0, 1, 2, 3))   # shape (3,)
-
-        self.mean = torch.tensor(mean_vals, dtype=torch.float32).view(3, 1, 1)
-        self.std  = torch.tensor(std_vals,  dtype=torch.float32).view(3, 1, 1)
-
-        # This is some method from your BaseTimeDataset or lightning
-        self.post_init()
-
-    def __getitem__(self, idx):
-        """
-        Returns: 
-          time, input_raw, label_raw
-          where:
-            time is a scalar (float),
-            input_raw shape => (channels, H, W)
-            label_raw shape => (3, H, W)
-        """
-        i = idx // self.multiplier
-        _idx = idx % self.multiplier
-
-        # time indices
-        if self.fix_input_to_time_step is None:
-            t1, t2 = self.time_indices[_idx]
-        else:
-            t1 = self.fix_input_to_time_step
-            t2 = self.time_step_size * (_idx + 1)
-
-        # scale time to [0..1] or something else
-        time = (t2 - t1) / 19.0
-
-        # shape => (T, H, W, C)
-        sample = self.data[i + self.start]
-
-        # frames => (H, W, C)
-        frame_in  = sample[t1]
-        frame_out = sample[t2]  # label
-
-        # ---------------------------------------------
-        #  Original 6 channels: [Ux, Uy, P, Re, SDF, Mask]
-        #  We'll break them out as needed:
-        # ---------------------------------------------
-        UxUyPReSDF = frame_in[..., :5]   # shape (H,W,5)
-        mask       = frame_in[..., 5:6]  # shape (H,W,1)
-
-        # We'll build a list of torch Tensors (all shape (H, W, something))
-        # in the order: [ first 5 channels, time?, x, y, mask ]
-        channel_list = []
-
-        # 1) first 5 channels
-        UxUyPReSDF_torch = torch.from_numpy(UxUyPReSDF).float()  # (H,W,5)
-        channel_list.append(UxUyPReSDF_torch)
-
-        # 2) optional time as (H,W,1)
-        if self.time_input:
-            time_hw = torch.ones((self.H, self.W, 1), dtype=torch.float32) * time
-            channel_list.append(time_hw)
-
-        # 3) x,y coordinates
-        if self.add_xy:
-            x_hw = self.x_grid.unsqueeze(-1)  # (H,W,1)
-            y_hw = self.y_grid.unsqueeze(-1)  # (H,W,1)
-            channel_list.append(x_hw)
-            channel_list.append(y_hw)
-
-        # 4) mask
-        mask_torch = torch.from_numpy(mask).float()  # (H,W,1)
-        channel_list.append(mask_torch)
-
-        # Concatenate along the last dimension => shape (H,W, total_ch)
-        input_tensor = torch.cat(channel_list, dim=-1)  # shape(H,W, #ch)
-
-        # Reorder => ( #ch, H, W )
-        input_raw = input_tensor.permute(2, 0, 1)
-
-        # Prepare label => (ux, uy, p)
-        label_np = frame_out[..., :3]  # (H,W,3)
-        label_raw = torch.tensor(label_np, dtype=torch.float32).permute(2,0,1)
-
-        # Normalize (ux, uy, p) only
-        input_raw[:3] = (input_raw[:3] - self.mean) / self.std
-        label_raw     = (label_raw - self.mean) / self.std
-
-        return time, input_raw, label_raw
-
-    def __len__(self):
-        return (self.N_max - self.start) * self.multiplier
 
 class BrownianBridgeTimeDataset(BaseTimeDataset):
     def __init__(self, *args, **kwargs):

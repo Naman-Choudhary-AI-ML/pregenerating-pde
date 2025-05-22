@@ -24,7 +24,7 @@ from einops import rearrange
 from einops.layers.torch import Rearrange
 import torch.nn as nn
 import copy
-from DataLoaders.CNO_TimeLoaders import NSFlowTimeDataset, NSFlowTimeDataset_CNO
+from DataLoaders.CNO_TimeLoaders import NSFlowTimeDataset
 
 
 #--------------------------------------
@@ -890,7 +890,19 @@ class CNO_time(pl.LightningModule):
         x = self.project(x, time)
         return x
     
-    
+    def setup(self, stage=None):
+        # 1) load entire raw arrays once
+        hole_arr   = np.load(self.loader_dictionary["hole_path"])[..., :3]
+        nohole_arr = np.load(self.loader_dictionary["nohole_path"])[..., :3]
+        all_uvp    = np.concatenate([hole_arr, nohole_arr], axis=0)
+
+        # 2) compute global stats
+        mean = all_uvp.mean(axis=(0,1,2,3))
+        std  = all_uvp.std(axis=(0,1,2,3))
+
+        # 3) store as broadcastable torch tensors
+        self.mean = torch.tensor(mean, dtype=torch.float32).view(3,1,1)
+        self.std  = torch.tensor(std,  dtype=torch.float32).view(3,1,1)
     
     def training_step(self, batch):
         
@@ -1025,7 +1037,7 @@ class CNO_time(pl.LightningModule):
             datasets = []
 
             if num_hole > 0:
-                hole_dataset = NSFlowTimeDataset_CNO(
+                hole_dataset = NSFlowTimeDataset(
                     max_num_time_steps = self.loader_dictionary["time_steps"],
                     time_step_size     = self.loader_dictionary["dt"],
                     fix_input_to_time_step = None,
@@ -1034,6 +1046,8 @@ class CNO_time(pl.LightningModule):
                     in_dist = True,
                     num_trajectories = num_hole,
                     data_path = hole_path,
+                    mean = self.mean,
+                    std = self.std,
                     time_input = self.loader_dictionary["time_input"],
                     masked_input = None,
                     allowed_transitions = self.loader_dictionary["allowed_tran"]
@@ -1041,7 +1055,7 @@ class CNO_time(pl.LightningModule):
                 datasets.append(hole_dataset)
 
             if num_nohole > 0:
-                nohole_dataset = NSFlowTimeDataset_CNO(
+                nohole_dataset = NSFlowTimeDataset(
                     max_num_time_steps = self.loader_dictionary["time_steps"],
                     time_step_size     = self.loader_dictionary["dt"],
                     fix_input_to_time_step = None,
@@ -1050,6 +1064,8 @@ class CNO_time(pl.LightningModule):
                     in_dist = True,
                     num_trajectories = num_nohole,
                     data_path = nohole_path,
+                    mean = self.mean,
+                    std = self.std,
                     time_input = self.loader_dictionary["time_input"],
                     masked_input = None,
                     allowed_transitions = self.loader_dictionary["allowed_tran"]
@@ -1245,7 +1261,7 @@ class CNO_time(pl.LightningModule):
 
             datasets = []
 
-            hole_dataset = NSFlowTimeDataset_CNO(
+            hole_dataset = NSFlowTimeDataset(
                 max_num_time_steps = self.loader_dictionary["time_steps"],
                 time_step_size     = self.loader_dictionary["dt"],
                 fix_input_to_time_step = None,
@@ -1261,7 +1277,7 @@ class CNO_time(pl.LightningModule):
             )
             datasets.append(hole_dataset)
 
-            nohole_dataset = NSFlowTimeDataset_CNO(
+            nohole_dataset = NSFlowTimeDataset(
                 max_num_time_steps = self.loader_dictionary["time_steps"],
                 time_step_size     = self.loader_dictionary["dt"],
                 fix_input_to_time_step = None,
@@ -1453,7 +1469,7 @@ class CNO_time(pl.LightningModule):
     
     def test_dataloader(self):
         if self.loader_dictionary.get("mixing", False):
-            test_hole = NSFlowTimeDataset_CNO(
+            test_hole = NSFlowTimeDataset(
                 max_num_time_steps=self.loader_dictionary["time_steps"],
                 time_step_size=self.loader_dictionary["dt"],
                 which="test",
@@ -1464,7 +1480,7 @@ class CNO_time(pl.LightningModule):
                 time_input=self.loader_dictionary["time_input"],
                 allowed_transitions=self.loader_dictionary["allowed_tran"]
             )
-            test_nohole = NSFlowTimeDataset_CNO(
+            test_nohole = NSFlowTimeDataset(
                 max_num_time_steps=self.loader_dictionary["time_steps"],
                 time_step_size=self.loader_dictionary["dt"],
                 which="test",
@@ -1509,6 +1525,7 @@ class CNO_time(pl.LightningModule):
             self.test_errs[key] = loss
         else:
             self.test_errs[key] = torch.cat((self.test_errs[key], loss))
+
         
         return loss
 

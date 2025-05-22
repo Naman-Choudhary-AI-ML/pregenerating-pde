@@ -5,7 +5,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import LearningRateMonitor
-from test_and_fine_tune_utils.test_utils import _load_dict, _initialize_model, _load_data, _list_models
+
 
 import copy
 import json
@@ -14,6 +14,9 @@ import sys
 
 import pandas as pd
 import torch
+import os, torch
+
+
 
 if len(sys.argv) <= 2:
     
@@ -23,15 +26,15 @@ if len(sys.argv) <= 2:
         "lr_scheduler": "cosine", # or "step"
         "scheduler_step": None,               #1,
         "scheduler_gamma": None, #0.9,
-        "epochs": 400,
+        "epochs": 100,
         "batch_size": 16,         
         "time_steps": 19,          # How many time steps to select?
         "dt": 1,                  # What is the time step? (1 means include entire traj, 2 means taking every other step, etc.
-        "training_samples": 824,   # How many training samples?
+        "training_samples": 200,   # How many training samples?
         "mixing": True,  # Set True to enable mixing experiment
-        "alpha": 0.15,   # Percentage of hole data (e.g., 0.15 = 15%)
-        "hole_data_path": "/data/user_data/vhsingh/final_combined_LDC_Multiple_hole.npy",
-        "nohole_data_path": "/data/group_data/sage_lab_complex_geometry/LDC_Regular_Normalized_1024.npy",
+        "alpha": 0.75,   # Percentage of hole data (e.g., 0.15 = 15%)
+        "hole_data_path": "/data/group_data/sage_lab_complex_geometry/Filtered_Data_Re_8000_10000.npy",
+        "nohole_data_path": "/data/group_data/sage_lab_complex_geometry/Filtered_Data_Re_2000_4000.npy",
         "time_input": 1,          # Should we include time in the input channels?
         "allowed": 'one',         # All2ALL (train) - all , or One2All (train) - one2all, AR training - one
         "cluster": True,          # Something internal (don't bother)
@@ -71,9 +74,9 @@ if len(sys.argv) <= 2:
     # FOR PRETRAINING CNO-FM: which_example = "eul_ns_mix1"
     
     # WHAT IS THE EXPERIMENT?
-    which_example = "ns_custom_CNO"
+    which_example = "ns_custom"
     
-    folder = f"/data/user_data/vhsingh/CNO_experiments/LDC_{training_properties['training_samples']}/Intermediate-Complex/{training_properties['allowed']}/{training_properties['alpha']}"
+    folder = f"/data/user_data/namancho/CNO_experiments/LDC_ InterCompl_{training_properties['training_samples']}/Mixing/{training_properties['allowed']}_{training_properties['training_samples']}/{training_properties['alpha']}"
     os.makedirs(folder, exist_ok=True)
 
 
@@ -153,61 +156,40 @@ loader_dict["allowed_tran"] = _allowed
 
 #---------------------------------------------------------
 # Initialize CNO
-# model   = CNO_time(in_dim =  loader_dict["in_dim"],               
-#                     in_size  = 128,                  
-#                     N_layers = model_architecture_["N_layers"],                
-#                     N_res =  model_architecture_["N_res"], 
-#                     N_res_neck = model_architecture_["N_res_neck"],           
-#                     channel_multiplier = model_architecture_["channel_multiplier"],  
-#                     batch_norm = model_architecture_["batch_norm"],    
-#                     out_dim = loader_dict["out_dim"],               
-#                     activation = model_architecture_["activation"], 
-#                     time_steps = loader_dict["time_steps"],
-#                     is_time = model_architecture_["is_time"],
-#                     nl_dim= model_architecture_["nl_dim"],
+model   = CNO_time(in_dim =  loader_dict["in_dim"],               
+                    in_size  = 128,                  
+                    N_layers = model_architecture_["N_layers"],                
+                    N_res =  model_architecture_["N_res"], 
+                    N_res_neck = model_architecture_["N_res_neck"],           
+                    channel_multiplier = model_architecture_["channel_multiplier"],  
+                    batch_norm = model_architecture_["batch_norm"],    
+                    out_dim = loader_dict["out_dim"],               
+                    activation = model_architecture_["activation"], 
+                    time_steps = loader_dict["time_steps"],
+                    is_time = model_architecture_["is_time"],
+                    nl_dim= model_architecture_["nl_dim"],
 
-#                     lr = training_properties["learning_rate"],
-#                     batch_size = training_properties["batch_size"],
-#                     weight_decay = training_properties["weight_decay"],
-#                     scheduler_step = training_properties["scheduler_step"],
-#                     scheduler_gamma = training_properties["scheduler_gamma"],
+                    lr = training_properties["learning_rate"],
+                    batch_size = training_properties["batch_size"],
+                    weight_decay = training_properties["weight_decay"],
+                    scheduler_step = training_properties["scheduler_step"],
+                    scheduler_gamma = training_properties["scheduler_gamma"],
 
-#                     loader_dictionary = loader_dict,
+                    loader_dictionary = loader_dict,
 
-#                     is_att = model_architecture_["is_att"],
-#                     patch_size = model_architecture_["patch_size"],
-#                     dim_multiplier = model_architecture_["dim_multiplier"],
-#                     depth = model_architecture_["depth"],
-#                     heads = model_architecture_["heads"],
-#                     dim_head_multiplier = model_architecture_["dim_head_multiplier"],
-#                     mlp_dim_multiplier = model_architecture_["mlp_dim_multiplier"],
-#                     emb_dropout = model_architecture_["emb_dropout"])
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model_file = "/data/user_data/vhsingh/CNO_experiments/LDC_824/Intermediate-Complex/one/0.15/model0/epoch=392-step=384747.ckpt"
-
-train_file  = "/data/user_data/vhsingh/CNO_experiments/LDC_824/Intermediate-Complex/one/0.0" + "/training_properties.txt"
-net_file    = "/data/user_data/vhsingh/CNO_experiments/LDC_824/Intermediate-Complex/one/0.0" + "/net_architecture.txt"
-
-loader_dict = _load_dict(files = [train_file, net_file], 
-                            which_example = which_example, 
-                            steps = 19,
-                            is_masked = False)
-
-print(loader_dict["in_dim"], loader_dict["out_dim"], "DIMENSIONS")
-model = _initialize_model(loader_dict,
-                            diff_embedding = False,
-                            old_in_dim  = 7,
-                            new_in_dim  = loader_dict["in_dim"],
-                            new_out_dim = loader_dict["out_dim"])
-
-checkpoint = torch.load(model_file, map_location = device)
-model.load_state_dict(checkpoint["state_dict"])
-
-print("DT",loader_dict["dt"])
-model = model.to(device)
+                    is_att = model_architecture_["is_att"],
+                    patch_size = model_architecture_["patch_size"],
+                    dim_multiplier = model_architecture_["dim_multiplier"],
+                    depth = model_architecture_["depth"],
+                    heads = model_architecture_["heads"],
+                    dim_head_multiplier = model_architecture_["dim_head_multiplier"],
+                    mlp_dim_multiplier = model_architecture_["mlp_dim_multiplier"],
+                    emb_dropout = model_architecture_["emb_dropout"])
 
 #---------------------------------------------------------
+print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
+print("Number of CUDA GPUs:", torch.cuda.device_count())
+
 
 ver = 0 # Just a random string to be added to the model name
 
@@ -219,7 +201,7 @@ lr_monitor = LearningRateMonitor(logging_interval='epoch')  # or 'step' if you p
 # logger = TensorBoardLogger(save_dir=folder, version=ver, name="logs")
 logger = WandbLogger(
     project="GeoFNO1",
-    name=f"CNO_test_1.0",
+    name=f"CNO_{training_properties['alpha']}_REMix_AR_NS_LDC_200_Alpha_Mixing_{training_properties['alpha']}Complex_w_Inter{training_properties['training_samples']}_100_100_{ver}_Cosine",
     save_dir=folder,
     config={**training_properties, **model_architecture_}  # logs hyperparams too
 )
@@ -229,8 +211,8 @@ trainer = Trainer(devices = -1,
                 callbacks = [checkpoint_callback,early_stop_callback, lr_monitor],
                 strategy="ddp_find_unused_parameters_true", #IMPORTANT!!!
                 logger=logger)
-# trainer.fit(model)
-# trainer.validate(model)
+trainer.fit(model)
+trainer.validate(model)
 trainer.test(model)
 
 #---------------------------------------------------------

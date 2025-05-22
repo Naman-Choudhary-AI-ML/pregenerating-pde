@@ -1,6 +1,0 @@
-Output: 1 0.22665149884091484 0.1843915492296219
-Traceback (most recent call last):
-  File "/home/vhsingh/Geo-UPSplus/FNO_Experiments/fno_openfoam_CE.py", line 289, in <module>
-    im1 = ax[ch, 0].imshow(truth[:, :, ch], cmap=cmap, vmin=vmin, vmax=vmax)
-          ~~^^^^^^^
-IndexError: index 2 is out of bounds for axis 0 with size 2

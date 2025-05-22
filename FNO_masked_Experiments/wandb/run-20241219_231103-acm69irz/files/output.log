@@ -1,9 +1,0 @@
-Output: 1 68.73246307373047 67.99251174926758
-Traceback (most recent call last):
-  File "/home/namancho/Geo-UPSplus/FNO_masked_Experiments/fno_masked_openfoam.py", line 313, in <module>
-    plot_predictions_with_centers(outputs, targets, C_output, output_folder, epoch-1)
-TypeError: plot_predictions_with_centers() missing 1 required positional argument: 'epoch'
-Traceback (most recent call last):
-  File "/home/namancho/Geo-UPSplus/FNO_masked_Experiments/fno_masked_openfoam.py", line 313, in <module>
-    plot_predictions_with_centers(outputs, targets, C_output, output_folder, epoch-1)
-TypeError: plot_predictions_with_centers() missing 1 required positional argument: 'epoch'

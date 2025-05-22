@@ -1208,7 +1208,7 @@ def main(batch_name: str, total_trajectories: int):
     save_dir = f"/data/user_data/namancho/SteadyState/LDC_hole_location_Final/{batch_name}"
     os.makedirs(save_dir, exist_ok=True)
     # total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
-    batch_size = 128  # Adjust based on memory availability
+    batch_size = 20  # Adjust based on memory availability
     main_folder = "Design_Point_0"
     start_time = time.time()
     batch_index = 1

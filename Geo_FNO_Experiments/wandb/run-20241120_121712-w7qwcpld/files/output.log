@@ -1,9 +1,0 @@
-18883651
-Traceback (most recent call last):
-  File "/home/namancho/Geo-FNO/plasticity/geofno_poseidon_nspwc.py", line 322, in <module>
-    train_l2 += loss.item()
-KeyboardInterrupt
-Traceback (most recent call last):
-  File "/home/namancho/Geo-FNO/plasticity/geofno_poseidon_nspwc.py", line 322, in <module>
-    train_l2 += loss.item()
-KeyboardInterrupt

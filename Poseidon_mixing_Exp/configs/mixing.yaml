@@ -19,7 +19,7 @@ warmup_ratio:
 early_stopping_patience:
   value: 100 #200
 num_epochs:
-  value: 100 #200
+  value: 200 #200
 batch_size:
   value: 16
 max_grad_norm:
@@ -29,8 +29,8 @@ max_num_train_time_steps:
 train_time_step_size:
   value: 1 
 hole_data_path:
-  value: "/data/group_data/sage_lab_complex_geometry/FPO_cylinder_hole_location_final_reshaped_data_1024_norm.npy"
+  value: "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Holes_6400_Normalised.npy"
 no_hole_data_path:
-  value: "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Holes_1024.npy"
+  value: "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Hole_Location_6400_Normalised.npy"
 alpha:
   value: 0.00

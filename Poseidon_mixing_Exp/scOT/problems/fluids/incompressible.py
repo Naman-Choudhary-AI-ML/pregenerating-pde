@@ -6,12 +6,16 @@ from scOT.problems.base import BaseTimeDataset
 from scOT.problems.fluids.normalization_constants import CONSTANTS
 import torch
 import numpy as np
+import psutil
+import os
 
 class GaussianNumpyDataset(BaseTimeDataset):
     def __init__(
         self,
         *args,
         file_path,
+        mean: np.ndarray = None,
+        std:  np.ndarray = None,
         max_num_time_steps=19,
         time_step_size=1,
         fix_input_to_time_step=None,
@@ -24,6 +28,14 @@ class GaussianNumpyDataset(BaseTimeDataset):
         which=None,
         **kwargs,
     ):
+        if mean is None or std is None:
+            # streaming or full-array fallback here…
+            arr = np.load(file_path, mmap_mode="r")[..., :3]
+            mean = arr.mean(axis=(0,1,2,3))
+            std  = arr.std (axis=(0,1,2,3))
+
+        self.constants = {"mean": mean, "std": std, "time": 20.0}
+
         """
         Custom dataset for `.npy` data adapted from `BaseTimeDataset`.
 
@@ -52,7 +64,7 @@ class GaussianNumpyDataset(BaseTimeDataset):
         )
 
         # Load `.npy` data
-        self.data = np.load(file_path)  # Shape: (num_trajectories, timesteps, height, width, channels)
+        self.data = np.load(file_path, mmap_mode="r")  # Shape: (num_trajectories, timesteps, height, width, channels)
         self.N_max = self.data.shape[0]  # Total number of trajectories
         self.resolution = resolution
         self.N_val = N_val  # Validation set size
@@ -74,12 +86,13 @@ class GaussianNumpyDataset(BaseTimeDataset):
         else:
             raise ValueError(f"Unknown dataset split: {which}")
 
-        # Set normalization constants (for velocity channels only)
-        self.constants = {
-            "mean": self.data[..., :3].mean(axis=(0, 1, 2, 3)),  # Mean of u, v, p
-            "std": self.data[..., :3].std(axis=(0, 1, 2, 3)),    # Std of u, v, p
-            "time": 20.0
-        }
+        # Set normalization constants (for velocity channels only
+        if mean is None or std is None:
+            # fall back to legacy
+            mean = self.data[..., :3].mean(axis=(0,1,2,3))
+            std  = self.data[..., :3].std (axis=(0,1,2,3))
+
+        self.constants = {"mean": mean, "std": std, "time": 20.0}
 
         # Define input and output dimensions
         self.input_dim = self.data.shape[-1]   # Includes mask channel if `just_velocities` is False, 3 with mask, 2 without mask
@@ -101,7 +114,6 @@ class GaussianNumpyDataset(BaseTimeDataset):
         """
         
         i, t, t1, t2 = self._idx_map(idx)
-        print(f"[DEBUG] Dataset index {idx}: trajectory={i}, t={t}, t1={t1}, t2={t2}, (t2 - t1)={t2 - t1}")
         time = t / self.constants["time"]  # Normalize timeli
         
 
@@ -131,16 +143,12 @@ class GaussianNumpyDataset(BaseTimeDataset):
         # Permute to match (channels, height, width)
         inputs = inputs.permute(2, 0, 1)  # From (height, width, channels) to (channels, height, width)
         labels = labels.permute(2, 0, 1)
-        print(f"[DEBUG] Final shapes: inputs={inputs.shape}, labels={labels.shape}")
         return {
             "pixel_values": inputs,
             "labels": labels,
             "time": time,
             "pixel_mask": None,
         }
-
-
-
 
 class IncompressibleBase(BaseTimeDataset):
     def __init__(

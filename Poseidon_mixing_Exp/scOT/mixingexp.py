@@ -133,7 +133,7 @@ def setup(params, model_map=True):
 
     if RANK == 0 or RANK == -1:
         run = wandb.init(
-            project=params.wandb_project_name, name=params.wandb_run_name, config=config
+            project=params.wandb_project_name, name=params.wandb_run_name, mode="online", config=config
         )
         config = wandb.config
     else:
@@ -151,19 +151,16 @@ def setup(params, model_map=True):
         run = None
 
     ckpt_dir = "./"
-    if RANK == 0 or RANK == -1:
-        if run.sweep_id is not None:
-            ckpt_dir = (
-                params.checkpoint_path
-                + "/"
-                + run.project
-                + "/"
-                + run.sweep_id
-                + "/"
-                + run.name
-            )
+    if RANK in (0, -1):
+        base = params.checkpoint_path.rstrip("/")
+        proj = run.project if run is not None else params.wandb_project_name
+        name = None
+        if run is not None and run.sweep_id:
+            # inside a sweep
+            name = f"{run.sweep_id}/{run.name}"
         else:
-            ckpt_dir = params.checkpoint_path + "/" + run.project + "/" + run.name
+            name = params.wandb_run_name
+        ckpt_dir = params.checkpoint_path
     if (RANK == 0 or RANK == -1) and not os.path.exists(ckpt_dir):
         os.makedirs(ckpt_dir)
     ls = broadcast_object_list([ckpt_dir], from_process=0)
@@ -183,11 +180,23 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train scOT or pretrain Poseidon.")
     parser.add_argument("--resume_training", action="store_true")
     parser.add_argument(
+    "--alpha",
+    type=float,
+    default=None,
+    help="(array) override the alpha in the YAML"
+)
+    parser.add_argument(
         "--finetune_from",
         type=str,
         default=None,
         help="Set this to a str pointing to a HF Hub model checkpoint or a directory with a scOT checkpoint if you want to finetune.",
     )
+    parser.add_argument(
+    "--total_trajectories",
+    type=int,
+    default=None,
+    help="Override total number of trajectories (supersedes YAML)."
+)
     parser.add_argument(
         "--replace_embedding_recovery",
         action="store_true",
@@ -218,22 +227,72 @@ if __name__ == "__main__":
        
     print("Loading datasets......")
 
+    # alpha = config.get("alpha")
+    if params.alpha is not None:
+        config["alpha"] = params.alpha
+    if run is not None:
+        # tell wandb about it, even in offline mode
+        wandb.config.update({"alpha": params.alpha}, allow_val_change=True)
     alpha = config.get("alpha")
-
     #Define the number of samples
     num_finetune_samples = config["num_trajectories"]
+    # alpha_to_total = {
+    #     0.50:   2,
+    #     0.02:   50,
+    #     0.01:  100,
+    #     0.005:  200,
+    #     0.0025:  400,
+    #     0.00125:  800,
+    #     0.00063:   1600,  # if alpha=1 still means only complex, so total=1
+    #     0.00031:  3200,
+    #     0.00016:  6400
+    # }
+
+    # pick the total based on alpha (fall back to YAML default if missing)
+    if params.total_trajectories is not None:
+        total_trajs = params.total_trajectories
+    else:
+        # fallback to config default
+        total_trajs = config["num_trajectories"]
+    config["num_trajectories"] = total_trajs
+    num_finetune_samples = total_trajs
     num_val_samples = 100
     num_test_samples = 80
 
     #Compute dataset splits
     num_hole_train = int(alpha * num_finetune_samples)
     num_no_hole_train = num_finetune_samples - num_hole_train
+    #── NEW SPLIT ── always fix hole to 1, let no-hole fill out the rest
+    # num_hole_train    = 1 if total_trajs >= 1 else 0
+    # num_no_hole_train = num_finetune_samples - num_hole_train
     num_hole_val = num_val_samples // 2
     num_no_hole_val = num_val_samples - num_hole_val
 
     print(f"Finetuning dataset: {num_hole_train} hole + {num_no_hole_train} no-hole")
     print(f"Validation dataset: {num_hole_val} hole + {num_no_hole_val} no-hole")
 
+    def streaming_stats(path, block=100):
+        # mmap the file so we never load it all at once
+        arr = np.load(path, mmap_mode="r")[..., :3]            # (Ntraj, T, H, W, 3)
+        s, ss, cnt = np.zeros(3), np.zeros(3), 0
+        for i in range(0, arr.shape[0], block):
+            chunk = arr[i : i+block]                           # (b, T, H, W, 3)
+            s  += chunk.sum(axis=(0,1,2,3))
+            ss += (chunk**2).sum(axis=(0,1,2,3))
+            cnt += np.prod(chunk.shape[:4])                    # ← include width too
+        return s, ss, cnt
+
+    # hole
+    s1, ss1, c1 = streaming_stats(config["hole_data_path"])
+    # no-hole
+    s2, ss2, c2 = streaming_stats(config["no_hole_data_path"])
+
+    total_sum   = s1  + s2
+    total_sqsum = ss1 + ss2
+    total_count = c1  + c2
+
+    global_mean = total_sum / total_count
+    global_std  = np.sqrt(total_sqsum/total_count - global_mean**2)
 
     # Load datasets with updated N_val and N_test
     if num_hole_train != 0 :
@@ -244,6 +303,8 @@ if __name__ == "__main__":
             N_val=num_hole_val,
             N_test=num_test_samples,
             data_path=config["hole_data_path"],
+            mean       = global_mean,
+            std        = global_std,
             **train_eval_set_kwargs
         )
     if num_no_hole_train != 0 :
@@ -254,6 +315,8 @@ if __name__ == "__main__":
             N_val=num_no_hole_val,
             N_test=num_test_samples,
             data_path=config["no_hole_data_path"],
+            mean       = global_mean,
+            std        = global_std,
             **train_eval_set_kwargs
         )
         
@@ -261,19 +324,23 @@ if __name__ == "__main__":
     val_hole_dataset = get_dataset(
         dataset=config["dataset"],
         which="val",
-        num_trajectories=num_finetune_samples,  #to keep the validation dataset same across experiments
+        num_trajectories=num_hole_train,  #to keep the validation dataset same across experiments
         N_val=num_hole_val,
         N_test=num_test_samples,
         data_path=config["hole_data_path"],
+        mean       = global_mean,
+        std        = global_std,
         **train_eval_set_kwargs
     )
     val_no_hole_dataset = get_dataset(
         dataset=config["dataset"],
         which="val",
-        num_trajectories=num_finetune_samples,  #to keep the validation dataset same across experiments
+        num_trajectories=num_no_hole_train,  #to keep the validation dataset same across experiments
         N_val=num_no_hole_val,
         N_test=num_test_samples,
         data_path=config["no_hole_data_path"],
+        mean       = global_mean,
+        std        = global_std,
         **train_eval_set_kwargs
     )
     if num_hole_train == 0:
@@ -387,7 +454,7 @@ if __name__ == "__main__":
         auto_find_batch_size=False,
         full_determinism=False,
         torch_compile=False,
-        report_to="wandb",
+        report_to=[],
         run_name=params.wandb_run_name,
         disable_tqdm = False
     )
@@ -559,15 +626,18 @@ if __name__ == "__main__":
     test_no_hole_dataset = get_dataset(
         dataset=config["dataset"],
         which="test",
-        num_trajectories=num_finetune_samples,
+        num_trajectories=num_no_hole_train,
         N_val=num_no_hole_val,
         N_test=num_test_samples,
         data_path=config["no_hole_data_path"],
+        mean       = global_mean,
+        std        = global_std,
         **train_eval_set_kwargs
     )
 
     predictions_no_hole = trainer.predict(test_no_hole_dataset, metric_key_prefix="test_no_hole")
     wandb.log(predictions_no_hole.metrics)
+    print(f"[test_no_hole] metrics: {predictions_no_hole.metrics}", flush=True)
     torch.cuda.empty_cache()
     # wandb.log({f"test_no_hole/mean_relative_l1_error": predictions_no_hole.metrics["mean_relative_l1_error"],
     #         f"test_no_hole/mean_relative_l2_error": predictions_no_hole.metrics["mean_relative_l2_error"],
@@ -577,14 +647,17 @@ if __name__ == "__main__":
     test_hole_dataset = get_dataset(
         dataset=config["dataset"],
         which="test",
-        num_trajectories=num_finetune_samples,
+        num_trajectories=num_hole_train,
         N_val=num_hole_val,
         N_test=num_test_samples,
         data_path=config["hole_data_path"],
+        mean       = global_mean,
+        std        = global_std,
         **train_eval_set_kwargs
 
     )
     predictions_hole = trainer.predict(test_hole_dataset, metric_key_prefix="test_hole")
+    print(f"[test_hole] metrics: {predictions_hole.metrics}", flush=True)
     wandb.log(predictions_hole.metrics)
     # wandb.log({f"test_hole/mean_relative_l1_error": predictions_hole.metrics["mean_relative_l1_error"],
     #         f"test_hole/mean_relative_l2_error": predictions_hole.metrics["mean_relative_l2_error"],

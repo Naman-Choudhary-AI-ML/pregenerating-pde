@@ -1,0 +1,41 @@
+Bootstrap: docker
+From: python:3.11-slim
+
+%labels
+    Author Vedant
+    Version 1.1
+
+# 1) Copy your entire project into /workspace
+%files
+    . /workspace
+
+%post
+    set -x
+
+    # 2) System deps
+    apt-get update && \
+      apt-get install -y git build-essential \
+      && rm -rf /var/lib/apt/lists/*
+
+    # 3) Python deps: numpy<2.0, PyTorch‑2.0.1+cu118, Hydra, WandB, etc.
+    pip install --no-cache-dir --disable-pip-version-check \
+        "numpy<2.0" \
+        "torch==2.0.1+cu118" \
+        "torchvision==0.15.2+cu118" \
+        "torchaudio==2.0.2+cu118" \
+        --extra-index-url https://download.pytorch.org/whl/cu118
+
+    pip install --no-cache-dir --disable-pip-version-check \
+        pyyaml \
+        hydra-core \
+        wandb
+
+    # 4) Editable install of your package
+    pip install --no-cache-dir --disable-pip-version-check -e /workspace
+
+%environment
+    export PYTHONPATH=/workspace:$PYTHONPATH
+    cd /workspace
+
+%runscript
+    exec python scOT/mixingexp.py "$@"

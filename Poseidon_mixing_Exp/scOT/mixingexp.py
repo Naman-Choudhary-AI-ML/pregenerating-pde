@@ -321,28 +321,54 @@ if __name__ == "__main__":
         )
         
     # Load validation datasets
-    val_hole_dataset = get_dataset(
-        dataset=config["dataset"],
-        which="val",
-        num_trajectories=num_hole_train,  #to keep the validation dataset same across experiments
-        N_val=num_hole_val,
-        N_test=num_test_samples,
-        data_path=config["hole_data_path"],
-        mean       = global_mean,
-        std        = global_std,
-        **train_eval_set_kwargs
-    )
-    val_no_hole_dataset = get_dataset(
-        dataset=config["dataset"],
-        which="val",
-        num_trajectories=num_no_hole_train,  #to keep the validation dataset same across experiments
-        N_val=num_no_hole_val,
-        N_test=num_test_samples,
-        data_path=config["no_hole_data_path"],
-        mean       = global_mean,
-        std        = global_std,
-        **train_eval_set_kwargs
-    )
+    if num_hole_train != 0 :
+        val_hole_dataset = get_dataset(
+            dataset=config["dataset"],
+            which="val",
+            num_trajectories=num_hole_train,  #to keep the validation dataset same across experiments
+            N_val=num_hole_val,
+            N_test=num_test_samples,
+            data_path=config["hole_data_path"],
+            mean       = global_mean,
+            std        = global_std,
+            **train_eval_set_kwargs
+        )
+    else:
+        val_hole_dataset = get_dataset(
+            dataset=config["dataset"],
+            which="val",
+            num_trajectories=1,  #to keep the validation dataset same across experiments
+            N_val=num_hole_val,
+            N_test=num_test_samples,
+            data_path=config["hole_data_path"],
+            mean       = global_mean,
+            std        = global_std,
+            **train_eval_set_kwargs
+        )
+    if num_no_hole_train != 0 :
+        val_no_hole_dataset = get_dataset(
+            dataset=config["dataset"],
+            which="val",
+            num_trajectories=num_no_hole_train,  #to keep the validation dataset same across experiments
+            N_val=num_no_hole_val,
+            N_test=num_test_samples,
+            data_path=config["no_hole_data_path"],
+            mean       = global_mean,
+            std        = global_std,
+            **train_eval_set_kwargs
+        )
+    else:
+        val_no_hole_dataset = get_dataset(
+            dataset=config["dataset"],
+            which="val",
+            num_trajectories=1,  #to keep the validation dataset same across experiments
+            N_val=num_no_hole_val,
+            N_test=num_test_samples,
+            data_path=config["no_hole_data_path"],
+            mean       = global_mean,
+            std        = global_std,
+            **train_eval_set_kwargs
+        )
     if num_hole_train == 0:
         train_dataset = train_no_hole_dataset
     elif num_no_hole_train == 0:
@@ -620,45 +646,74 @@ if __name__ == "__main__":
 
     torch.cuda.empty_cache()
 
+    print("Testing on HOLE dataset...")
+    if num_hole_train != 0 :
+        test_hole_dataset = get_dataset(
+            dataset=config["dataset"],
+            which="test",
+            num_trajectories=num_hole_train,
+            N_val=num_hole_val,
+            N_test=num_test_samples,
+            data_path=config["hole_data_path"],
+            mean       = global_mean,
+            std        = global_std,
+            **train_eval_set_kwargs
+
+        )
+    else:
+        test_hole_dataset = get_dataset(
+            dataset=config["dataset"],
+            which="test",
+            num_trajectories=1,
+            N_val=num_hole_val,
+            N_test=num_test_samples,
+            data_path=config["hole_data_path"],
+            mean       = global_mean,
+            std        = global_std,
+            **train_eval_set_kwargs
+
+        )
+    predictions_hole = trainer.predict(test_hole_dataset, metric_key_prefix="test_hole")
+    print(f"[test_hole] metrics: {predictions_hole.metrics}", flush=True)
+    wandb.log(predictions_hole.metrics)
+    torch.cuda.empty_cache()
+
     print("Testing on NO HOLE dataset...")
     # Load test datasets separately
-
-    test_no_hole_dataset = get_dataset(
-        dataset=config["dataset"],
-        which="test",
-        num_trajectories=num_no_hole_train,
-        N_val=num_no_hole_val,
-        N_test=num_test_samples,
-        data_path=config["no_hole_data_path"],
-        mean       = global_mean,
-        std        = global_std,
-        **train_eval_set_kwargs
-    )
+    if num_no_hole_train != 0 :
+        test_no_hole_dataset = get_dataset(
+            dataset=config["dataset"],
+            which="test",
+            num_trajectories=num_no_hole_train,
+            N_val=num_no_hole_val,
+            N_test=num_test_samples,
+            data_path=config["no_hole_data_path"],
+            mean       = global_mean,
+            std        = global_std,
+            **train_eval_set_kwargs
+        )
+    else:
+        test_no_hole_dataset = get_dataset(
+            dataset=config["dataset"],
+            which="test",
+            num_trajectories=1,
+            N_val=num_no_hole_val,
+            N_test=num_test_samples,
+            data_path=config["no_hole_data_path"],
+            mean       = global_mean,
+            std        = global_std,
+            **train_eval_set_kwargs
+        )
 
     predictions_no_hole = trainer.predict(test_no_hole_dataset, metric_key_prefix="test_no_hole")
     wandb.log(predictions_no_hole.metrics)
     print(f"[test_no_hole] metrics: {predictions_no_hole.metrics}", flush=True)
-    torch.cuda.empty_cache()
+    
     # wandb.log({f"test_no_hole/mean_relative_l1_error": predictions_no_hole.metrics["mean_relative_l1_error"],
     #         f"test_no_hole/mean_relative_l2_error": predictions_no_hole.metrics["mean_relative_l2_error"],
     #         f"test_no_hole/mean_relative_linf_error": predictions_no_hole.metrics["mean_relative_linf_error"]})
 
-    print("Testing on HOLE dataset...")
-    test_hole_dataset = get_dataset(
-        dataset=config["dataset"],
-        which="test",
-        num_trajectories=num_hole_train,
-        N_val=num_hole_val,
-        N_test=num_test_samples,
-        data_path=config["hole_data_path"],
-        mean       = global_mean,
-        std        = global_std,
-        **train_eval_set_kwargs
-
-    )
-    predictions_hole = trainer.predict(test_hole_dataset, metric_key_prefix="test_hole")
-    print(f"[test_hole] metrics: {predictions_hole.metrics}", flush=True)
-    wandb.log(predictions_hole.metrics)
+    
     # wandb.log({f"test_hole/mean_relative_l1_error": predictions_hole.metrics["mean_relative_l1_error"],
     #         f"test_hole/mean_relative_l2_error": predictions_hole.metrics["mean_relative_l2_error"],
     #         f"test_hole/mean_relative_linf_error": predictions_hole.metrics["mean_relative_linf_error"]})

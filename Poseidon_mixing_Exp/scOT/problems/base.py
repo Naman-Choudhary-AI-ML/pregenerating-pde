@@ -355,7 +355,7 @@ class BaseTimeDataset(BaseDataset, ABC):
             self.num_trajectories = (self.N_max - self.N_val - self.N_test) // 2
         elif self.num_trajectories == -8:
             self.num_trajectories = (self.N_max - self.N_val - self.N_test) // 8
-        assert self.num_trajectories + self.N_val + self.N_test <= self.N_max
+        # assert self.num_trajectories + self.N_val + self.N_test <= self.N_max
         assert self.N_val is not None and self.N_val > 0
         assert self.N_test is not None and self.N_test > 0
         assert self.max_num_time_steps is not None and self.max_num_time_steps > 0

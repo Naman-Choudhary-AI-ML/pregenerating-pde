@@ -1258,7 +1258,7 @@ def update_controlDict(sim_folder, endTime, num_outputs=20):
         f.writelines(new_lines)
 
 def main(batch_name: str, total_trajectories: int):
-    save_dir = f"/data/user_data/vhsingh/LDC_Multiple_Holes/{batch_name}"
+    save_dir = f"/data/user_data/namancho/LDC_Multiple_Holes/{batch_name}"
     os.makedirs(save_dir, exist_ok=True)
     # total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
     main_folder = "Design_Point_0"
@@ -1288,7 +1288,7 @@ def main(batch_name: str, total_trajectories: int):
             folder_start_time = time.time()
 
             # Generate randomized holes for this folder
-            num_holes = random.randint(2, 10)
+            num_holes = random.randint(4, 6)
             print(num_holes)
             logging.info(f"Processing folder {folder} with {num_holes} holes.")
             random_holes = randomize_holes(num_holes, allow_overlap=False, overlap_fraction=0.5)

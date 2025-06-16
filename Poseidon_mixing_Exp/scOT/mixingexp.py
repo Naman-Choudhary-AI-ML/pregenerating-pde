@@ -208,6 +208,17 @@ if __name__ == "__main__":
         default=None,
         help="Path to a checkpoint directory to load the model and plot predictions.",
     )
+    parser.add_argument("--num_easy", type=int, default=None,
+                        help="Number of easy (no‑hole) trajectories in TRAIN set")
+    parser.add_argument("--num_hard", type=int, default=None,
+                        help="Number of hard (hole) trajectories in TRAIN set")
+    # -------------------------------------------------------------------------
+
+    # keep the old options for backward compatibility -------------------------
+    # parser.add_argument("--alpha", type=float, default=None,
+    #                     help="Deprecated: ratio hard / total")
+    # parser.add_argument("--total_trajectories", type=int, default=None,
+    #                     help="Deprecated: total trajectories")
     params = read_cli(parser).parse_args()
     run, config, ckpt_dir, RANK, CPU_CORES = setup(params)
 
@@ -228,8 +239,17 @@ if __name__ == "__main__":
     print("Loading datasets......")
 
     # alpha = config.get("alpha")
-    if params.alpha is not None:
-        config["alpha"] = params.alpha
+    if params.num_easy is not None and params.num_hard is not None:
+        num_no_hole_train = params.num_easy
+        num_hole_train    = params.num_hard
+        num_finetune_samples = num_no_hole_train + num_hole_train
+        config["num_trajectories"] = num_finetune_samples
+        # make it visible in WandB even offline
+        if run is not None:
+            wandb.config.update(
+                {"num_easy": num_no_hole_train,
+                 "num_hard": num_hole_train},
+                allow_val_change=True)
     if run is not None:
         # tell wandb about it, even in offline mode
         wandb.config.update({"alpha": params.alpha}, allow_val_change=True)

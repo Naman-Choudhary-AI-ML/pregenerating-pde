@@ -29,8 +29,8 @@ max_num_train_time_steps:
 train_time_step_size:
   value: 1 
 hole_data_path:
-  value: "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Holes_6400_Normalised.npy"
+  value: "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Hole_HighRe_1600.npy"
 no_hole_data_path:
-  value: "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Hole_Location_6400_Normalised.npy"
+  value: "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Hole_interRe_1600.npy"
 alpha:
   value: 0.00

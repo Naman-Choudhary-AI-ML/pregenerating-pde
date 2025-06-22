@@ -179,48 +179,29 @@ def setup(params, model_map=True):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train scOT or pretrain Poseidon.")
     parser.add_argument("--resume_training", action="store_true")
-    parser.add_argument(
-    "--alpha",
-    type=float,
-    default=None,
-    help="(array) override the alpha in the YAML"
-)
-    parser.add_argument(
-        "--finetune_from",
-        type=str,
-        default=None,
-        help="Set this to a str pointing to a HF Hub model checkpoint or a directory with a scOT checkpoint if you want to finetune.",
-    )
-    parser.add_argument(
-    "--total_trajectories",
-    type=int,
-    default=None,
-    help="Override total number of trajectories (supersedes YAML)."
-)
-    parser.add_argument(
-        "--replace_embedding_recovery",
-        action="store_true",
-        help="Set this if you have to replace the embeddings and recovery layers because you are not just using the density, velocity and pressure channels. Only relevant for finetuning.",
-    )
-    parser.add_argument(
-        "--plot_from_checkpoint",
-        type=str,
-        default=None,
-        help="Path to a checkpoint directory to load the model and plot predictions.",
-    )
+    parser.add_argument("--alpha", type=float, default=None,
+                        help="(array) override the alpha in the YAML")
+    parser.add_argument("--finetune_from", type=str, default=None,
+                        help="Checkpoint directory or HF Hub model for finetuning")
+    parser.add_argument("--total_trajectories", type=int, default=None,
+                        help="Override total number of trajectories")
+    parser.add_argument("--replace_embedding_recovery", action="store_true",
+                        help="Replace embedding & recovery layers when finetuning")
+    parser.add_argument("--plot_from_checkpoint", type=str, default=None,
+                        help="Load a trained model and just plot predictions")
+
+    # ⇓ *** add your new options here, BEFORE read_cli() touches the parser ***
     parser.add_argument("--num_easy", type=int, default=None,
                         help="Number of easy (no‑hole) trajectories in TRAIN set")
     parser.add_argument("--num_hard", type=int, default=None,
                         help="Number of hard (hole) trajectories in TRAIN set")
-    # -------------------------------------------------------------------------
 
-    # keep the old options for backward compatibility -------------------------
-    # parser.add_argument("--alpha", type=float, default=None,
-    #                     help="Deprecated: ratio hard / total")
-    # parser.add_argument("--total_trajectories", type=int, default=None,
-    #                     help="Deprecated: total trajectories")
-    params = read_cli(parser).parse_args()
+    # let the helper extend the *same* parser or return a modified one
+    parser = read_cli(parser)          # many helpers return a new parser
+    params = parser.parse_args()       # now all flags are recognised
+
     run, config, ckpt_dir, RANK, CPU_CORES = setup(params)
+
 
     train_eval_set_kwargs = (
         {"just_velocities": True}
@@ -253,9 +234,9 @@ if __name__ == "__main__":
     if run is not None:
         # tell wandb about it, even in offline mode
         wandb.config.update({"alpha": params.alpha}, allow_val_change=True)
-    alpha = config.get("alpha")
+    # alpha = config.get("alpha")
     #Define the number of samples
-    num_finetune_samples = config["num_trajectories"]
+    # num_finetune_samples = config["num_trajectories"]
     # alpha_to_total = {
     #     0.50:   2,
     #     0.02:   50,
@@ -280,8 +261,8 @@ if __name__ == "__main__":
     num_test_samples = 80
 
     #Compute dataset splits
-    num_hole_train = int(alpha * num_finetune_samples)
-    num_no_hole_train = num_finetune_samples - num_hole_train
+    # num_hole_train = int(alpha * num_finetune_samples)
+    # num_no_hole_train = num_finetune_samples - num_hole_train
     #── NEW SPLIT ── always fix hole to 1, let no-hole fill out the rest
     # num_hole_train    = 1 if total_trajs >= 1 else 0
     # num_no_hole_train = num_finetune_samples - num_hole_train

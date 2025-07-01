@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=256G
-#SBATCH --array=0-7
+#SBATCH --array=0
 #SBATCH --output=logs/%x_%A_%a.log   # one combined file per array-task
 #SBATCH --error=logs/%x_%A_%a.log    # (stderr → same file)
 ## OPTIONAL:  e-mail yourself if it fails
@@ -14,8 +14,8 @@
 set -Eeuo pipefail
 LOGDIR=$HOME/logs
 mkdir -p "$LOGDIR"
-RUNLOG="$LOGDIR/${SLURM_JOB_NAME}_${SLURM_ARRAY_TASK_ID}_$(date +%s).log"
-exec > >(tee -i "$RUNLOG") 2>&1          # duplicate everything to $RUNLOG
+# RUNLOG="$LOGDIR/${SLURM_JOB_NAME}_${SLURM_ARRAY_TASK_ID}_$(date +%s).log"
+# exec > >(tee -i "$RUNLOG") 2>&1          # duplicate everything to $RUNLOG
 PS4='+ ${BASH_SOURCE}:${LINENO}: '
 
 trap 'echo "❌ ERROR on line $LINENO (exit $?)" >&2' ERR
@@ -38,8 +38,8 @@ echo "[INFO] Using Python: $(which python)"
 python -V
 
 # ── 2) experiment-specific parameters ----------------------------------------
-easy_counts=(100 100 100 100 100 100 100 100)
-hard_counts=(  0 1   5  10  50 100 200 400 800)
+easy_counts=(100)
+hard_counts=(  0)
 
 EASY=${easy_counts[$SLURM_ARRAY_TASK_ID]}
 HARD=${hard_counts[$SLURM_ARRAY_TASK_ID]}

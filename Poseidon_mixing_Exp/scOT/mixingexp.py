@@ -133,7 +133,7 @@ def setup(params, model_map=True):
 
     if RANK == 0 or RANK == -1:
         run = wandb.init(
-            project=params.wandb_project_name, name=params.wandb_run_name, mode="online", config=config
+            project=params.wandb_project_name, name=params.wandb_run_name, mode="offline", config=config
         )
         config = wandb.config
     else:

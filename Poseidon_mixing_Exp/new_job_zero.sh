@@ -32,10 +32,11 @@ set -x
 #   source ~/miniconda3/etc/profile.d/conda.sh   # CHANGE path if miniconda is elsewhere
 # fi
 
-# conda activate poseidon        # CHANGE to your env name
+# conda init
+# conda activate poseidon_test        # CHANGE to your env name
 
 echo "[INFO] Using Python: $(which python)"
-python -V
+python3 -V
 
 # ── 2) experiment-specific parameters ----------------------------------------
 easy_counts=(100)
@@ -73,7 +74,7 @@ for p in "$PY_MAIN" "$CONFIG" "$DATA"; do
 done
 
 # ── 5) launch training --------------------------------------------------------
-python "$PY_MAIN" \
+python3 "$PY_MAIN" \
   --config "$CONFIG" \
   --num_easy "$EASY" \
   --num_hard "$HARD" \

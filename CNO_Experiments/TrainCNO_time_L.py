@@ -30,9 +30,9 @@ if len(sys.argv) <= 2:
         "batch_size": 16,         
         "time_steps": 19,          # How many time steps to select?
         "dt": 1,                  # What is the time step? (1 means include entire traj, 2 means taking every other step, etc.
-        "training_samples": 999,   # How many training samples?
+        "training_samples": 800,   # How many training samples?
         "mixing": True,  # Set True to enable mixing experiment
-        "alpha": 0.2002,   # Percentage of hole data (e.g., 0.15 = 15%)
+        "alpha": 0.85,   # Percentage of hole data (e.g., 0.15 = 15%)
         "hole_data_path": "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Hole_HighRe_1600.npy",
         "nohole_data_path": "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Hole_interRe_1600.npy",
         "time_input": 1,          # Should we include time in the input channels?

@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=256G
-#SBATCH --array=0-7
+#SBATCH --array=0-6
 #SBATCH --output=logs/%x_%A_%a.log
 #SBATCH --error=logs/%x_%A_%a.log
 
@@ -25,7 +25,7 @@ export WANDB_API_KEY=3ff6a13421fb5921502235dde3f9a4700f33b5b8
 # 1) easy / hard counts  (pick whatever grid you like)
 ###############################################################################
 easy_counts=(1 49 99 199 399 799 1599)
-hard_counts=(  200   200   200  200  200 200 200)
+hard_counts=(200 200 200 200 200 200 200)
 
 EASY=${easy_counts[$SLURM_ARRAY_TASK_ID]}
 HARD=${hard_counts[$SLURM_ARRAY_TASK_ID]}
@@ -35,10 +35,10 @@ HARD=${hard_counts[$SLURM_ARRAY_TASK_ID]}
 ###############################################################################
 CODE=/home/vhsingh/Geo-UPSplus/Autoregressive_Baseline_Scripts
 MAIN=${CODE}/scripts/train.py              # <—— has the new CLI flags
-CONF=${CODE}/configs/mixing.yaml
+CONF=${CODE}/config/config.yaml
 
-NO_HOLE=/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Hole_interRe_1600.npy               # easy
-HOLE=/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Hole_HighRe_1600.npy                    # hard
+NO_HOLE=/data/group_data/sage_lab_complex_geometry/new_FPO_dataset/FPO_Cylinder_Hole_Location_3000.npy               # easy
+HOLE=/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Holes_3200_Normalised.npy                   # hard
 
 ###############################################################################
 # 3) checkpoint directory per run

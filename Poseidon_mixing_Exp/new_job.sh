@@ -38,8 +38,8 @@ echo "[INFO] Using Python: $(which python)"
 python -V
 
 # ── 2) experiment-specific parameters ----------------------------------------
-easy_counts=(824 823 816 783 742 618 412 124)
-hard_counts=( 0 1 8   41  82  206 412 700)
+easy_counts=(100 100 100 100 100 100 100 100)
+hard_counts=(  0 1   5  10  50 100 200 400 800)
 
 EASY=${easy_counts[$SLURM_ARRAY_TASK_ID]}
 HARD=${hard_counts[$SLURM_ARRAY_TASK_ID]}

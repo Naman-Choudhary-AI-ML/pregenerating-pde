@@ -234,6 +234,20 @@ if __name__ == "__main__":
     if run is not None:
         # tell wandb about it, even in offline mode
         wandb.config.update({"alpha": params.alpha}, allow_val_change=True)
+    # alpha = config.get("alpha")
+    #Define the number of samples
+    # num_finetune_samples = config["num_trajectories"]
+    # alpha_to_total = {
+    #     0.50:   2,
+    #     0.02:   50,
+    #     0.01:  100,
+    #     0.005:  200,
+    #     0.0025:  400,
+    #     0.00125:  800,
+    #     0.00063:   1600,  # if alpha=1 still means only complex, so total=1
+    #     0.00031:  3200,
+    #     0.00016:  6400
+    # }
 
     # pick the total based on alpha (fall back to YAML default if missing)
     if params.total_trajectories is not None:

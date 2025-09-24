@@ -1,10 +1,13 @@
 import copy
 import logging
 import math
+import torch
+import os
 
 import torch.nn as nn
 from torch.nn.utils import weight_norm
 from torch.nn.utils.weight_norm import WeightNorm
+import torch.nn.functional as F
 
 logger = logging.getLogger(__name__)
 
@@ -38,42 +41,65 @@ class GehringLinear(nn.Linear):
             nn.utils.weight_norm(self)
 
 
-class WNLinear(nn.Linear):
-    def __init__(self, in_features: int, out_features: int, bias: bool = True, device=None, dtype=None, wnorm=False):
-        super().__init__(in_features=in_features,
-                         out_features=out_features,
-                         bias=bias,
-                         device=device,
-                         dtype=dtype)
-        if wnorm:
-            weight_norm(self)
+class WNLinear(nn.Module):
+    def __init__(self,
+                 in_features: int,
+                 out_features: int,
+                 wnorm: bool = True,
+                 bias: bool = True):
+        super().__init__()
+        self.in_features  = in_features
+        self.out_features = out_features
+        self.debug        = int(os.getenv("DEBUG_NAN", "0")) == 1
+        self.eps          = float(os.getenv("SAFE_WN_EPS", "1e-6"))
+        self.wnorm        = wnorm and (int(os.getenv("DISABLE_WN", "0")) == 0)
 
-        self._fix_weight_norm_deepcopy()
-
-    def _fix_weight_norm_deepcopy(self):
-        # Fix bug where deepcopy doesn't work with weightnorm.
-        # Taken from https://github.com/pytorch/pytorch/issues/28594#issuecomment-679534348
-        orig_deepcopy = getattr(self, '__deepcopy__', None)
-
-        def __deepcopy__(self, memo):
-            # save and delete all weightnorm weights on self
-            weights = {}
-            for hook in self._forward_pre_hooks.values():
-                if isinstance(hook, WeightNorm):
-                    weights[hook.name] = getattr(self, hook.name)
-                    delattr(self, hook.name)
-            # remove this deepcopy method, restoring the object's original one if necessary
-            __deepcopy__ = self.__deepcopy__
-            if orig_deepcopy:
-                self.__deepcopy__ = orig_deepcopy
+        if not self.wnorm:
+            # Plain Linear
+            self.lin = nn.Linear(in_features, out_features, bias=bias)
+        else:
+            # Safe weight-norm (manual g/v with epsilon)
+            # weight_v: (out, in),  weight_g: (out, 1)
+            self.weight_v = nn.Parameter(torch.empty(out_features, in_features))
+            self.weight_g = nn.Parameter(torch.empty(out_features, 1))
+            if bias:
+                self.bias = nn.Parameter(torch.zeros(out_features))
             else:
-                del self.__deepcopy__
-            # actually do the copy
-            result = copy.deepcopy(self)
-            # restore weights and method on self
-            for name, value in weights.items():
-                setattr(self, name, value)
-            self.__deepcopy__ = __deepcopy__
-            return result
-        # bind __deepcopy__ to the weightnorm'd layer
-        self.__deepcopy__ = __deepcopy__.__get__(self, self.__class__)
+                self.register_parameter("bias", None)
+
+            # Kaiming init for v, g = ||v|| so that initial weight == v
+            nn.init.kaiming_uniform_(self.weight_v, a=math.sqrt(5))
+            with torch.no_grad():
+                vnorm = self.weight_v.norm(dim=1, keepdim=True).clamp_min(self.eps)
+                self.weight_g.copy_(vnorm)
+
+    # ----- helpers -----------------------------------------------------------
+    def _make_weight(self) -> torch.Tensor:
+        # w = g * v / (||v|| + eps)
+        v = self.weight_v
+        g = self.weight_g
+        vnorm = v.norm(dim=1, keepdim=True).clamp_min(self.eps)
+        w = g * (v / vnorm)
+        if self.debug:
+            if not torch.isfinite(w).all():
+                raise RuntimeError("[WNLinear] non-finite weight computed")
+        return w
+
+    def extra_repr(self) -> str:
+        return (f"in={self.in_features}, out={self.out_features}, "
+                f"wnorm={self.wnorm}, eps={self.eps}")
+
+    # ----- forward -----------------------------------------------------------
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if not self.wnorm:
+            return self.lin(x)
+
+        w = self._make_weight()
+        if self.debug:
+            # light‑weight stats (no huge prints)
+            if not torch.isfinite(x).all():
+                raise RuntimeError("[WNLinear] non-finite input")
+            wabs = w.abs().max().item()
+            if wabs > 1e6:
+                print(f"[WNLinear][WARN] |w|max={wabs:.3e}")
+        return F.linear(x, w, self.bias)

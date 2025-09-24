@@ -1,35 +1,5 @@
 """
-This file contains scOT.
-
-A lot of this file is taken from the transformers library and changed to our purposes. Huggingface Transformers is licensed under
-Apache 2.0 License, see trainer.py for details.
-
-We follow https://github.com/huggingface/transformers/blob/v4.35.2/src/transformers/models/swinv2/configuration_swinv2.py
-and https://github.com/huggingface/transformers/blob/v4.35.2/src/transformers/models/swinv2/modeling_swinv2.py#L1129
-
-The class ConvNeXtBlock is taken from the facebookresearch/ConvNeXt repository and is licensed under the MIT License,
-
-MIT License
-
-Copyright (c) Meta Platforms, Inc. and affiliates.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+scOT model implementation
 """
 
 from transformers import (
@@ -64,7 +34,7 @@ class ScOTOutput(ModelOutput):
 
 
 class ScOTConfig(PretrainedConfig):
-    """https://github.com/huggingface/transformers/blob/v4.35.2/src/transformers/models/swinv2/configuration_swinv2.py"""
+    """ScOT Configuration"""
 
     model_type = "swinv2"
 
@@ -161,7 +131,7 @@ class ConditionalLayerNorm(nn.Module):
 
 
 class ConvNeXtBlock(nn.Module):
-    r"""Taken from: https://github.com/facebookresearch/ConvNeXt/blob/main/models/convnext.py
+    r"""ConvNeXt Block implementation
     ConvNeXt Block. There are two equivalent implementations:
     (1) DwConv -> LayerNorm (channels_first) -> 1x1 Conv -> GELU -> 1x1 Conv; all in (N, C, H, W)
     (2) DwConv -> Permute to (N, H, W, C); LayerNorm (channels_last) -> Linear -> GELU -> Linear; Permute back
@@ -1221,7 +1191,7 @@ class ScOTDecoder(nn.Module):
 
 
 class ScOT(Swinv2PreTrainedModel):
-    """Inspired by https://github.com/huggingface/transformers/blob/v4.35.2/src/transformers/models/swinv2/modeling_swinv2.py#L1129"""
+    """ScOT Model implementation"""
 
     def __init__(self, config, use_mask_token=False):
         super().__init__(config)

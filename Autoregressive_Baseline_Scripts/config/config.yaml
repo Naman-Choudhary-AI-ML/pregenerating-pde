@@ -2,26 +2,29 @@ data:
   data_path: 
   - "/data/group_data/sage_lab_complex_geometry/new_FPO_dataset/FPO_Cylinder_Hole_Location_3000.npy"  ## Easy data
   - "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Holes_3200_Normalised.npy" ## Hard Data
-  batch_size: 8
+  batch_size: 2
   train_split: 0.8
   debug: false
 wandb:
   project: "llama3-sentiment-finetune"
-  entity: "ved100-carnegie-mellon-university"
+  entity: "anonymous-researcher"
   learning_rate: 0.001
-  epochs: 400
+  epochs: 200
   batch_size: 32
   scheduler_step_size: 100
   scheduler_gamma: 0.5
-
+early_stopping:
+  enabled: true          # Set to false to disable early stopping
+  patience: 10          # Number of epochs to wait for improvement
+  min_delta: 1e-4       # Minimum change to qualify as an improvement
 model:
   model_type: "FFNO"      # Options: "FFNO", "FNO", etc.
   model_name: "T"
   input_dim: 6       # For CE=7 and NS=6
-  modes: 16
-  width: 64
+  modes: 12
+  width: 48
   output_dim: 3           # For CE=4 and NS=3
-  n_layers: 5
+  n_layers: 4
   factor: 4
   retrain_fno: 42
   n_ff_layers: 2
@@ -31,7 +34,7 @@ model:
 
 optimizer:
   type: "Adam"
-  lr: 0.00005
+  lr: 0.0005
   weight_decay: 1e-4  
 
 scheduler:

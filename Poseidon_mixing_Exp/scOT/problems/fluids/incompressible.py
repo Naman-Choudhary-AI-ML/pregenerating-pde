@@ -37,7 +37,7 @@ class GaussianNumpyDataset(BaseTimeDataset):
         self.constants = {"mean": mean, "std": std, "time": 20.0}
 
         """
-        Custom dataset for `.npy` data adapted from `BaseTimeDataset`.
+        Custom dataset for `.npy` data based on `BaseTimeDataset`.
 
         Args:
             file_path (str): Path to the `.npy` dataset.

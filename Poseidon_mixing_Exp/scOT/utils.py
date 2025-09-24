@@ -66,7 +66,7 @@ def read_cli(parser):
         "--push_to_hf_hub",
         type=str,
         default=None,
-        help="Whether to push the model to Huggingface Hub. Specify the model repository name.",
+        help="Whether to push the model to model hub. Specify the model repository name.",
     )
     parser.add_argument(
         "--just_velocities",

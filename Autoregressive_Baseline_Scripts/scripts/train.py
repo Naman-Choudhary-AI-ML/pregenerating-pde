@@ -54,9 +54,13 @@ if DEBUG:
     torch.autograd.set_detect_anomaly(True, check_nan=True)
     log.warning("DEBUG_NAN is ON: anomaly detection & extra checks enabled.")
 
+# Memory management
+torch.backends.cudnn.benchmark = True
+torch.backends.cudnn.deterministic = False
+
 wandb.init(project=base_cfg["wandb"]["project"],
            entity =base_cfg["wandb"]["entity"],
-           name   =f"{base_cfg['model']['model_type']}_mix_{EASY_TRAIN}E_{HARD_TRAIN}H_debug{int(DEBUG)}",
+           name   =f"{base_cfg['model']['model_type']}_mix_{EASY_TRAIN}E_{HARD_TRAIN}H_RegulartoHarmonics_debug{int(DEBUG)}",
            config =base_cfg)
 
 # -------------- tiny helpers ----------
@@ -122,6 +126,7 @@ elif m_cfg["model_type"] == "FFNO":
                  share_weight=m_cfg["share_weight"],
                  ff_weight_norm=m_cfg["ff_weight_norm"],
                  layer_norm=m_cfg["layer_norm"]).to(device)
+    # Note: Gradient checkpointing will be applied during training loop
 else:
     raise ValueError("Only FNO / FFNO are supported.")
 
@@ -141,7 +146,7 @@ if sch_cfg["type"].lower() == "steplr":
     scheduler = StepLR(optimizer, step_size=sch_cfg["step_size"], gamma=sch_cfg["gamma"])
 elif sch_cfg["type"].lower() in ("cosineannealing", "cosineannealinglr"):
     # NOTE: this is stepped per-batch in this script; if you want per‑epoch, move scheduler.step() below.
-    scheduler = CosineAnnealingLR(optimizer, T_max=base_cfg["wandb"]["epochs"]*50,
+    scheduler = CosineAnnealingLR(optimizer, T_max=base_cfg["wandb"]["epochs"]*len(train_loader),
                                   eta_min=sch_cfg.get("eta_min", 0.0))
 else:
     scheduler = None
@@ -178,6 +183,37 @@ def _first_metric(d: dict, prefix: str):
         key = f"{prefix}/{k}"
         if key in d: return d[key]
     return next(iter(d.values()))
+
+def log_wn_stats(model: torch.nn.Module, step: int, top_k: int = 3):
+    """
+    Walk the model and report the min/max norms of v and values of g for WNLinear.
+    Helpful to see whether ||v|| is collapsing to ~0 which would explode grad.
+    """
+    rows = []
+    for name, m in model.named_modules():
+        if hasattr(m, "wnorm") and m.wnorm and hasattr(m, "weight_v"):
+            with torch.no_grad():
+                v = m.weight_v
+                g = m.weight_g
+                vnorm = v.norm(dim=1)  # (out,)
+                rows.append((
+                    name,
+                    float(vnorm.min().item()),
+                    float(vnorm.max().item()),
+                    float(g.min().item()),
+                    float(g.max().item())
+                ))
+    if rows:
+        # log a compact line per call (also to W&B)
+        for name, vmin, vmax, gmin, gmax in rows[:50]:  # don’t spam
+            log.info(f"[wn] step={step} {name}: ||v|| min={vmin:.3e} max={vmax:.3e} "
+                     f"g min={gmin:.3e} max={gmax:.3e}")
+            wandb.log({
+                f"wn/{name.replace('.','_')}_vmin": vmin,
+                f"wn/{name.replace('.','_')}_vmax": vmax,
+                f"wn/{name.replace('.','_')}_gmin": gmin,
+                f"wn/{name.replace('.','_')}_gmax": gmax,
+            }, step=step)
 
 for epoch in range(1, epochs+1):
     model.train()

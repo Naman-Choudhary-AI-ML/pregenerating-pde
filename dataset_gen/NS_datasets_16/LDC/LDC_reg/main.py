@@ -820,7 +820,7 @@ def gather_all_simulations(sim_folders, expected_n_points=16384, L=16, nu=1.53e-
     return final_time_dirs, final_results
 
 def main(batch_name: str, total_trajectories: int):
-    save_dir = f"/data/user_data/vhsingh/test_FPO_cylinder_reg_new/{batch_name}"
+    save_dir = f"/path/to/data/test_FPO_cylinder_reg_new/{batch_name}"
     os.makedirs(save_dir, exist_ok=True)
     # total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
     main_folder = "Design_Point_0"

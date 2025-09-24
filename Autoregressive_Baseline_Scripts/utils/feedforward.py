@@ -1,24 +1,38 @@
 import torch.nn as nn
 
 from .linear import WNLinear
+import os
+import torch
 
 
 class FeedForward(nn.Module):
-    def __init__(self, dim, factor, ff_weight_norm, n_layers, layer_norm, dropout):
+    def __init__(self,
+                 dim: int,
+                 factor: int = 4,
+                 ff_weight_norm: bool = True,
+                 n_ff_layers: int = 2,
+                 layer_norm: bool = False,
+                 dropout: float = 0.0):
         super().__init__()
-        self.layers = nn.ModuleList([])
-        for i in range(n_layers):
-            in_dim = dim if i == 0 else dim * factor
-            out_dim = dim if i == n_layers - 1 else dim * factor
-            self.layers.append(nn.Sequential(
-                WNLinear(in_dim, out_dim, wnorm=ff_weight_norm),
-                nn.Dropout(dropout),
-                nn.ReLU(inplace=True) if i < n_layers - 1 else nn.Identity(),
-                nn.LayerNorm(out_dim) if layer_norm and i == n_layers -
-                1 else nn.Identity(),
-            ))
+        self.debug = int(os.getenv("DEBUG_NAN", "0")) == 1
 
-    def forward(self, x):
-        for layer in self.layers:
-            x = layer(x)
-        return x
+        hidden = dim * factor
+        layers = []
+        for i in range(n_ff_layers):
+            in_d  = dim if i == 0 else hidden
+            out_d = dim if i == n_ff_layers - 1 else hidden
+            layers.append(WNLinear(in_d, out_d, wnorm=ff_weight_norm))
+            if i < n_ff_layers - 1:
+                layers.append(nn.GELU())
+                if layer_norm:
+                    layers.append(nn.LayerNorm(out_d))
+                if dropout and dropout > 0:
+                    layers.append(nn.Dropout(dropout))
+        self.net = nn.Sequential(*layers)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        y = self.net(x)
+        if self.debug:
+            if not torch.isfinite(y).all():
+                raise RuntimeError("[FeedForward] non‑finite output")
+        return y

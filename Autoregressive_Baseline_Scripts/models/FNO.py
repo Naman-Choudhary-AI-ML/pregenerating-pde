@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 # from netCDF4 import Dataset
 import yaml
-with open("/home/vhsingh/Geo-UPSplus/Autoregressive_Baseline_Scripts/config/config.yaml", "r") as f:
+with open("/path/to/codebase/Geo-UPSplus/Autoregressive_Baseline_Scripts/config/config.yaml", "r") as f:
     config = yaml.safe_load(f)
 
 class SpectralConv2d(nn.Module):

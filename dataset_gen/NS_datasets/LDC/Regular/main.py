@@ -1052,7 +1052,7 @@ def update_controlDict(sim_folder, endTime, num_outputs=20):
     with open(cd_path, "w") as f:
         f.writelines(new_lines)
 def main(batch_name: str, total_trajectories: int):
-    save_dir = f"/data/user_data/vhsingh/LDC_Regular/{batch_name}"
+    save_dir = f"/path/to/data/LDC_Regular/{batch_name}"
     os.makedirs(save_dir, exist_ok=True)
     # total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
     main_folder = "Design_Point_0"

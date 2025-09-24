@@ -66,7 +66,7 @@ def compute_cell_centers(points):
 
 def generate_brownian_bridge_velocity(nx, ny, max_velocity=1.0):
     """
-    Generate Brownian Bridge velocity fields for a structured 2D grid, based on the Poseidon paper.
+    Generate Brownian Bridge velocity fields for a structured 2D grid.
 
     Parameters:
         nx, ny: int - Grid dimensions (number of points in x and y directions).

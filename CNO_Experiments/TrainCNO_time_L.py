@@ -30,11 +30,19 @@ if len(sys.argv) <= 2:
         "batch_size": 16,         
         "time_steps": 19,          # How many time steps to select?
         "dt": 1,                  # What is the time step? (1 means include entire traj, 2 means taking every other step, etc.
+<<<<<<< HEAD
         "training_samples": 999,   # How many training samples?
         "mixing": True,  # Set True to enable mixing experiment
         "alpha": 0.2002,   # Percentage of hole data (e.g., 0.15 = 15%)
         "hole_data_path": "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Hole_HighRe_1600.npy",
         "nohole_data_path": "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Hole_interRe_1600.npy",
+=======
+        "training_samples": 299,   # How many training samples?
+        "mixing": True,  # Set True to enable mixing experiment
+        "alpha": 0.5025,   # Percentage of hole data (e.g., 0.15 = 15%)
+        "hole_data_path": "/data/group_data/sage_lab_complex_geometry/flowbench_harmonics_complete.npy",
+        "nohole_data_path": "/data/group_data/sage_lab_complex_geometry/new_FPO_dataset/FPO_Cylinder_Hole_Location_3000.npy",
+>>>>>>> feature/autoreg-baselines
         "time_input": 1,          # Should we include time in the input channels?
         "allowed": 'one',         # All2ALL (train) - all , or One2All (train) - one2all, AR training - one
         "cluster": True,          # Something internal (don't bother)
@@ -76,7 +84,7 @@ if len(sys.argv) <= 2:
     # WHAT IS THE EXPERIMENT?
     which_example = "ns_custom"
     
-    folder = f"/data/user_data/vhsingh/CNO_experiments/FPO_Cyl_EC_Regular_MultiHole_{training_properties['training_samples']}/Mixing/{training_properties['allowed']}/{training_properties['alpha']}"
+    folder = f"/path/to/data/CNO_experiments/FPO_Cyl_EC_HoleLocation_nurbsflowbench_{training_properties['training_samples']}/Mixing/{training_properties['allowed']}/{training_properties['alpha']}"
     os.makedirs(folder, exist_ok=True)
 
 
@@ -201,7 +209,7 @@ lr_monitor = LearningRateMonitor(logging_interval='epoch')  # or 'step' if you p
 # logger = TensorBoardLogger(save_dir=folder, version=ver, name="logs")
 logger = WandbLogger(
     project="GeoFNO1",
-    name=f"CNO_{training_properties['alpha']}_MultiHole_IntertoComplexRe_Scaling_{training_properties['training_samples']}_100_{ver}_Cosine",
+    name=f"CNO_{training_properties['alpha']}_HoleLocationnurbsflowbench_{training_properties['training_samples']}_100_{ver}_Cosine",
     save_dir=folder,
     config={**training_properties, **model_architecture_}  # logs hyperparams too
 )

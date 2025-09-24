@@ -1214,7 +1214,7 @@ def update_controlDict(sim_folder, endTime, num_outputs=20):
         f.writelines(new_lines)
 
 def main(batch_name: str, total_trajectories: int):
-    save_dir = f"/data/user_data/vhsingh/FPO_cylinder_hole_location"
+    save_dir = f"/path/to/data/FPO_cylinder_hole_location"
     os.makedirs(save_dir, exist_ok=True)
     # total_trajectories = int(input("Enter the total number of trajectories to simulate: "))
     batch_size = 128  # Adjust based on memory availability

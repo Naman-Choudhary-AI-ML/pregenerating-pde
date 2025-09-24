@@ -3,7 +3,7 @@ dataset:
 num_trajectories:
   value: 400
 model_name:
-  value: "T"
+  value: "B"
 lr:
   value: 0.00005
 lr_embedding_recovery:
@@ -29,8 +29,8 @@ max_num_train_time_steps:
 train_time_step_size:
   value: 1 
 hole_data_path:
-  value: "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Hole_HighRe_1600.npy"
+  value: "/path/to/hole_data.npy"
 no_hole_data_path:
-  value: "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Hole_interRe_1600.npy"
+  value: "/path/to/no_hole_data.npy"
 alpha:
   value: 0.00

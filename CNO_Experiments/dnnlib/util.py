@@ -1,10 +1,3 @@
-# Copyright (c) 2021, NVIDIA CORPORATION & AFFILIATES.  All rights reserved.
-#
-# NVIDIA CORPORATION and its licensors retain all intellectual property
-# and proprietary rights in and to this software, related documentation
-# and any modifications thereto.  Any use, reproduction, disclosure or
-# distribution of this software and related documentation without an express
-# license agreement from NVIDIA CORPORATION is strictly prohibited.
 
 """Miscellaneous utility classes and functions."""
 
@@ -31,12 +24,8 @@ import uuid
 
 from distutils.util import strtobool
 from typing import Any, List, Tuple, Union
-
-
 # Util classes
 # ------------------------------------------------------------------------------------------
-
-
 class EasyDict(dict):
     """Convenience class that behaves like a dict but allows access with the attribute syntax."""
 
@@ -51,8 +40,6 @@ class EasyDict(dict):
 
     def __delattr__(self, name: str) -> None:
         del self[name]
-
-
 class Logger(object):
     """Redirect stderr to stdout, optionally print stdout to a file, and optionally force flushing on both stdout and the file."""
 
@@ -110,8 +97,6 @@ class Logger(object):
         if self.file is not None:
             self.file.close()
             self.file = None
-
-
 # Cache directories
 # ------------------------------------------------------------------------------------------
 
@@ -134,8 +119,6 @@ def make_cache_dir_path(*paths: str) -> str:
 
 # Small util functions
 # ------------------------------------------------------------------------------------------
-
-
 def format_time(seconds: Union[int, float]) -> str:
     """Convert the seconds to human readable string with days, hours, minutes and seconds."""
     s = int(np.rint(seconds))
@@ -148,8 +131,6 @@ def format_time(seconds: Union[int, float]) -> str:
         return "{0}h {1:02}m {2:02}s".format(s // (60 * 60), (s // 60) % 60, s % 60)
     else:
         return "{0}d {1:02}h {2:02}m".format(s // (24 * 60 * 60), (s // (60 * 60)) % 24, (s // 60) % 60)
-
-
 def format_time_brief(seconds: Union[int, float]) -> str:
     """Convert the seconds to human readable string with days, hours, minutes and seconds."""
     s = int(np.rint(seconds))
@@ -162,8 +143,6 @@ def format_time_brief(seconds: Union[int, float]) -> str:
         return "{0}h {1:02}m".format(s // (60 * 60), (s // 60) % 60)
     else:
         return "{0}d {1:02}h".format(s // (24 * 60 * 60), (s // (60 * 60)) % 24)
-
-
 def ask_yes_no(question: str) -> bool:
     """Ask the user the question until the user inputs a valid answer."""
     while True:
@@ -172,8 +151,6 @@ def ask_yes_no(question: str) -> bool:
             return strtobool(input().lower())
         except ValueError:
             pass
-
-
 def tuple_product(t: Tuple) -> Any:
     """Calculate the product of the tuple elements."""
     result = 1
@@ -182,8 +159,6 @@ def tuple_product(t: Tuple) -> Any:
         result *= v
 
     return result
-
-
 _str_to_ctype = {
     "uint8": ctypes.c_ubyte,
     "uint16": ctypes.c_uint16,
@@ -196,8 +171,6 @@ _str_to_ctype = {
     "float32": ctypes.c_float,
     "float64": ctypes.c_double
 }
-
-
 def get_dtype_and_ctype(type_obj: Any) -> Tuple[np.dtype, Any]:
     """Given a type name string (or an object having a __name__ attribute), return matching Numpy and ctypes types that have the same size in bytes."""
     type_str = None
@@ -219,8 +192,6 @@ def get_dtype_and_ctype(type_obj: Any) -> Tuple[np.dtype, Any]:
     assert my_dtype.itemsize == ctypes.sizeof(my_ctype)
 
     return my_dtype, my_ctype
-
-
 def is_pickleable(obj: Any) -> bool:
     try:
         with io.BytesIO() as stream:
@@ -228,8 +199,6 @@ def is_pickleable(obj: Any) -> bool:
         return True
     except:
         return False
-
-
 # Functionality to import modules/objects by name, and call functions by name
 # ------------------------------------------------------------------------------------------
 
@@ -272,8 +241,6 @@ def get_module_from_obj_name(obj_name: str) -> Tuple[types.ModuleType, str]:
 
     # we are out of luck, but we have no idea why
     raise ImportError(obj_name)
-
-
 def get_obj_from_module(module: types.ModuleType, obj_name: str) -> Any:
     """Traverses the object name and returns the last (rightmost) python object."""
     if obj_name == '':
@@ -282,38 +249,26 @@ def get_obj_from_module(module: types.ModuleType, obj_name: str) -> Any:
     for part in obj_name.split("."):
         obj = getattr(obj, part)
     return obj
-
-
 def get_obj_by_name(name: str) -> Any:
     """Finds the python object with the given name."""
     module, obj_name = get_module_from_obj_name(name)
     return get_obj_from_module(module, obj_name)
-
-
 def call_func_by_name(*args, func_name: str = None, **kwargs) -> Any:
     """Finds the python object with the given name and calls it as a function."""
     assert func_name is not None
     func_obj = get_obj_by_name(func_name)
     assert callable(func_obj)
     return func_obj(*args, **kwargs)
-
-
 def construct_class_by_name(*args, class_name: str = None, **kwargs) -> Any:
     """Finds the python class with the given name and constructs it with the given arguments."""
     return call_func_by_name(*args, func_name=class_name, **kwargs)
-
-
 def get_module_dir_by_obj_name(obj_name: str) -> str:
     """Get the directory path of the module containing the given object name."""
     module, _ = get_module_from_obj_name(obj_name)
     return os.path.dirname(inspect.getfile(module))
-
-
 def is_top_level_function(obj: Any) -> bool:
     """Determine whether the given object is a top-level function, i.e., defined at module scope using 'def'."""
     return callable(obj) and obj.__name__ in sys.modules[obj.__module__].__dict__
-
-
 def get_top_level_function_name(obj: Any) -> str:
     """Return the fully-qualified name of a top-level function."""
     assert is_top_level_function(obj)
@@ -321,8 +276,6 @@ def get_top_level_function_name(obj: Any) -> str:
     if module == '__main__':
         module = os.path.splitext(os.path.basename(sys.modules[module].__file__))[0]
     return module + "." + obj.__name__
-
-
 # File system helpers
 # ------------------------------------------------------------------------------------------
 
@@ -357,8 +310,6 @@ def list_dir_recursively_with_ignore(dir_path: str, ignores: List[str] = None, a
         result += zip(absolute_paths, relative_paths)
 
     return result
-
-
 def copy_files_and_create_dirs(files: List[Tuple[str, str]]) -> None:
     """Takes in a list of tuples of (src, dst) paths and copies files.
     Will create all necessary directories."""
@@ -370,8 +321,6 @@ def copy_files_and_create_dirs(files: List[Tuple[str, str]]) -> None:
             os.makedirs(target_dir_name)
 
         shutil.copyfile(file[0], file[1])
-
-
 # URL helpers
 # ------------------------------------------------------------------------------------------
 
@@ -391,8 +340,6 @@ def is_url(obj: Any, allow_file_urls: bool = False) -> bool:
     except:
         return False
     return True
-
-
 def open_url(url: str, cache_dir: str = None, num_attempts: int = 10, verbose: bool = True, return_filename: bool = False, cache: bool = True) -> Any:
     """Download the given URL and return a binary-mode file object to access the data."""
     assert num_attempts >= 1

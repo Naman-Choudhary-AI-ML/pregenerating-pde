@@ -1,6 +1,0 @@
-/* dynamicCode:
- * SHA1 = 4687328d2566dd4dd352af5a88e623a74e1ea6be
- */
-fixedValueFvPatchFieldTemplate.C
-
-LIB = $(PWD)/../platforms/$(WM_OPTIONS)/lib/libparabolicinlet_4687328d2566dd4dd352af5a88e623a74e1ea6be

@@ -1,7 +1,7 @@
 data:
   data_path: 
-  - "/data/group_data/sage_lab_complex_geometry/new_FPO_dataset/FPO_Cylinder_Hole_Location_3000.npy"  ## Easy data
-  - "/data/group_data/sage_lab_complex_geometry/FPO_Cylinder_Multiple_Holes_3200_Normalised.npy" ## Hard Data
+  - "/path/to/hole/data"  ## Easy data
+  - "/path/to/no/hole/data" ## Hard Data
   batch_size: 2
   train_split: 0.8
   debug: false

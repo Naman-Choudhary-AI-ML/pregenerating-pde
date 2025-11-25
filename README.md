@@ -3,9 +3,8 @@
 Official code repository for the research paper on difficulty transfer in neural PDE solvers.
 
 **Paper**: Pre-Generating Multi-Difficulty PDE Data For Few-Shot Neural PDE Solvers
-**Authors**: Naman Choudhary*, Vedant Singh*, Ameet Talwalkar, Nicholas Matthew Boffi, Mikhail Khodak, Tanya Marwah
+**Authors**: Naman Choudhary*, Vedant Singh*, Ameet Talwalkar, Nicholas Matthew Boffi, Mikhail Khodak, Tanya Marwah (* Equal contribution)
 **Institution**: Machine Learning Department, Carnegie Mellon University
-*Equal contribution
 
 ## Dataset
 

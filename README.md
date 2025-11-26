@@ -1,6 +1,6 @@
-[Paper](#) | [Dataset](https://huggingface.co/datasets/sage-lab/PreGen-NavierStokes-2D) | [Website](https://naman-choudhary-ai-ml.github.io/pde-difficulty-transfer/)
-
 # Pre-Generating Multi-Difficulty PDE Data For Few-Shot Neural PDE Solvers
+
+[Paper](#) | [Dataset](https://huggingface.co/datasets/sage-lab/PreGen-NavierStokes-2D) | [Website](https://naman-choudhary-ai-ml.github.io/pde-difficulty-transfer/)
 
 Official code repository for the research paper on difficulty transfer in neural PDE solvers.
 
@@ -25,12 +25,12 @@ We provide pre-generated datasets for training neural PDE solvers with multi-dif
 ### Physical Channels
 Example physical channels from our dataset: velocity components (Ux, Uy), pressure (P), and vorticity fields with geometry mask:
 
-![Physical Channels](assets/images/FPO_physical_channels.png)
+<img src="assets/images/FPO_physical_channels.png" width="600">
 
 ### Increasing Complexity
 Visualizations showing increasing geometry complexity (left to right) and physics complexity via Reynolds number in Flow Past Object (FPO) simulations:
 
-![Complexity Progression](assets/images/FPO_CG.png)
+<img src="assets/images/FPO_CG.png" width="600">
 
 ## Overview
 

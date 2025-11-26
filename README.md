@@ -1,10 +1,14 @@
+[Paper](#) | [Dataset](https://huggingface.co/datasets/sage-lab/PreGen-NavierStokes-2D) | [Website](https://naman-choudhary-ai-ml.github.io/pde-difficulty-transfer/)
+
 # Pre-Generating Multi-Difficulty PDE Data For Few-Shot Neural PDE Solvers
 
 Official code repository for the research paper on difficulty transfer in neural PDE solvers.
 
 **Paper**: Pre-Generating Multi-Difficulty PDE Data For Few-Shot Neural PDE Solvers
+
 **Authors**: Naman Choudhary*, Vedant Singh*, Ameet Talwalkar, Nicholas Matthew Boffi, Mikhail Khodak, Tanya Marwah (* Equal contribution)
-**Institution**: Machine Learning Department, Carnegie Mellon University
+
+**Institution**: Machine Learning Department, Carnegie Mellon University; Department of Computer Sciences, UW-Madison; Simons Foundation
 
 ## Dataset
 
@@ -16,6 +20,18 @@ We provide pre-generated datasets for training neural PDE solvers with multi-dif
   - **Physics complexity** (Reynolds numbers)
   - **Combined difficulty variations**
 
+## Example Visualizations
+
+### Physical Channels
+Example physical channels from our dataset: velocity components (Ux, Uy), pressure (P), and vorticity fields with geometry mask:
+
+![Physical Channels](assets/images/FPO_physical_channels.png)
+
+### Increasing Complexity
+Visualizations showing increasing geometry complexity (left to right) and physics complexity via Reynolds number in Flow Past Object (FPO) simulations:
+
+![Complexity Progression](assets/images/FPO_CG.png)
+
 ## Overview
 
 This research addresses a key bottleneck in neural PDE solvers: the computational cost of generating training data often exceeds the cost of training the model itself. We demonstrate that by strategically combining low and medium difficulty examples with high-difficulty examples, we can achieve **8.9× computational savings** on dataset pre-generation while maintaining the same error levels.
@@ -23,7 +39,7 @@ This research addresses a key bottleneck in neural PDE solvers: the computationa
 ## Repository Structure
 
 - **CNO_Experiments/**: Experiments with Convolutional Neural Operators (CNO)
-  - Training scripts for different difficulty levels (L1-L5)
+  - Training scripts for different difficulty levels
   - Fine-tuning and evaluation scripts
 - **dataset_gen/**: Dataset generation utilities for creating multi-difficulty PDE data
 - **Poseidon_mixing_Exp/**: Experiments with Poseidon-based mixing approaches
@@ -32,18 +48,9 @@ This research addresses a key bottleneck in neural PDE solvers: the computationa
 ## Installation
 
 ```bash
-git clone https://github.com/Naman-Choudhary-AI-ML/Geo-UPSplus.git
-cd Geo-UPSplus
+git clone https://github.com/Naman-Choudhary-AI-ML/pregenerating-pde.git
+cd pregenerating-pde
 pip install -r requirements.txt
-```
-
-### Docker
-
-Alternatively, build and run the Docker container:
-
-```bash
-docker build -t geo-upsplus .
-docker run -it geo-upsplus
 ```
 
 ## Quick Start
@@ -53,7 +60,6 @@ docker run -it geo-upsplus
 ```bash
 cd CNO_Experiments
 python TrainCNO_time_L.py  # Train on low difficulty data
-python TrainCNO_time_L5.py # Train on highest difficulty data
 ```
 
 ### Testing
@@ -85,8 +91,5 @@ For more details and visualizations: [https://naman-choudhary-ai-ml.github.io/pd
 
 ## Contact
 
-For questions or issues, please contact: [namanchoud@andrew.cmu.edu](mailto:namanchoud@andrew.cmu.edu)
-
----
-
-© 2025 Carnegie Mellon University
+- Naman Choudhary: [namanchoudharyimp@gmail.com](mailto:namanchoudharyimp@gmail.com)
+- Vedant Singh: [vhsingh@andrew.cmu.edu](mailto:vhsingh@andrew.cmu.edu)

@@ -25,12 +25,16 @@ We provide pre-generated datasets for training neural PDE solvers with multi-dif
 ### Physical Channels
 Example physical channels from our dataset: velocity components (Ux, Uy), pressure (P), and vorticity fields with geometry mask:
 
+<div align="center">
 <img src="assets/images/FPO_physical_channels.png" width="600">
+</div>
 
 ### Increasing Complexity
 Visualizations showing increasing geometry complexity (left to right) and physics complexity via Reynolds number in Flow Past Object (FPO) simulations:
 
+<div align="center">
 <img src="assets/images/FPO_CG.png" width="600">
+</div>
 
 ## Overview
 
@@ -77,7 +81,7 @@ python TestCNO_ALL.py
 ## Citation
 
 ```bibtex
-@article{choudhary2025pde,
+@article{pregen2025,
   title={Pre-Generating Multi-Difficulty PDE Data For Few-Shot Neural PDE Solvers},
   author={Choudhary, Naman and Singh, Vedant and Talwalkar, Ameet and Boffi, Nicholas Matthew and Khodak, Mikhail and Marwah, Tanya},
   journal={arXiv preprint},

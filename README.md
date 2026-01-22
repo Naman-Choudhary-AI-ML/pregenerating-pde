@@ -1,6 +1,6 @@
 # Pre-Generating Multi-Difficulty PDE Data For Few-Shot Neural PDE Solvers
 
-[Paper](#) | [Dataset](https://huggingface.co/datasets/sage-lab/PreGen-NavierStokes-2D) | [Website](https://naman-choudhary-ai-ml.github.io/pde-difficulty-transfer/)
+[Paper](https://arxiv.org/abs/2512.00564v1) | [Dataset](https://huggingface.co/datasets/sage-lab/PreGen-NavierStokes-2D) | [Website](https://naman-choudhary-ai-ml.github.io/pde-difficulty-transfer/)
 
 Official code repository for the research paper on difficulty transfer in neural PDE solvers.
 

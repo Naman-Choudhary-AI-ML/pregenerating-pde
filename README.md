@@ -88,6 +88,7 @@ python TestCNO_ALL.py
 
 If you find this work or the dataset useful, please cite our paper:
 
+```bibtex
 @article{choudhary2025pregenerating,
   title={Pre-Generating Multi-Difficulty PDE Data for Few-Shot Neural PDE Solvers},
   author={Choudhary, Naman and Singh, Vedant and Talwalkar, Ameet and Boffi, Nicholas Matthew and Khodak, Mikhail and Marwah, Tanya},
@@ -96,7 +97,7 @@ If you find this work or the dataset useful, please cite our paper:
   eprint={2512.00564},
   archivePrefix={arXiv},
   primaryClass={cs.LG},
-  url={https://arxiv.org/abs/2512.00564}
+  url={[https://arxiv.org/abs/2512.00564](https://arxiv.org/abs/2512.00564)}
 }
 ```
 

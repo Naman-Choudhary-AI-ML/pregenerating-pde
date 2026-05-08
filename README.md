@@ -1,10 +1,16 @@
+<div align="center">
+
 # Pre-Generating Multi-Difficulty PDE Data For Few-Shot Neural PDE Solvers
 
-[Paper](https://arxiv.org/abs/2512.00564v1) | [Dataset](https://huggingface.co/datasets/sage-lab/PreGen-NavierStokes-2D) | [Website](https://naman-choudhary-ai-ml.github.io/pde-difficulty-transfer/)
+[![Hugging Face Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-blue)](https://huggingface.co/datasets/sage-lab/PreGen-NavierStokes-2D)
+[![arXiv](https://img.shields.io/badge/arXiv-2512.00564-b31b1b.svg)](https://arxiv.org/abs/2512.00564)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+[Paper](https://arxiv.org/abs/2512.00564) | [Dataset](https://huggingface.co/datasets/sage-lab/PreGen-NavierStokes-2D) | [Website](https://naman-choudhary-ai-ml.github.io/pde-difficulty-transfer/)
 
 Official code repository for the research paper on difficulty transfer in neural PDE solvers.
 
-**Paper**: Pre-Generating Multi-Difficulty PDE Data For Few-Shot Neural PDE Solvers
+</div>
 
 **Authors**: Naman Choudhary*, Vedant Singh*, Ameet Talwalkar, Nicholas Matthew Boffi, Mikhail Khodak, Tanya Marwah (* Equal contribution)
 
@@ -81,11 +87,15 @@ python TestCNO_ALL.py
 ## Citation
 
 ```bibtex
-@article{pregen2025,
-  title={Pre-Generating Multi-Difficulty PDE Data For Few-Shot Neural PDE Solvers},
+@article{choudhary2025pregenerating,
+  title={Pre-Generating Multi-Difficulty PDE Data for Few-Shot Neural PDE Solvers},
   author={Choudhary, Naman and Singh, Vedant and Talwalkar, Ameet and Boffi, Nicholas Matthew and Khodak, Mikhail and Marwah, Tanya},
-  journal={arXiv preprint},
-  year={2025}
+  journal={arXiv preprint arXiv:2512.00564},
+  year={2025},
+  eprint={2512.00564},
+  archivePrefix={arXiv},
+  primaryClass={cs.LG},
+  url={https://arxiv.org/abs/2512.00564}
 }
 ```
 

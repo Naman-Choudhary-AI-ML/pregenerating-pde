@@ -86,7 +86,8 @@ python TestCNO_ALL.py
 
 ## Citation
 
-```bibtex
+If you find this work or the dataset useful, please cite our paper:
+
 @article{choudhary2025pregenerating,
   title={Pre-Generating Multi-Difficulty PDE Data for Few-Shot Neural PDE Solvers},
   author={Choudhary, Naman and Singh, Vedant and Talwalkar, Ameet and Boffi, Nicholas Matthew and Khodak, Mikhail and Marwah, Tanya},
